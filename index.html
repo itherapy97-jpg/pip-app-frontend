@@ -791,7 +791,7 @@ async function api(path, method='GET', body=null) {
 // ===== CLIENT LOGIN =====
 async function clientLogin() {
   const code = document.getElementById('invite-code').value.trim().toUpperCase();
-  const lang = document.getElementById('lang-select').value;
+  const lang = userLang;  // 이미 selectLang()에서 저장된 값 사용
   if(!code) return;
   document.getElementById('login-btn').disabled = true;
   try {
@@ -1323,7 +1323,7 @@ async function loadHostDashboard() {
         <div class="avatar">${c.name.substring(0,2).toUpperCase()}</div>
         <div style="flex:1">
           <div class="client-name">${c.name} (${c.language})</div>
-          <div class="client-meta" style="font-size:12px;color:var(--text-muted)">${c.hasPending?'상담 대기 중':'미답변 없음'}</div>
+          <div class="client-meta" style="font-size:12px;color:var(--text-muted)">${c.hasPending?'상담 대기 중':'미답변 없음'}</div> <div style="font-size:11px;color:var(--sage-dark);letter-spacing:0.08em;margin-top:2px">🔑 코드: ${c.invite_code || '-'}</div>
         </div>
         ${c.hasPending ? '<div class="unread-dot"></div>' : ''}
       </div>
