@@ -357,6 +357,102 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
 </div>
 
+<!-- ===== SCREEN: HOST CLIENT DETAIL ===== -->
+<div class="screen" id="screen-client-detail">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-host')">← 뒤로</button>
+    <div class="top-bar-title">
+      <h2 id="detail-client-name">내담자 상세</h2>
+      <p id="detail-client-sub">프로필 · 모듈 · 상담</p>
+    </div>
+    <button onclick="saveClientProfile()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">저장</button>
+  </div>
+
+  <!-- 탭 -->
+  <div style="display:flex;border-bottom:1px solid var(--warm);">
+    <button class="host-tab active" id="dtab-profile" onclick="showDetailTab('profile',this)">프로필</button>
+    <button class="host-tab" id="dtab-modules" onclick="showDetailTab('modules',this)">모듈</button>
+    <button class="host-tab" id="dtab-counsel" onclick="showDetailTab('counsel',this)">상담</button>
+    <button class="host-tab" id="dtab-schedule" onclick="showDetailTab('schedule',this)">일정</button>
+  </div>
+
+  <!-- 프로필 탭 -->
+  <div id="detail-tab-profile" class="content" style="overflow-y:auto;">
+    <div class="field-label">이름</div>
+    <input type="text" id="dp-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">별명</div>
+    <input type="text" id="dp-nickname" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">나이</div>
+    <input type="number" id="dp-age" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">이메일</div>
+    <input type="email" id="dp-email" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">언어</div>
+    <select id="dp-language" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px">
+      <option value="ko">한국어</option>
+      <option value="en">English</option>
+    </select>
+    <div class="field-label">초대 코드</div>
+    <div style="padding:10px 12px;background:var(--cream);border-radius:8px;font-size:14px;letter-spacing:0.1em;color:var(--sage-dark);font-weight:500;margin-bottom:8px" id="dp-invite-code">-</div>
+    <div class="field-label">상담 빈도 (주 N회)</div>
+    <input type="number" id="dp-frequency" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">프로그램 시작일</div>
+    <input type="date" id="dp-startdate" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">특징 / 메모</div>
+    <textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="내담자 특징, 주의사항 등"></textarea>
+    <div class="field-label">상담 메모 (호스트 전용)</div>
+    <textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="진행 상황, 특이사항 등"></textarea>
+    <div class="success-msg" id="profile-save-success" style="margin-top:8px">저장되었습니다.</div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- 모듈 탭 -->
+  <div id="detail-tab-modules" class="content" style="display:none;overflow-y:auto;">
+    <p class="sec-label">배정된 모듈</p>
+    <div id="detail-module-list"><div class="loading">로딩 중...</div></div>
+    <div class="divider"></div>
+    <p class="sec-label">모듈 추가</p>
+    <div id="detail-all-modules"><div class="loading">로딩 중...</div></div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- 상담 탭 -->
+  <div id="detail-tab-counsel" class="content" style="display:none;overflow-y:auto;">
+    <p class="sec-label">상담 내역</p>
+    <div id="detail-counsel-list"><div class="loading">로딩 중...</div></div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- 일정 탭 -->
+  <div id="detail-tab-schedule" class="content" style="display:none;overflow-y:auto;">
+    <p class="sec-label">일정 현황</p>
+    <div id="detail-schedule-list"><div class="loading">로딩 중...</div></div>
+    <div class="spacer"></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: HOST COUNSEL REPLY (상세) ===== -->
+<div class="screen" id="screen-detail-reply">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-client-detail');showDetailTab('counsel',document.getElementById('dtab-counsel'))">← 뒤로</button>
+    <div class="top-bar-title"><h2 id="detail-reply-title">상담 답변</h2></div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px" id="detail-reply-date"></div>
+      <p style="font-size:14px;line-height:1.8" id="detail-counsel-msg">로딩 중...</p>
+    </div>
+    <div id="detail-reply-existing" style="display:none">
+      <div class="field-label">기존 답변</div>
+      <div class="card" style="background:var(--cream)"><p style="font-size:13px;line-height:1.7;color:var(--sage-dark)" id="detail-reply-prev"></p></div>
+    </div>
+    <div class="field-label">답변 작성</div>
+    <textarea class="editor-area" id="detail-reply-text" rows="6" placeholder="답변을 작성하세요..."></textarea>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="sendDetailReply()">답변 전송</button>
+    <div class="success-msg" id="detail-reply-success">전송되었습니다.</div>
+  </div>
+</div>
+
 </div>
 <script>
 const API = 'https://pip-app-backend-production.up.railway.app';
@@ -389,7 +485,6 @@ async function api(path, method='GET', body=null) {
   if(body) opts.body = JSON.stringify(body);
   const res = await fetch(API + path, opts);
   if(res.status === 401 || res.status === 403) {
-    // 토큰 만료 → 역할에 따라 재로그인
     const role = localStorage.getItem('pip_role');
     localStorage.removeItem('pip_token');
     token = null;
@@ -659,18 +754,201 @@ function hostLogout() {
   token = null; goScreen('screen-host-login');
 }
 
+
+// ===== HOST DASHBOARD =====
 async function loadHostDashboard() {
   try {
     const clients = await api('/api/host/clients');
     document.getElementById('stat-clients').textContent = clients.length;
     document.getElementById('stat-pending').textContent = clients.filter(c => c.hasPending).length;
-    document.getElementById('client-list').innerHTML = clients.map(c => '<div class="client-item" onclick="openClientCounsel(\'' + c.id + '\',\'' + c.name + '\',\'' + c.language + '\')"><div class="avatar">' + c.name.substring(0,2).toUpperCase() + '</div><div style="flex:1"><div class="client-name">' + c.name + ' (' + c.language + ')</div><div style="font-size:12px;color:var(--text-muted)">' + (c.hasPending?'상담 대기 중':'미답변 없음') + '</div><div style="font-size:11px;color:var(--sage-dark);letter-spacing:0.08em;margin-top:2px">🔑 코드: ' + (c.invite_code || '-') + '</div></div>' + (c.hasPending?'<div class="unread-dot"></div>':'') + '</div>').join('');
+    document.getElementById('client-list').innerHTML = clients.map(c => `
+      <div class="client-item" onclick="openClientDetail('${c.id}')">
+        <div class="avatar">${c.name.substring(0,2).toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500">${c.name}${c.nickname ? ' ('+c.nickname+')' : ''}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${c.hasPending ? '💬 상담 대기 중' : '미답변 없음'} · 주${c.session_frequency||2}회</div>
+          <div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 ${c.invite_code || '-'}</div>
+        </div>
+        ${c.hasPending ? '<div class="unread-dot"></div>' : ''}
+      </div>`).join('');
   } catch(e) { document.getElementById('client-list').innerHTML = '<p style="color:var(--text-muted);font-size:13px">로드 실패</p>'; }
   try {
     const modules = await api('/api/host/modules');
-    document.getElementById('host-module-list').innerHTML = modules.map(m => '<div class="card"><div class="card-row"><div style="font-size:14px;font-weight:500">' + m.title + '</div><span class="badge ' + (m.is_active?'green':'gray') + '">' + (m.is_active?'활성':'비활성') + '</span></div></div>').join('') + '<button class="btn" style="margin-top:8px" onclick="alert(\'다음 업데이트에서 제공됩니다.\')">+ 새 모듈 추가</button>';
+    document.getElementById('host-module-list').innerHTML = modules.map(m => `<div class="card"><div class="card-row"><div style="font-size:14px;font-weight:500">${m.title}</div><span class="badge ${m.is_active?'green':'gray'}">${m.is_active?'활성':'비활성'}</span></div></div>`).join('') + '<button class="btn" style="margin-top:8px" onclick="alert(\'다음 업데이트에서 제공됩니다.\')">+ 새 모듈 추가</button>';
   } catch(e) {}
   loadHostSchedule();
+}
+
+// ===== 내담자 상세 =====
+let currentDetailClientId = null;
+let currentDetailCounselId = null;
+let allModules = [];
+
+async function openClientDetail(clientId) {
+  currentDetailClientId = clientId;
+  goScreen('screen-client-detail');
+  showDetailTab('profile', document.getElementById('dtab-profile'));
+  await loadClientDetail();
+}
+
+async function loadClientDetail() {
+  try {
+    const data = await api('/api/host/clients/' + currentDetailClientId);
+    const c = data.client;
+
+    // 프로필 채우기
+    document.getElementById('detail-client-name').textContent = c.name + (c.nickname ? ' · ' + c.nickname : '');
+    document.getElementById('detail-client-sub').textContent = (c.language==='ko'?'한국어':'English') + ' · 주' + (c.session_frequency||2) + '회';
+    document.getElementById('dp-name').value = c.name || '';
+    document.getElementById('dp-nickname').value = c.nickname || '';
+    document.getElementById('dp-age').value = c.age || '';
+    document.getElementById('dp-email').value = c.email || '';
+    document.getElementById('dp-language').value = c.language || 'ko';
+    document.getElementById('dp-invite-code').textContent = c.invite_code || '-';
+    document.getElementById('dp-frequency').value = c.session_frequency || 2;
+    document.getElementById('dp-startdate').value = c.program_start_date || '';
+    document.getElementById('dp-characteristics').value = c.characteristics || '';
+    document.getElementById('dp-memo').value = c.memo || '';
+
+    // 모듈 탭
+    const assigned = data.modules || [];
+    document.getElementById('detail-module-list').innerHTML = assigned.length > 0
+      ? assigned.map(m => `
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-row">
+            <div>
+              <div style="font-size:14px;font-weight:500">${m.modules?.title || '모듈'}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${m.completed ? '✅ 완료' : (m.is_active ? '🟢 진행 중' : '⏸ 대기')}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button onclick="toggleModule('${m.module_id}', ${!m.is_active})" style="background:${m.is_active?'#FDF3E7':'#EDF4EE'};color:${m.is_active?'#8B5E2A':'var(--sage-dark)'};border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">
+                ${m.is_active ? '비활성화' : '활성화'}
+              </button>
+              <button onclick="removeModule('${m.module_id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button>
+            </div>
+          </div>
+        </div>`).join('')
+      : '<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
+
+    // 전체 모듈 목록 (배정용)
+    allModules = await api('/api/host/modules');
+    const assignedIds = assigned.map(m => m.module_id);
+    document.getElementById('detail-all-modules').innerHTML = allModules
+      .filter(m => !assignedIds.includes(m.id))
+      .map(m => `
+        <div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule('${m.id}')">
+          <div class="card-row">
+            <div style="font-size:14px">${m.title}</div>
+            <span style="color:var(--sage);font-size:12px">+ 배정</span>
+          </div>
+        </div>`).join('') || '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
+
+    // 상담 탭
+    const counsels = data.counseling || [];
+    document.getElementById('detail-counsel-list').innerHTML = counsels.length > 0
+      ? counsels.map(c => `
+        <div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'")}','${(c.reply||'').replace(/'/g,"\\'")}','${c.sent_at||''}','${c.status||''}')">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">${c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR') : ''} · <span style="color:${c.status==='replied'?'var(--sage-dark)':'var(--danger)'}">${c.status==='replied'?'답변완료':'미답변'}</span></div>
+          <p style="font-size:13px;line-height:1.6;color:var(--text)">${(c.message||'').substring(0,60)}${(c.message||'').length>60?'...':''}</p>
+        </div>`).join('')
+      : '<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
+
+    // 일정 탭
+    const schedules = data.schedules || [];
+    document.getElementById('detail-schedule-list').innerHTML = schedules.length > 0
+      ? schedules.map(s => `
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-row">
+            <div style="font-size:14px">${s.confirmed_time || s.requested_time || '시간 미정'}</div>
+            <span class="badge ${s.status==='confirmed'?'green':'amber'}">${s.status==='confirmed'?'확정':'대기'}</span>
+          </div>
+        </div>`).join('')
+      : '<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
+
+  } catch(e) { console.error(e); }
+}
+
+function showDetailTab(tab, btn) {
+  document.querySelectorAll('#screen-client-detail .host-tab').forEach(t => t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  ['profile','modules','counsel','schedule'].forEach(t => {
+    const el = document.getElementById('detail-tab-' + t);
+    if(el) el.style.display = t===tab ? 'block' : 'none';
+  });
+}
+
+async function saveClientProfile() {
+  const data = {
+    name: document.getElementById('dp-name').value,
+    nickname: document.getElementById('dp-nickname').value,
+    age: parseInt(document.getElementById('dp-age').value) || null,
+    email: document.getElementById('dp-email').value,
+    language: document.getElementById('dp-language').value,
+    session_frequency: parseInt(document.getElementById('dp-frequency').value) || 2,
+    program_start_date: document.getElementById('dp-startdate').value || null,
+    characteristics: document.getElementById('dp-characteristics').value,
+    memo: document.getElementById('dp-memo').value
+  };
+  try {
+    await api('/api/host/clients/' + currentDetailClientId, 'PUT', data);
+    const suc = document.getElementById('profile-save-success');
+    suc.classList.add('show');
+    setTimeout(() => suc.classList.remove('show'), 2000);
+    document.getElementById('detail-client-name').textContent = data.name + (data.nickname ? ' · ' + data.nickname : '');
+  } catch(e) { alert('저장 실패'); }
+}
+
+async function assignModule(moduleId) {
+  try {
+    await api('/api/host/clients/' + currentDetailClientId + '/modules/assign', 'POST', { moduleId, orderNum: 1 });
+    await loadClientDetail();
+    showDetailTab('modules', document.getElementById('dtab-modules'));
+  } catch(e) { alert('배정 실패'); }
+}
+
+async function toggleModule(moduleId, isActive) {
+  try {
+    await api('/api/host/clients/' + currentDetailClientId + '/modules/' + moduleId + '/toggle', 'PUT', { is_active: isActive });
+    await loadClientDetail();
+    showDetailTab('modules', document.getElementById('dtab-modules'));
+  } catch(e) { alert('변경 실패'); }
+}
+
+async function removeModule(moduleId) {
+  if(!confirm('이 모듈을 제거할까요?')) return;
+  try {
+    await api('/api/host/clients/' + currentDetailClientId + '/modules/' + moduleId, 'DELETE');
+    await loadClientDetail();
+    showDetailTab('modules', document.getElementById('dtab-modules'));
+  } catch(e) { alert('제거 실패'); }
+}
+
+function openDetailReply(counselId, message, reply, sentAt, status) {
+  currentDetailCounselId = counselId;
+  document.getElementById('detail-counsel-msg').textContent = message;
+  document.getElementById('detail-reply-date').textContent = sentAt ? new Date(sentAt).toLocaleDateString('ko-KR') : '';
+  document.getElementById('detail-reply-text').value = '';
+  if(reply) {
+    document.getElementById('detail-reply-existing').style.display = 'block';
+    document.getElementById('detail-reply-prev').textContent = reply;
+  } else {
+    document.getElementById('detail-reply-existing').style.display = 'none';
+  }
+  document.getElementById('detail-reply-success').classList.remove('show');
+  goScreen('screen-detail-reply');
+}
+
+async function sendDetailReply() {
+  const reply = document.getElementById('detail-reply-text').value.trim();
+  if(!reply || !currentDetailCounselId) return;
+  try {
+    const res = await api('/api/host/counsel/' + currentDetailCounselId + '/reply', 'POST', { reply });
+    if(res.success) {
+      document.getElementById('detail-reply-success').classList.add('show');
+      document.getElementById('detail-reply-text').value = '';
+      setTimeout(() => { goScreen('screen-client-detail'); showDetailTab('counsel', document.getElementById('dtab-counsel')); }, 1500);
+    }
+  } catch(e) { alert('전송 실패'); }
 }
 
 async function loadHostSchedule() {
