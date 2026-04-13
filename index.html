@@ -250,12 +250,24 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 </div>
 
 <div class="screen" id="screen-reply">
-  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 홈으로</button><div class="top-bar-title"><h2>상담 답변</h2><p>1회 열람 후 삭제됩니다</p></div></div>
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 홈으로</button><div class="top-bar-title"><h2>상담가 답변 확인</h2></div></div>
   <div class="content">
-    <div class="warn"><p>⚠ 이 답변은 1회만 열람 가능합니다.</p></div>
-    <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">상담자 답변</div><p style="font-size:14px;line-height:1.8" id="reply-content">로딩 중...</p></div>
-    <div class="spacer"></div>
-    <button class="btn" style="border-color:var(--danger);color:var(--danger)" onclick="deleteReply()">확인했습니다 — 삭제하기</button>
+    <!-- 답변 확인 전 -->
+    <div id="reply-view-section">
+      <div class="notice" style="margin-bottom:16px"><p>📌 답변을 확인하면 화면에서 사라집니다.<br>이전 상담은 <strong>개인별 암호화 저장</strong>되어 있습니다.</p></div>
+      <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">상담가 답변</div><p style="font-size:14px;line-height:1.8" id="reply-content">로딩 중...</p></div>
+      <div class="spacer"></div>
+      <button class="btn primary" onclick="confirmReply()">확인했습니다</button>
+    </div>
+    <!-- 답변 확인 후 -->
+    <div id="reply-confirmed-section" style="display:none;text-align:center;padding-top:40px">
+      <div style="width:56px;height:56px;border-radius:50%;background:#EDF4EE;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:22px">🔒</div>
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;margin-bottom:12px">이전 상담은<br>개인별 암호화 저장되어있습니다.</h3>
+      <p style="font-size:12px;color:var(--text-muted);line-height:1.8">상담가가 확인하고 있으며,<br>다음 답변이 오면 알림을 보내드립니다.</p>
+      <div class="spacer"></div>
+      <button class="btn primary" onclick="goScreen('screen-counsel')">새 상담 신청하기</button>
+      <button class="btn ghost" onclick="goScreen('screen-home')">홈으로</button>
+    </div>
   </div>
 </div>
 
@@ -450,6 +462,24 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div class="spacer"></div>
     <button class="btn primary" onclick="sendDetailReply()">답변 전송</button>
     <div class="success-msg" id="detail-reply-success">전송되었습니다.</div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: 모듈 질문 편집 ===== -->
+<div class="screen" id="screen-module-editor">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-client-detail');showDetailTab('modules',document.getElementById('dtab-modules'))">← 뒤로</button>
+    <div class="top-bar-title"><h2 id="editor-module-title">모듈 편집</h2><p>객관식/주관식 질문 편집</p></div>
+    <button onclick="saveAllQuestions()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">저장</button>
+  </div>
+  <div class="content" style="overflow-y:auto;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button onclick="addQuestion('choice')" style="flex:1;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;font-size:12px;color:var(--sage-dark);cursor:pointer;">+ 객관식 추가</button>
+      <button onclick="addQuestion('text')" style="flex:1;padding:10px;background:#FDF8F0;border:1px solid #E8C99A;border-radius:8px;font-size:12px;color:#8B5E2A;cursor:pointer;">+ 주관식 추가</button>
+    </div>
+    <div id="question-list"></div>
+    <div class="success-msg" id="editor-save-success" style="margin-top:8px;text-align:center;">저장되었습니다.</div>
+    <div class="spacer"></div>
   </div>
 </div>
 
@@ -726,17 +756,31 @@ async function sendCounsel() {
 }
 
 async function loadReply() {
+  document.getElementById('reply-view-section').style.display = 'block';
+  document.getElementById('reply-confirmed-section').style.display = 'none';
   try {
     const res = await api('/api/counsel/reply');
-    if(res.hasReply) { currentCounselId = res.counselId; document.getElementById('reply-content').textContent = res.reply; }
-    else { document.getElementById('reply-content').textContent = '확인 가능한 답변이 없습니다.'; }
+    if(res.hasReply) {
+      currentCounselId = res.counselId;
+      document.getElementById('reply-content').textContent = res.reply;
+    } else {
+      document.getElementById('reply-content').textContent = '확인 가능한 답변이 없습니다.';
+    }
   } catch(e) {}
 }
 
-async function deleteReply() {
+async function confirmReply() {
   if(!currentCounselId) { goScreen('screen-home'); return; }
-  try { await api('/api/counsel/reply/read', 'POST', { counselId: currentCounselId }); alert('답변이 삭제되었습니다.'); goScreen('screen-home'); }
-  catch(e) { goScreen('screen-home'); }
+  try {
+    await api('/api/counsel/reply/read', 'POST', { counselId: currentCounselId });
+  } catch(e) {}
+  // 답변 확인 후 암호화 메시지 표시
+  document.getElementById('reply-view-section').style.display = 'none';
+  document.getElementById('reply-confirmed-section').style.display = 'block';
+}
+
+async function deleteReply() {
+  confirmReply();
 }
 
 async function hostLogin() {
@@ -816,11 +860,12 @@ async function loadClientDetail() {
       ? assigned.map(m => `
         <div class="card" style="margin-bottom:8px">
           <div class="card-row">
-            <div>
+            <div style="flex:1;cursor:pointer" onclick="openModuleEditor('${m.module_id}','${(m.modules?.title||'모듈').replace(/'/g,"\\'")}')">
               <div style="font-size:14px;font-weight:500">${m.modules?.title || '모듈'}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${m.completed ? '✅ 완료' : (m.is_active ? '🟢 진행 중' : '⏸ 대기')}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${m.completed ? '✅ 완료' : (m.is_active ? '🟢 진행 중' : '⏸ 대기')} · 클릭하여 질문 편집</div>
             </div>
-            <div style="display:flex;gap:8px;align-items:center">
+            <div style="display:flex;gap:6px;align-items:center">
+              <button onclick="openModuleEditor('${m.module_id}','${(m.modules?.title||'모듈').replace(/'/g,"\\'")}'))" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button>
               <button onclick="toggleModule('${m.module_id}', ${!m.is_active})" style="background:${m.is_active?'#FDF3E7':'#EDF4EE'};color:${m.is_active?'#8B5E2A':'var(--sage-dark)'};border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">
                 ${m.is_active ? '비활성화' : '활성화'}
               </button>
@@ -843,13 +888,20 @@ async function loadClientDetail() {
           </div>
         </div>`).join('') || '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
 
-    // 상담 탭
+    // 상담 탭 - 전체 내역 + 선택 삭제
     const counsels = data.counseling || [];
     document.getElementById('detail-counsel-list').innerHTML = counsels.length > 0
       ? counsels.map(c => `
-        <div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'")}','${(c.reply||'').replace(/'/g,"\\'")}','${c.sent_at||''}','${c.status||''}')">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">${c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR') : ''} · <span style="color:${c.status==='replied'?'var(--sage-dark)':'var(--danger)'}">${c.status==='replied'?'답변완료':'미답변'}</span></div>
-          <p style="font-size:13px;line-height:1.6;color:var(--text)">${(c.message||'').substring(0,60)}${(c.message||'').length>60?'...':''}</p>
+        <div class="card" style="margin-bottom:8px;" id="counsel-card-${c.id}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div style="font-size:11px;color:var(--text-muted)">${c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;color:${c.status==='replied'?'var(--sage-dark)':'var(--danger)'}">● ${c.status==='replied'?'답변완료':'미답변'}</span>
+              <button onclick="deleteCounsel('${c.id}')" style="background:none;border:1px solid #ddd;border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text-muted);cursor:pointer;">삭제</button>
+            </div>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--text);margin-bottom:${c.reply?'8px':'0'};cursor:pointer" onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${(c.reply||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${c.sent_at||''}','${c.status||''}')">${(c.message||'').substring(0,80)}${(c.message||'').length>80?'...':''}</p>
+          ${c.reply ? `<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 ${(c.reply||'').substring(0,60)}${(c.reply||'').length>60?'...':''}</div>` : `<button onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','','${c.sent_at||''}','${c.status||''}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>`}
         </div>`).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
 
@@ -921,6 +973,121 @@ async function removeModule(moduleId) {
     await loadClientDetail();
     showDetailTab('modules', document.getElementById('dtab-modules'));
   } catch(e) { alert('제거 실패'); }
+}
+
+// ===== 상담 선택 삭제 (호스트) =====
+async function deleteCounsel(counselId) {
+  if(!confirm('이 상담 내역을 삭제할까요?\n(내담자 데이터는 보존됩니다)')) return;
+  try {
+    await api('/api/host/counsel/' + counselId, 'DELETE');
+    const card = document.getElementById('counsel-card-' + counselId);
+    if(card) card.remove();
+  } catch(e) { alert('삭제 실패'); }
+}
+
+// ===== 모듈 질문 편집 =====
+let currentEditorModuleId = null;
+let editorQuestions = [];
+
+async function openModuleEditor(moduleId, title) {
+  currentEditorModuleId = moduleId;
+  document.getElementById('editor-module-title').textContent = title + ' — 질문 편집';
+  document.getElementById('editor-save-success').classList.remove('show');
+  document.getElementById('question-list').innerHTML = '<div class="loading">질문 로딩 중...</div>';
+  goScreen('screen-module-editor');
+  try {
+    const questions = await api('/api/host/modules/' + moduleId + '/questions');
+    editorQuestions = questions.map(q => ({
+      id: q.id,
+      text: q.text || '',
+      type: q.type || 'choice',
+      order_num: q.order_num || 1,
+      choices: (() => { try { return typeof q.choices === 'string' ? JSON.parse(q.choices) : (q.choices || []); } catch(e) { return []; } })()
+    }));
+    renderQuestionList();
+  } catch(e) { document.getElementById('question-list').innerHTML = '<p style="color:var(--danger)">질문 로드 실패</p>'; }
+}
+
+function renderQuestionList() {
+  if(editorQuestions.length === 0) {
+    document.getElementById('question-list').innerHTML = '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px">아직 질문이 없습니다.<br>위의 버튼으로 추가하세요.</p>';
+    return;
+  }
+  document.getElementById('question-list').innerHTML = editorQuestions.map((q, i) => `
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;padding:3px 8px;border-radius:12px;background:${q.type==='choice'?'#EDF4EE':'#FDF8F0'};color:${q.type==='choice'?'var(--sage-dark)':'#8B5E2A'}">
+          ${q.type==='choice'?'객관식':'주관식'}
+        </span>
+        <div style="display:flex;gap:6px">
+          ${i > 0 ? `<button onclick="moveQuestion(${i},-1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↑</button>` : ''}
+          ${i < editorQuestions.length-1 ? `<button onclick="moveQuestion(${i},1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↓</button>` : ''}
+          <button onclick="deleteQuestion(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px 4px">✕</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">질문 ${i+1}</div>
+      <textarea onchange="editorQuestions[${i}].text=this.value" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:70px;outline:none;line-height:1.6">${q.text}</textarea>
+      ${q.type === 'choice' ? `
+        <div style="margin-top:10px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 (한 줄에 하나)</div>
+          <textarea onchange="updateChoices(${i},this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">${(q.choices||[]).map(c=>c.label||c).join('\n')}</textarea>
+        </div>` : `
+        <div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">
+          💬 내담자가 직접 텍스트로 입력합니다
+        </div>`}
+    </div>`).join('');
+}
+
+function addQuestion(type) {
+  editorQuestions.push({ text: '', type, order_num: editorQuestions.length + 1, choices: type==='choice' ? [{label:'선택지 1',value:'1'},{label:'선택지 2',value:'2'}] : [] });
+  renderQuestionList();
+  setTimeout(() => { const el = document.getElementById('question-list'); if(el) el.scrollTop = el.scrollHeight; }, 100);
+}
+
+function deleteQuestion(idx) {
+  if(!confirm('이 질문을 삭제할까요?')) return;
+  editorQuestions.splice(idx, 1);
+  renderQuestionList();
+}
+
+function moveQuestion(idx, dir) {
+  const newIdx = idx + dir;
+  if(newIdx < 0 || newIdx >= editorQuestions.length) return;
+  [editorQuestions[idx], editorQuestions[newIdx]] = [editorQuestions[newIdx], editorQuestions[idx]];
+  renderQuestionList();
+}
+
+function updateChoices(idx, val) {
+  const lines = val.split('\n').filter(l => l.trim());
+  editorQuestions[idx].choices = lines.map((l, i) => ({ label: l.trim(), value: String(i+1) }));
+}
+
+async function saveAllQuestions() {
+  // 현재 textarea 값 동기화
+  const textareas = document.querySelectorAll('#question-list textarea');
+  let tIdx = 0;
+  editorQuestions.forEach((q, i) => {
+    if(textareas[tIdx]) { q.text = textareas[tIdx].value; tIdx++; }
+    if(q.type === 'choice' && textareas[tIdx]) {
+      const lines = textareas[tIdx].value.split('\n').filter(l => l.trim());
+      q.choices = lines.map((l, j) => ({ label: l.trim(), value: String(j+1) }));
+      tIdx++;
+    }
+    q.order_num = i + 1;
+  });
+  try {
+    await api('/api/host/modules/' + currentEditorModuleId + '/questions', 'POST', { questions: editorQuestions });
+    const suc = document.getElementById('editor-save-success');
+    suc.classList.add('show');
+    setTimeout(() => suc.classList.remove('show'), 2000);
+    // 저장 후 id 업데이트를 위해 다시 로드
+    const updated = await api('/api/host/modules/' + currentEditorModuleId + '/questions');
+    editorQuestions = updated.map(q => ({
+      id: q.id, text: q.text || '', type: q.type || 'choice', order_num: q.order_num || 1,
+      choices: (() => { try { return typeof q.choices === 'string' ? JSON.parse(q.choices) : (q.choices||[]); } catch(e) { return []; } })()
+    }));
+    renderQuestionList();
+  } catch(e) { alert('저장 실패'); }
 }
 
 function openDetailReply(counselId, message, reply, sentAt, status) {
