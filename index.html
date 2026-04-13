@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!-- PIP v2.4 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -49,7 +49,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .notif { background: #EDF4EE; border: 1px solid var(--sage-light); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; cursor: pointer; display: none; }
 .notif.show { display: flex; gap: 10px; align-items: flex-start; }
 .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); margin-top: 5px; flex-shrink: 0; }
-.bubble-wrap { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+.bubble-wrap { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; justify-content: flex-end; }
 .nav { display: flex; border-top: 1px solid var(--warm); background: var(--white); }
 .nav-tab { flex: 1; padding: 12px 4px 10px; border: none; background: none; cursor: pointer; font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: 'DM Sans', sans-serif; letter-spacing: 0.05em; }
 .nav-tab.active { color: var(--sage-dark); }
@@ -87,13 +87,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .divider { height: 1px; background: var(--warm); margin: 16px 0; }
 .spacer { height: 16px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+#screen-edu.active { display: flex !important; flex-direction: column; height: 100vh; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
 <div class="container" id="app">
 
-<div class="screen active" id="screen-lang">
+<div class="screen" id="screen-lang">
   <div class="pip-header" style="padding:60px 32px 40px">
     <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#4A6B4D;letter-spacing:0.15em;margin-bottom:8px">PIP</p>
     <h1 class="pip-title">Peace-In <em>Practice</em>™</h1>
@@ -199,14 +200,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   <div class="content"><div id="edu-module-list"><div class="loading">모듈 로딩 중...</div></div></div>
 </div>
 
-<div class="screen" id="screen-edu">
+<div class="screen" id="screen-edu" style="flex-direction:column;height:100vh;">
   <div class="top-bar">
     <button class="back-btn" onclick="goScreen('screen-home')">← 뒤로</button>
     <div class="top-bar-title"><h2 id="edu-module-title">모듈</h2><p id="edu-module-sub" style="font-size:11px;color:var(--text-muted)"></p></div>
   </div>
-  <div style="padding:0 20px 4px"><div style="height:3px;background:var(--warm);border-radius:2px"><div id="edu-prog-bar" style="height:3px;background:var(--sage);border-radius:2px;width:0%;transition:width 0.5s"></div></div></div>
-  <div class="bubble-wrap" id="edu-bubbles" style="padding:16px 16px 8px"></div>
-  <div id="edu-choices" style="padding:8px 16px 24px"></div>
+  <div style="padding:0 20px 6px;flex-shrink:0"><div style="height:3px;background:var(--warm);border-radius:2px"><div id="edu-prog-bar" style="height:3px;background:var(--sage);border-radius:2px;width:0%;transition:width 0.5s"></div></div></div>
+  <div class="bubble-wrap" id="edu-bubbles" style="flex:1;overflow-y:auto;padding:12px 16px 4px;min-height:0;justify-content:flex-end;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="edu-choices" style="flex-shrink:0;padding:8px 16px 20px;background:var(--white);border-top:1px solid var(--warm)"></div>
 </div>
 
 <div class="screen" id="screen-schedule">
@@ -499,32 +500,43 @@ const L = {
 
 function goScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.add('active');
   if(id==='screen-home') loadHome();
   if(id==='screen-edu-list') loadEduList();
   if(id==='screen-host') loadHostDashboard();
   if(id==='screen-reply') loadReply();
   if(id==='screen-schedule') loadSchedule();
   if(id==='screen-host-reply') loadHostReply();
-  if(id==='screen-host') loadHostSettings();
+  // loadHostSettings는 설정 탭 클릭 시에만 호출 (중복 제거)
 }
 
 async function api(path, method='GET', body=null) {
   const opts = { method, headers: { 'Content-Type':'application/json' } };
   if(token) opts.headers['Authorization'] = 'Bearer ' + token;
   if(body) opts.body = JSON.stringify(body);
-  const res = await fetch(API + path, opts);
+  let res;
+  try { res = await fetch(API + path, opts); } catch(e) { throw new Error('네트워크 오류'); }
   if(res.status === 401 || res.status === 403) {
     const role = localStorage.getItem('pip_role');
-    localStorage.removeItem('pip_token');
     token = null;
+    localStorage.removeItem('pip_token');
+    // 이미 로그인 화면이면 중복 이동 방지
+    const current = document.querySelector('.screen.active');
+    const currentId = current ? current.id : '';
+    if(currentId === 'screen-host-login' || currentId === 'screen-login') {
+      throw new Error('인증 필요');
+    }
     if(role === 'host') {
       localStorage.removeItem('pip_role');
-      goScreen('screen-host-login');
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-host-login').classList.add('active');
     } else {
-      goScreen('screen-login');
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-login').classList.add('active');
     }
-    throw new Error('인증 만료. 다시 로그인해주세요.');
+    throw new Error('인증 만료');
   }
   return res.json();
 }
@@ -639,17 +651,62 @@ function showQuestion(q) {
   currentQuestionId = q.questionId;
   eduCurrentStep++;
   document.getElementById('edu-prog-bar').style.width = Math.min((eduCurrentStep / eduTotalSteps) * 100, 95) + '%';
-  addBubbleTyping(q.text, () => showChoiceCards(q.choices));
+  if(q.type === 'text') {
+    // 주관식
+    addBubbleTyping(q.text, () => showTextInput());
+  } else {
+    // 객관식
+    addBubbleTyping(q.text, () => showChoiceCards(q.choices || []));
+  }
 }
 
-function speakText(text) {
-  if(!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = userLang === 'en' ? 'en-US' : 'ko-KR';
-  utter.rate = 0.92; utter.pitch = 1.05; utter.volume = 0.85;
-  window.speechSynthesis.speak(utter);
+function showTextInput() {
+  const choicesEl = document.getElementById('edu-choices');
+  choicesEl.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:8px;align-items:flex-end;animation:slideUp 0.3s ease';
+  const ta = document.createElement('textarea');
+  ta.placeholder = '여기에 자유롭게 적어주세요...';
+  ta.style.cssText = 'flex:1;padding:12px 14px;border:1.5px solid var(--warm);border-radius:14px;font-size:14px;font-family:"DM Sans",sans-serif;resize:none;outline:none;line-height:1.6;height:80px;color:var(--text);background:var(--white)';
+  ta.addEventListener('focus', () => ta.style.borderColor='var(--sage)');
+  ta.addEventListener('blur', () => ta.style.borderColor='var(--warm)');
+  const btn = document.createElement('button');
+  btn.innerHTML = '→';
+  btn.style.cssText = 'background:var(--sage);color:white;border:none;border-radius:14px;padding:12px 16px;font-size:18px;cursor:pointer;height:80px;flex-shrink:0';
+  btn.onclick = () => {
+    const val = ta.value.trim();
+    if(!val) { ta.style.borderColor='var(--danger)'; return; }
+    submitTextAnswer(val);
+  };
+  wrap.appendChild(ta); wrap.appendChild(btn);
+  choicesEl.appendChild(wrap);
+  setTimeout(() => ta.focus(), 100);
 }
+
+async function submitTextAnswer(value) {
+  const choicesEl = document.getElementById('edu-choices');
+  choicesEl.innerHTML = '';
+  // 내담자 답변 버블 표시
+  const bubblesEl = document.getElementById('edu-bubbles');
+  const userWrap = document.createElement('div');
+  userWrap.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:4px;animation:fadeIn 0.3s ease';
+  const userBubble = document.createElement('div');
+  userBubble.style.cssText = 'background:var(--sage);color:white;border-radius:16px 16px 4px 16px;padding:12px 16px;max-width:78%;font-size:14px;line-height:1.55';
+  userBubble.textContent = value;
+  userWrap.appendChild(userBubble); bubblesEl.appendChild(userWrap); bubblesEl.scrollTop = bubblesEl.scrollHeight;
+  try {
+    const res = await api('/api/sessions/answer', 'POST', { questionId: currentQuestionId, textValue: value, moduleId: currentModuleId });
+    if(res.completed) {
+      document.getElementById('edu-prog-bar').style.width = '100%';
+      setTimeout(() => {
+        addBubbleTyping('수고하셨습니다. 오늘 세션이 완료되었습니다.', () => {
+          document.getElementById('edu-choices').innerHTML = '<button onclick=\"goScreen(\'screen-home\')\" style=\"display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer\">홈으로 돌아가기</button>';
+        });
+      }, 600);
+    } else { setTimeout(() => showQuestion(res.nextQuestion), 800); }
+  } catch(e) { setTimeout(() => addBubbleTyping('오류가 발생했습니다. 다시 시도해 주세요.', null), 600); }
+}
+
 
 function addBubbleTyping(text, callback) {
   const bubblesEl = document.getElementById('edu-bubbles');
@@ -665,15 +722,10 @@ function addBubbleTyping(text, callback) {
   bubblesEl.appendChild(wrap); bubblesEl.scrollTop = bubblesEl.scrollHeight;
   setTimeout(() => {
     typing.style.cssText = 'background:#EDF4EE;border-radius:16px 16px 16px 4px;padding:14px 18px;max-width:78%;font-size:15px;line-height:1.7;color:var(--sage-dark);font-family:"Cormorant Garamond",serif;font-weight:400';
-    const speakerBtn = document.createElement('button');
-    speakerBtn.style.cssText = 'display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:var(--sage);font-size:11px;padding:0;margin-top:8px;opacity:0.75';
-    speakerBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg><span>' + (userLang==='en'?'Listen':'듣기') + '</span>';
-    speakerBtn.onclick = () => { playClick(); speakText(text); };
     const textNode = document.createElement('div');
     textNode.textContent = text;
-    typing.innerHTML = ''; typing.appendChild(textNode); typing.appendChild(speakerBtn);
+    typing.innerHTML = ''; typing.appendChild(textNode);
     bubblesEl.scrollTop = bubblesEl.scrollHeight;
-    setTimeout(() => speakText(text), 200);
     if(callback) setTimeout(callback, 300);
   }, 700);
 }
@@ -683,7 +735,7 @@ function showChoiceCards(choices) {
   choicesEl.innerHTML = '';
   choices.forEach((c, i) => {
     const card = document.createElement('button');
-    card.style.cssText = 'display:block;width:100%;background:var(--white);border:1.5px solid var(--warm);border-radius:14px;padding:14px 18px;margin-bottom:10px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--sage-dark);text-align:left;cursor:pointer;line-height:1.55;transition:all 0.18s;animation:slideUp 0.3s ease ' + (i*0.08) + 's both;box-shadow:0 2px 8px rgba(0,0,0,0.04)';
+    card.style.cssText = 'display:block;width:100%;background:var(--white);border:1.5px solid var(--warm);border-radius:12px;padding:11px 16px;margin-bottom:7px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--sage-dark);text-align:left;cursor:pointer;line-height:1.5;transition:all 0.15s;animation:slideUp 0.25s ease ' + (i*0.06) + 's both';
     card.textContent = c.label;
     card.onmouseenter = () => { card.style.borderColor='var(--sage)'; card.style.background='#F4F8F4'; card.style.transform='translateY(-1px)'; };
     card.onmouseleave = () => { card.style.borderColor='var(--warm)'; card.style.background='var(--white)'; card.style.transform='translateY(0)'; };
@@ -1026,11 +1078,11 @@ function renderQuestionList() {
         </div>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">질문 ${i+1}</div>
-      <textarea onchange="editorQuestions[${i}].text=this.value" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:70px;outline:none;line-height:1.6">${q.text}</textarea>
+      <textarea id="q-text-${i}" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:70px;outline:none;line-height:1.6">${q.text}</textarea>
       ${q.type === 'choice' ? `
         <div style="margin-top:10px">
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 (한 줄에 하나)</div>
-          <textarea onchange="updateChoices(${i},this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">${(q.choices||[]).map(c=>c.label||c).join('\n')}</textarea>
+          <textarea id="q-choices-${i}" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">${(q.choices||[]).map(c=>c.label||c).join('\n')}</textarea>
         </div>` : `
         <div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">
           💬 내담자가 직접 텍스트로 입력합니다
@@ -1063,15 +1115,16 @@ function updateChoices(idx, val) {
 }
 
 async function saveAllQuestions() {
-  // 현재 textarea 값 동기화
-  const textareas = document.querySelectorAll('#question-list textarea');
-  let tIdx = 0;
+  // ID 기반으로 각 textarea 값 직접 읽기
   editorQuestions.forEach((q, i) => {
-    if(textareas[tIdx]) { q.text = textareas[tIdx].value; tIdx++; }
-    if(q.type === 'choice' && textareas[tIdx]) {
-      const lines = textareas[tIdx].value.split('\n').filter(l => l.trim());
-      q.choices = lines.map((l, j) => ({ label: l.trim(), value: String(j+1) }));
-      tIdx++;
+    const textEl = document.getElementById('q-text-' + i);
+    if(textEl) q.text = textEl.value.trim();
+    if(q.type === 'choice') {
+      const choicesEl = document.getElementById('q-choices-' + i);
+      if(choicesEl) {
+        const lines = choicesEl.value.split('\n').filter(l => l.trim());
+        q.choices = lines.map((l, j) => ({ label: l.trim(), value: String(j+1) }));
+      }
     }
     q.order_num = i + 1;
   });
@@ -1206,12 +1259,49 @@ function selectLang(lang) {
   goScreen('screen-landing');
 }
 
-window.onload = function() {
-  const isHost = window.location.hash === '#host';
-  const savedRole = localStorage.getItem('pip_role');
-  if(isHost) { if(token && savedRole==='host') goScreen('screen-host'); else goScreen('screen-host-login'); }
-  else { if(token && savedRole!=='host') { applyLang(); goScreen('screen-home'); } else goScreen('screen-lang'); }
-};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+
+function initApp() {
+  try {
+    const hash = window.location.hash;
+    const isHost = hash === '#host' || hash === '#/host';
+    const savedRole = localStorage.getItem('pip_role');
+    const savedToken = localStorage.getItem('pip_token');
+    token = savedToken || null;
+
+    if(isHost) {
+      if(savedToken && savedRole === 'host') {
+        showScreen('screen-host');
+        loadHostDashboard();
+      } else {
+        localStorage.removeItem('pip_token');
+        localStorage.removeItem('pip_role');
+        token = null;
+        showScreen('screen-host-login');
+      }
+    } else {
+      if(savedToken && savedRole !== 'host') {
+        try { applyLang(); } catch(e) {}
+        showScreen('screen-home');
+        loadHome();
+      } else {
+        showScreen('screen-lang');
+      }
+    }
+  } catch(e) {
+    // 오류 시 언어 선택 화면으로
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('screen-lang');
+    if(el) el.classList.add('active');
+  }
+}
+
+window.onload = initApp;
 </script>
 </body>
 </html>
