@@ -299,13 +299,13 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     </div>
   </div>
   <div class="host-tabs">
-    <button class="host-tab active" onclick="showHostTab('clients',this)">내담자</button>
-    <button class="host-tab" onclick="showHostTab('groups',this)">그룹</button>
+    <button class="host-tab active" onclick="showHostTab('groups',this)">그룹</button>
+    <button class="host-tab" onclick="showHostTab('clients',this)">전체 내담자</button>
     <button class="host-tab" onclick="showHostTab('edu',this)">교육과정</button>
     <button class="host-tab" onclick="showHostTab('schedule',this)">일정</button>
     <button class="host-tab" onclick="showHostTab('settings',this)">설정</button>
   </div>
-  <div id="host-tab-clients" class="content">
+  <div id="host-tab-clients" class="content" style="display:none">
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num" id="stat-clients">-</div><div class="stat-lbl">활성 내담자</div></div>
       <div class="stat-card"><div class="stat-num" style="color:var(--danger)" id="stat-pending">-</div><div class="stat-lbl">미답변 상담</div></div>
@@ -315,7 +315,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div class="spacer"></div>
     <button class="btn" onclick="goScreen('screen-host-add')">+ 내담자 추가 (초대 코드 생성)</button>
   </div>
-  <div id="host-tab-groups" class="content" style="display:none">
+  <div id="host-tab-groups" class="content">
     <p class="sec-label">그룹 목록</p>
     <div id="group-list"><div class="loading">로딩 중...</div></div>
     <div class="divider"></div>
@@ -924,13 +924,15 @@ function hostLogout() {
 
 // ===== HOST DASHBOARD =====
 async function loadHostDashboard() {
+  // 그룹 탭 먼저 로드
+  loadGroups();
   try {
     const clients = await api('/api/host/clients');
     document.getElementById('stat-clients').textContent = clients.length;
     document.getElementById('stat-pending').textContent = clients.filter(c => c.hasPending).length;
     document.getElementById('client-list').innerHTML = clients.map(c => `
       <div class="client-item" onclick="openClientDetail('${c.id}')">
-        <div class="avatar">${c.name.substring(0,2).toUpperCase()}</div>
+        <div class="avatar">${(c.name||'?').substring(0,2).toUpperCase()}</div>
         <div style="flex:1">
           <div style="font-size:14px;font-weight:500">${c.name}${c.nickname ? ' ('+c.nickname+')' : ''}</div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${c.hasPending ? '💬 상담 대기 중' : '미답변 없음'} · 주${c.session_frequency||2}회</div>
@@ -1372,26 +1374,75 @@ async function addClient() {
 // ===== 그룹 관리 =====
 async function loadGroups() {
   try {
-    const groups = await api('/api/host/groups');
-    document.getElementById('group-list').innerHTML = groups.length > 0
-      ? groups.map(g => `
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-row">
+    const [groups, clients] = await Promise.all([
+      api('/api/host/groups'),
+      api('/api/host/clients')
+    ]);
+
+    if(groups.length === 0) {
+      document.getElementById('group-list').innerHTML = '<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';
+      return;
+    }
+
+    // 그룹별 내담자 분류
+    document.getElementById('group-list').innerHTML = groups.map(g => {
+      const groupClients = clients.filter(c => c.group_id === g.id);
+      const clientsHtml = groupClients.length > 0
+        ? groupClients.map(c => `
+          <div class="client-item" onclick="openClientDetail('${c.id}')">
+            <div class="avatar" style="width:34px;height:34px;font-size:11px">${(c.name||'?').substring(0,2).toUpperCase()}</div>
             <div style="flex:1">
+              <div style="font-size:13px;font-weight:500">${c.name}${c.nickname?' ('+c.nickname+')':''}</div>
+              <div style="font-size:11px;color:var(--text-muted)">🔑 ${c.invite_code||'-'} · ${c.hasPending?'💬 상담대기':'미답변없음'}</div>
+            </div>
+            ${c.hasPending?'<div class="unread-dot"></div>':''}
+          </div>`).join('')
+        : '<p style="font-size:12px;color:var(--text-muted);padding:8px 0">내담자 없음</p>';
+
+      return `
+        <div class="card" style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div>
               <div style="font-size:15px;font-weight:500">${g.name}</div>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:3px">${g.description || ''}</div>
-              <div style="display:flex;gap:12px;margin-top:6px">
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${g.description||''}</div>
+              <div style="display:flex;gap:8px;margin-top:4px">
                 <span style="font-size:11px;background:#EDF4EE;color:var(--sage-dark);padding:2px 8px;border-radius:10px">주 ${g.session_frequency||3}회</span>
                 <span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.contract_months||6}개월</span>
                 <span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.total_modules||24}모듈</span>
               </div>
             </div>
-            <button onclick="editGroup('${g.id}','${(g.name||'').replace(/'/g,"\'")}')" style="background:none;border:1px solid var(--warm);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text-muted);cursor:pointer">편집</button>
+            <button onclick="addClientToGroup('${g.id}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">+ 내담자</button>
           </div>
-        </div>`).join('')
-      : '<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';
+          <div style="border-top:1px solid var(--warm);padding-top:8px">${clientsHtml}</div>
+        </div>`;
+    }).join('');
+
+    // 미배정 내담자
+    const ungrouped = clients.filter(c => !c.group_id);
+    if(ungrouped.length > 0) {
+      document.getElementById('group-list').innerHTML += `
+        <div class="card" style="margin-bottom:12px;border-style:dashed">
+          <div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">📌 미배정 내담자</div>
+          ${ungrouped.map(c => `
+            <div class="client-item" onclick="openClientDetail('${c.id}')">
+              <div class="avatar" style="width:34px;height:34px;font-size:11px">${(c.name||'?').substring(0,2).toUpperCase()}</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:500">${c.name}</div>
+                <div style="font-size:11px;color:var(--text-muted)">🔑 ${c.invite_code||'-'}</div>
+              </div>
+            </div>`).join('')}
+        </div>`;
+    }
   } catch(e) { document.getElementById('group-list').innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>'; }
 }
+
+function addClientToGroup(groupId) {
+  // 내담자 추가 화면으로 이동하면서 그룹 ID 전달
+  currentAddGroupId = groupId;
+  goScreen('screen-host-add');
+}
+
+let currentAddGroupId = null;
 
 async function createGroup() {
   const name = document.getElementById('new-group-name').value.trim();
@@ -1433,7 +1484,7 @@ async function saveSettings() {
 function showHostTab(tab, btn) {
   document.querySelectorAll('.host-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  ['clients','groups','edu','schedule','settings'].forEach(t => { const el = document.getElementById('host-tab-' + t); if(el) el.style.display = t===tab?'block':'none'; });
+  ['groups','clients','edu','schedule','settings'].forEach(t => { const el = document.getElementById('host-tab-' + t); if(el) el.style.display = t===tab?'block':'none'; });
   if(tab==='settings') loadHostSettings();
   if(tab==='schedule') loadHostSchedule();
   if(tab==='groups') loadGroups();
