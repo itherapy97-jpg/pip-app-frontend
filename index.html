@@ -775,14 +775,22 @@ async function submitAnswer(value, btn, label) {
   }, 150);
   try {
     const res = await api('/api/sessions/answer', 'POST', { questionId: currentQuestionId, choiceValue: value, moduleId: currentModuleId });
+    if(res.error) {
+      setTimeout(() => addBubbleTyping('저장 중 오류가 발생했습니다: ' + res.error, null), 600);
+      return;
+    }
     if(res.completed) {
       document.getElementById('edu-prog-bar').style.width = '100%';
       setTimeout(() => {
         addBubbleTyping('수고하셨습니다. 오늘 세션이 완료되었습니다.', () => {
-          document.getElementById('edu-choices').innerHTML = '<button onclick="goScreen(\'screen-home\')" style="display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;font-family:\'DM Sans\',sans-serif;cursor:pointer;margin-top:8px">홈으로 돌아가기</button>';
+          document.getElementById('edu-choices').innerHTML = '<button onclick="goScreen(\'screen-home\')" style="display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>';
         });
       }, 600);
-    } else { setTimeout(() => showQuestion(res.nextQuestion), 800); }
+    } else if(res.nextQuestion) {
+      setTimeout(() => showQuestion(res.nextQuestion), 800);
+    } else {
+      setTimeout(() => addBubbleTyping('다음 질문을 불러오지 못했습니다.', null), 600);
+    }
   } catch(e) { setTimeout(() => addBubbleTyping('오류가 발생했습니다. 다시 시도해 주세요.', null), 600); }
 }
 
