@@ -1543,4 +1543,20 @@ function initApp() {
       else { localStorage.removeItem('pip_token'); localStorage.removeItem('pip_role'); token = null; showScreen('screen-host-login'); }
     } else {
       if(savedToken && savedRole !== 'host') {
-        try { app
+        try { applyLang(); } catch(e) {}
+        showScreen('screen-home'); loadHome();
+      } else {
+        // A안: 언어선택 없이 바로 랜딩페이지로
+        showScreen('screen-landing');
+      }
+    }
+  } catch(e) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-landing').classList.add('active');
+  }
+}
+
+window.onload = initApp;
+</script>
+</body>
+</html>
