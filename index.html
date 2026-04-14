@@ -1399,11 +1399,12 @@ async function loadHostDashboard() {
     document.getElementById('stat-clients').textContent = clients.length;
     document.getElementById('stat-pending').textContent = clients.filter(c => c.hasPending).length;
     document.getElementById('client-list').innerHTML = clients.map(c => {
-      const dispName = c.email ? c.email.split('@')[0] : (c.name || '내담자');
+      const dispName = c.email || c.name || '내담자';
+      const initials = dispName.substring(0,2).toUpperCase();
       return `<div class="client-item" onclick="openClientDetail('${c.id}')">
-        <div class="avatar">${dispName.substring(0,2).toUpperCase()}</div>
+        <div class="avatar">${initials}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:500">${dispName}${c.name && c.name !== dispName ? ' <span style="font-size:11px;color:var(--text-muted)">(${c.name})</span>' : ''}</div>
+          <div style="font-size:13px;font-weight:500">${dispName}</div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${c.hasPending ? '💬 상담 대기 중' : '미답변 없음'} · 주${c.session_frequency||2}회</div>
           <div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 ${c.invite_code || '-'}</div>
         </div>
@@ -1642,27 +1643,42 @@ async function sendDetailReply() {
   } catch(e) { alert('전송 실패'); }
 }
 
-// 내담자 표시명: 이메일 @ 앞자리 우선, 그룹명 포함
+// 내담자 표시명: 이메일 전체 우선 (정체성), 없으면 내부 이름
 function getClientDisplay(client) {
-  const emailId = client?.email ? client.email.split('@')[0] : null;
-  const name = emailId || client?.name || '내담자';
+  const name = client?.email || client?.name || '내담자';
   const group = client?.group_name || (client?.groups && client.groups.name) || null;
   return { name, group };
 }
 
 async function loadHostSchedule() {
   try {
-    const pending = await api('/api/schedule/host/pending');
+    // 일정 + 전체 내담자 목록 동시 조회 → 이메일 교차 참조
+    const [pending, allClients] = await Promise.all([
+      api('/api/schedule/host/pending'),
+      api('/api/host/clients')
+    ]);
+
+    // client_id 기준 이메일·그룹 조회 맵
+    const clientMap = {};
+    allClients.forEach(c => { clientMap[c.id] = c; });
+
     document.getElementById('host-pending-schedule').innerHTML = pending.length > 0
       ? pending.map(s => {
+          // 전체 내담자 정보 병합
+          const clientId = s.client_id || s.clients?.id;
+          const fullClient = clientMap[clientId] || s.clients || {};
+          const { name, group } = getClientDisplay(fullClient);
+
           let hostTime = s.requested_time;
           try { if (hostTime && hostTime.includes('T')) hostTime = formatDateForHost(hostTime); } catch(e) {}
-          const { name, group } = getClientDisplay(s.clients);
           const tzInfo = s.clientTimezone ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">📍 ${s.clientTimezone}</div>` : '';
+
           return `<div class="card">
             <div style="margin-bottom:6px">
               <div style="font-size:15px;font-weight:500">${name}</div>
-              ${group ? `<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">📂 ${group}</div>` : '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">그룹 미지정</div>'}
+              ${group
+                ? `<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">📂 ${group}</div>`
+                : '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">그룹 미지정</div>'}
             </div>
             <div style="font-size:13px;color:var(--text);margin-bottom:6px">🕐 ${hostTime}</div>
             ${tzInfo}
@@ -1732,7 +1748,10 @@ async function loadGroups() {
     document.getElementById('group-list').innerHTML = groups.map(g => {
       const groupClients = clients.filter(c => c.group_id === g.id);
       const clientsHtml = groupClients.length > 0
-        ? groupClients.map(c => `<div class="client-item" onclick="openClientDetail('${c.id}')"><div class="avatar" style="width:34px;height:34px;font-size:11px">${(c.name||'?').substring(0,2).toUpperCase()}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${c.name}${c.nickname?' ('+c.nickname+')':''}</div><div style="font-size:11px;color:var(--text-muted)">🔑 ${c.invite_code||'-'} · ${c.hasPending?'💬 상담대기':'미답변없음'}</div></div>${c.hasPending?'<div class="unread-dot"></div>':''}</div>`).join('')
+        ? groupClients.map(c => {
+            const dn = c.email || c.name || '내담자';
+            return `<div class="client-item" onclick="openClientDetail('${c.id}')"><div class="avatar" style="width:34px;height:34px;font-size:10px">${dn.substring(0,2).toUpperCase()}</div><div style="flex:1"><div style="font-size:12px;font-weight:500">${dn}</div><div style="font-size:11px;color:var(--text-muted)">🔑 ${c.invite_code||'-'} · ${c.hasPending?'💬 상담대기':'미답변없음'}</div></div>${c.hasPending?'<div class="unread-dot"></div>':''}</div>`;
+          }).join('')
         : '<p style="font-size:12px;color:var(--text-muted);padding:8px 0">내담자 없음</p>';
       return `<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-size:15px;font-weight:500">${g.name}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">${g.description||''}</div><div style="display:flex;gap:8px;margin-top:4px"><span style="font-size:11px;background:#EDF4EE;color:var(--sage-dark);padding:2px 8px;border-radius:10px">주 ${g.session_frequency||3}회</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.contract_months||6}개월</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.total_modules||24}모듈</span></div></div><button onclick="addClientToGroup('${g.id}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">+ 내담자</button></div><div style="border-top:1px solid var(--warm);padding-top:8px">${clientsHtml}</div></div>`;
     }).join('');
