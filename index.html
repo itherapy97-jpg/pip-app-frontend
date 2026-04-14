@@ -227,8 +227,10 @@ body { top: 0px !important; }
 
 <!-- ===== SCREEN: LANDING ===== -->
 <div class="screen" id="screen-landing">
-  <!-- Google Translate 실제 위젯 (숨김 - 기능만 사용) -->
-  <div id="google_translate_element" style="display:none;position:absolute;"></div>
+  <!-- Google Translate 실제 위젯 (화면 밖으로 숨김 - 초기화 유지) -->
+  <div style="position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;z-index:-1;">
+    <div id="google_translate_element"></div>
+  </div>
 
   <!-- 커스텀 언어 선택기 -->
   <div class="lang-selector-wrap">
@@ -238,21 +240,21 @@ body { top: 0px !important; }
       <span style="font-size:10px;color:var(--text-muted)">▾</span>
     </div>
     <div class="lang-menu" id="langMenu">
-      <div class="lang-menu-item" onclick="setLang('en')">English</div>
-      <div class="lang-menu-item" onclick="setLang('zh-CN')">中文（简体）</div>
-      <div class="lang-menu-item" onclick="setLang('zh-TW')">中文（繁體）</div>
-      <div class="lang-menu-item" onclick="setLang('ja')">日本語</div>
-      <div class="lang-menu-item" onclick="setLang('hi')">हिन्दी</div>
-      <div class="lang-menu-item" onclick="setLang('es')">Español</div>
-      <div class="lang-menu-item" onclick="setLang('fr')">Français</div>
-      <div class="lang-menu-item" onclick="setLang('de')">Deutsch</div>
-      <div class="lang-menu-item" onclick="setLang('ar')">العربية</div>
-      <div class="lang-menu-item" onclick="setLang('pt')">Português</div>
-      <div class="lang-menu-item" onclick="setLang('ru')">Русский</div>
-      <div class="lang-menu-item" onclick="setLang('vi')">Tiếng Việt</div>
-      <div class="lang-menu-item" onclick="setLang('th')">ภาษาไทย</div>
-      <div class="lang-menu-item" onclick="setLang('id')">Bahasa Indonesia</div>
-      <div class="lang-menu-item lang-ko" onclick="setLang('ko')">한국어 (원본)</div>
+      <div class="lang-menu-item" onclick="setLang('en',this)">English</div>
+      <div class="lang-menu-item" onclick="setLang('zh-CN',this)">中文（简体）</div>
+      <div class="lang-menu-item" onclick="setLang('zh-TW',this)">中文（繁體）</div>
+      <div class="lang-menu-item" onclick="setLang('ja',this)">日本語</div>
+      <div class="lang-menu-item" onclick="setLang('hi',this)">हिन्दी</div>
+      <div class="lang-menu-item" onclick="setLang('es',this)">Español</div>
+      <div class="lang-menu-item" onclick="setLang('fr',this)">Français</div>
+      <div class="lang-menu-item" onclick="setLang('de',this)">Deutsch</div>
+      <div class="lang-menu-item" onclick="setLang('ar',this)">العربية</div>
+      <div class="lang-menu-item" onclick="setLang('pt',this)">Português</div>
+      <div class="lang-menu-item" onclick="setLang('ru',this)">Русский</div>
+      <div class="lang-menu-item" onclick="setLang('vi',this)">Tiếng Việt</div>
+      <div class="lang-menu-item" onclick="setLang('th',this)">ภาษาไทย</div>
+      <div class="lang-menu-item" onclick="setLang('id',this)">Bahasa Indonesia</div>
+      <div class="lang-menu-item lang-ko" onclick="setLang('ko',this)">한국어 (원본)</div>
     </div>
   </div>
 
@@ -837,28 +839,23 @@ const LANG_NAMES = {
 };
 
 function toggleLangMenu() {
-  const menu = document.getElementById('langMenu');
-  menu.classList.toggle('open');
+  document.getElementById('langMenu').classList.toggle('open');
 }
 
-function setLang(lang) {
-  // Google Translate 콤보박스 찾아서 변경
+function setLang(lang, el) {
   const tryTranslate = (attempts) => {
     const combo = document.querySelector('.goog-te-combo');
     if (combo) {
       combo.value = lang;
       combo.dispatchEvent(new Event('change'));
-      // 선택된 언어 표시 업데이트
-      const label = LANG_NAMES[lang] || lang;
-      document.getElementById('langSelected').textContent = label;
-      // 활성 표시
-      document.querySelectorAll('.lang-menu-item').forEach(el => el.classList.remove('active'));
-      event.target.classList.add('active');
+      document.getElementById('langSelected').textContent = LANG_NAMES[lang] || lang;
+      document.querySelectorAll('.lang-menu-item').forEach(e => e.classList.remove('active'));
+      if (el) el.classList.add('active');
     } else if (attempts > 0) {
-      setTimeout(() => tryTranslate(attempts - 1), 300);
+      setTimeout(() => tryTranslate(attempts - 1), 400);
     }
   };
-  tryTranslate(10);
+  tryTranslate(15);
   document.getElementById('langMenu').classList.remove('open');
 }
 
