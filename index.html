@@ -147,16 +147,67 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <div class="screen" id="screen-login">
   <div class="top-bar">
     <button class="back-btn" onclick="goScreen('screen-landing')">← 뒤로</button>
-    <div class="top-bar-title"><h2 id="login-title">참여 코드 입력</h2><p id="login-sub">초대받은 참여자만 입력 가능합니다</p></div>
+    <div class="top-bar-title"><h2>로그인</h2><p>Peace-In Practice™</p></div>
   </div>
-  <div class="content" style="padding-top:40px">
-    <div class="field">
-      <label id="invite-label">참여 코드 / Invite Code</label>
-      <input type="text" id="invite-code" placeholder="초대 코드를 입력하세요" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.1em;font-size:18px;text-align:center" />
+  <div class="content" style="padding-top:32px">
+    <!-- 탭: 이메일 로그인 / 초대코드 -->
+    <div style="display:flex;border:1px solid var(--warm);border-radius:8px;margin-bottom:24px;overflow:hidden">
+      <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:10px;border:none;background:var(--sage);color:white;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">이메일 로그인</button>
+      <button id="tab-invite-btn" onclick="switchLoginTab('invite')" style="flex:1;padding:10px;border:none;background:var(--white);color:var(--text-muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">초대코드 (첫 방문)</button>
     </div>
-    <div class="error-msg" id="login-error">초대 코드가 올바르지 않습니다.</div>
+
+    <!-- 이메일 로그인 -->
+    <div id="login-email-section">
+      <div class="field">
+        <label>이메일</label>
+        <input type="email" id="login-email" placeholder="이메일 주소" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>비밀번호</label>
+        <input type="password" id="login-password" placeholder="비밀번호" autocomplete="current-password" />
+      </div>
+      <div class="error-msg" id="login-error">이메일 또는 비밀번호가 올바르지 않습니다.</div>
+      <div class="spacer"></div>
+      <button class="btn primary" onclick="clientEmailLogin()">로그인</button>
+    </div>
+
+    <!-- 초대코드 입력 (첫 방문) -->
+    <div id="login-invite-section" style="display:none">
+      <div class="notice"><p>📌 처음 방문하시나요?<br>상담가에게 받은 <strong>초대코드</strong>를 입력하면 계정을 만들 수 있어요.</p></div>
+      <div class="field">
+        <label>초대 코드</label>
+        <input type="text" id="invite-code" placeholder="초대 코드 입력" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.1em;font-size:18px;text-align:center" />
+      </div>
+      <div class="error-msg" id="invite-error">초대 코드가 올바르지 않습니다.</div>
+      <div class="spacer"></div>
+      <button class="btn primary" onclick="checkInviteCode()">다음 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- 회원가입 화면 -->
+<div class="screen" id="screen-register">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-login')">← 뒤로</button>
+    <div class="top-bar-title"><h2>계정 만들기</h2><p>초대코드 확인 완료</p></div>
+  </div>
+  <div class="content" style="padding-top:32px">
+    <div class="notice"><p>✅ 초대코드가 확인되었습니다.<br>앞으로 사용할 <strong>이메일과 비밀번호</strong>를 설정해주세요.</p></div>
+    <div class="field">
+      <label>이메일</label>
+      <input type="email" id="reg-email" placeholder="이메일 주소" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>비밀번호 (6자 이상)</label>
+      <input type="password" id="reg-password" placeholder="비밀번호 설정" autocomplete="new-password" />
+    </div>
+    <div class="field">
+      <label>비밀번호 확인</label>
+      <input type="password" id="reg-password2" placeholder="비밀번호 재입력" autocomplete="new-password" />
+    </div>
+    <div class="error-msg" id="reg-error"></div>
     <div class="spacer"></div>
-    <button class="btn primary" id="login-btn" onclick="clientLogin()">시작하기 / Begin</button>
+    <button class="btn primary" onclick="registerClient()">계정 만들기 →</button>
   </div>
 </div>
 
@@ -578,24 +629,107 @@ async function api(path, method='GET', body=null) {
   return res.json();
 }
 
-async function clientLogin() {
-  const code = document.getElementById('invite-code').value.trim().toUpperCase();
-  const lang = userLang;
-  if(!code) return;
-  document.getElementById('login-btn').disabled = true;
+function switchLoginTab(tab) {
+  const emailSection = document.getElementById('login-email-section');
+  const inviteSection = document.getElementById('login-invite-section');
+  const emailBtn = document.getElementById('tab-email-btn');
+  const inviteBtn = document.getElementById('tab-invite-btn');
+  if(tab === 'email') {
+    emailSection.style.display = 'block';
+    inviteSection.style.display = 'none';
+    emailBtn.style.background = 'var(--sage)'; emailBtn.style.color = 'white';
+    inviteBtn.style.background = 'var(--white)'; inviteBtn.style.color = 'var(--text-muted)';
+  } else {
+    emailSection.style.display = 'none';
+    inviteSection.style.display = 'block';
+    inviteBtn.style.background = 'var(--sage)'; inviteBtn.style.color = 'white';
+    emailBtn.style.background = 'var(--white)'; emailBtn.style.color = 'var(--text-muted)';
+  }
+}
+
+async function clientEmailLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  if(!email || !password) { errEl.textContent = '이메일과 비밀번호를 입력해주세요.'; errEl.classList.add('show'); return; }
   try {
-    const data = await api('/api/auth/client/login', 'POST', { inviteCode: code, language: lang });
+    const data = await api('/api/auth/client/login', 'POST', { email, password });
     if(data.token) {
       token = data.token;
       localStorage.setItem('pip_token', token);
-      localStorage.setItem('pip_lang', lang);
+      localStorage.setItem('pip_lang', data.language || userLang);
+      userLang = data.language || userLang;
       applyLang();
-      goScreen('screen-home');
+      showScreen('screen-home');
+      loadHome();
     } else {
-      document.getElementById('login-error').classList.add('show');
+      errEl.textContent = data.error || '로그인 실패';
+      errEl.classList.add('show');
     }
-  } catch(e) { document.getElementById('login-error').classList.add('show'); }
-  document.getElementById('login-btn').disabled = false;
+  } catch(e) { errEl.textContent = '서버 오류. 다시 시도해주세요.'; errEl.classList.add('show'); }
+}
+
+let pendingInviteCode = '';
+
+async function checkInviteCode() {
+  const code = document.getElementById('invite-code').value.trim().toUpperCase();
+  const errEl = document.getElementById('invite-error');
+  errEl.classList.remove('show');
+  if(!code) { errEl.textContent = '초대코드를 입력해주세요.'; errEl.classList.add('show'); return; }
+  try {
+    const data = await api('/api/auth/client/login', 'POST', { inviteCode: code });
+    if(data.needsRegister) {
+      pendingInviteCode = code;
+      showScreen('screen-register');
+    } else if(data.needsLogin) {
+      // 이미 계정 있음 → 이메일 로그인 탭으로
+      document.getElementById('login-email').value = data.email || '';
+      switchLoginTab('email');
+      errEl.textContent = '이미 계정이 있습니다. 이메일로 로그인해주세요.';
+      errEl.classList.add('show');
+    } else if(data.token) {
+      token = data.token;
+      localStorage.setItem('pip_token', token);
+      applyLang();
+      showScreen('screen-home');
+      loadHome();
+    } else {
+      errEl.textContent = data.error || '유효하지 않은 초대코드입니다.';
+      errEl.classList.add('show');
+    }
+  } catch(e) { errEl.textContent = '서버 오류.'; errEl.classList.add('show'); }
+}
+
+async function registerClient() {
+  const email = document.getElementById('reg-email').value.trim();
+  const pw = document.getElementById('reg-password').value;
+  const pw2 = document.getElementById('reg-password2').value;
+  const errEl = document.getElementById('reg-error');
+  errEl.classList.remove('show');
+  if(!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력해주세요.'; errEl.classList.add('show'); return; }
+  if(pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; errEl.classList.add('show'); return; }
+  if(pw !== pw2) { errEl.textContent = '비밀번호가 일치하지 않습니다.'; errEl.classList.add('show'); return; }
+  try {
+    const data = await api('/api/auth/client/register', 'POST', { inviteCode: pendingInviteCode, email, password: pw, language: userLang });
+    if(data.token) {
+      token = data.token;
+      localStorage.setItem('pip_token', token);
+      localStorage.setItem('pip_lang', data.language || userLang);
+      userLang = data.language || userLang;
+      applyLang();
+      showScreen('screen-home');
+      loadHome();
+    } else {
+      errEl.textContent = data.error || '가입 실패';
+      errEl.classList.add('show');
+    }
+  } catch(e) { errEl.textContent = '서버 오류.'; errEl.classList.add('show'); }
+}
+
+async function clientLogin() {
+  // 하위 호환용
+  checkInviteCode();
 }
 
 function applyLang() {
