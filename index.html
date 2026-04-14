@@ -534,12 +534,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div id="confirmed-schedule"><div class="loading">일정 확인 중...</div></div>
     <div class="divider"></div>
     <p class="sec-label">새 시간 요청</p>
-    <div id="time-slots">
-      <div class="time-slot" onclick="selectSlot(this,'월요일 오후 6시')"><span>월요일 오후 6:00</span><span style="font-size:12px;color:var(--text-muted)">가능</span></div>
-      <div class="time-slot" onclick="selectSlot(this,'화요일 오전 10시')"><span>화요일 오전 10:00</span><span style="font-size:12px;color:var(--text-muted)">가능</span></div>
-      <div class="time-slot" onclick="selectSlot(this,'수요일 오후 7시')"><span>수요일 오후 7:00</span><span style="font-size:12px;color:var(--text-muted)">가능</span></div>
-      <div class="time-slot" onclick="selectSlot(this,'목요일 오후 8시')"><span>목요일 오후 8:00</span><span style="font-size:12px;color:var(--text-muted)">가능</span></div>
-    </div>
+    <p id="client-tz-label" style="font-size:11px;color:var(--text-muted);margin-bottom:10px"></p>
+    <div id="time-slots"></div>
     <div class="spacer"></div>
     <button class="btn primary" id="request-slot-btn" style="display:none" onclick="requestSlot()">이 시간으로 요청하기</button>
     <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:10px">상담자 확인 후 최종 확정됩니다</p>
@@ -877,6 +873,7 @@ let token = localStorage.getItem('pip_token');
 let userLang = localStorage.getItem('pip_lang') || 'ko';
 let currentCounselId = null;
 let selectedSlotValue = null;
+let selectedSlotLabel = null;
 let currentHostCounselId = null;
 
 const L = {
@@ -1205,25 +1202,144 @@ async function submitAnswer(value, btn, label) {
   } catch(e) { setTimeout(() => addBubbleTyping('오류가 발생했습니다. 다시 시도해 주세요.', null), 600); }
 }
 
+// ===== 시간대 변환 유틸 =====
+// 슬롯 기준: 한국 시간(KST = UTC+9) 기준 요일+시간
+const BASE_SLOTS_KST = [
+  { day: 1, hour: 18, minute: 0 }, // 월요일 오후 6시
+  { day: 2, hour: 10, minute: 0 }, // 화요일 오전 10시
+  { day: 3, hour: 19, minute: 0 }, // 수요일 오후 7시
+  { day: 4, hour: 20, minute: 0 }, // 목요일 오후 8시
+];
+
+function getNextSlotDate(dayKST, hourKST, minuteKST) {
+  // KST 기준 다음 해당 요일+시간을 UTC Date 객체로 반환
+  const now = new Date();
+  // KST 오프셋: UTC+9
+  const KST_OFFSET = 9 * 60 * 60000;
+  const nowKST = new Date(now.getTime() + KST_OFFSET);
+
+  // 이번 주 해당 요일 KST 자정
+  const kstDay = nowKST.getUTCDay(); // 0=일, 1=월...
+  let daysUntil = (dayKST - kstDay + 7) % 7;
+
+  const candidate = new Date(nowKST);
+  candidate.setUTCDate(candidate.getUTCDate() + daysUntil);
+  candidate.setUTCHours(hourKST, minuteKST, 0, 0);
+
+  // 이미 지난 시간이면 다음 주
+  if (candidate <= nowKST) {
+    candidate.setUTCDate(candidate.getUTCDate() + 7);
+  }
+
+  // UTC Date로 변환
+  return new Date(candidate.getTime() - KST_OFFSET);
+}
+
+function formatSlotForTZ(date, tz, lang) {
+  const locale = lang === 'ko' ? 'ko-KR' : 'en-US';
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: tz,
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }).format(date);
+}
+
+function formatDateForHost(isoString) {
+  // 호스트 브라우저 시간대로 표시
+  const date = new Date(isoString);
+  const hostTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: hostTZ,
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZoneName: 'short'
+  }).format(date);
+}
+
+function buildTimeSlots() {
+  const clientTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const lang = userLang || 'ko';
+
+  // 시간대 안내
+  const tzLabel = document.getElementById('client-tz-label');
+  if (tzLabel) tzLabel.textContent = '📍 ' + clientTZ + ' 기준';
+
+  const container = document.getElementById('time-slots');
+  if (!container) return;
+  container.innerHTML = '';
+
+  BASE_SLOTS_KST.forEach((slot, i) => {
+    const date = getNextSlotDate(slot.day, slot.hour, slot.minute);
+    const localStr = formatSlotForTZ(date, clientTZ, lang);
+    const isoStr = date.toISOString(); // 백엔드 저장용 (UTC)
+
+    const div = document.createElement('div');
+    div.className = 'time-slot';
+    div.innerHTML = `
+      <div>
+        <div style="font-size:14px">${localStr}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">KST: ${formatSlotForTZ(date, 'Asia/Seoul', 'ko')}</div>
+      </div>
+      <span style="font-size:12px;color:var(--text-muted)">가능</span>`;
+    div.onclick = () => selectSlot(div, isoStr, localStr);
+    container.appendChild(div);
+  });
+}
+
 async function loadSchedule() {
   try {
     const schedules = await api('/api/schedule/confirmed');
     const el = document.getElementById('confirmed-schedule');
-    if(schedules && schedules.length > 0) {
-      el.innerHTML = schedules.map(s => '<div class="card"><div class="card-row"><div style="font-size:14px">' + (s.confirmed_time || s.requested_time) + '</div><span class="badge ' + (s.status==='confirmed'?'green':'amber') + '">' + (s.status==='confirmed'?'확정':'대기 중') + '</span></div></div>').join('');
-    } else { el.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">확정된 일정 없음</p>'; }
+    if (schedules && schedules.length > 0) {
+      el.innerHTML = schedules.map(s => {
+        // ISO면 변환, 텍스트면 그대로
+        let displayTime = s.confirmed_time || s.requested_time;
+        try {
+          if (displayTime && displayTime.includes('T')) {
+            displayTime = formatSlotForTZ(new Date(displayTime),
+              Intl.DateTimeFormat().resolvedOptions().timeZone, userLang);
+          }
+        } catch(e) {}
+        return `<div class="card"><div class="card-row">
+          <div style="font-size:14px">${displayTime}</div>
+          <span class="badge ${s.status==='confirmed'?'green':'amber'}">${s.status==='confirmed'?'확정':'대기 중'}</span>
+        </div></div>`;
+      }).join('');
+    } else {
+      el.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">확정된 일정 없음</p>';
+    }
   } catch(e) {}
+  buildTimeSlots();
 }
 
-function selectSlot(el, val) {
+function selectSlot(el, isoVal, displayLabel) {
   document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected'); selectedSlotValue = val;
+  el.classList.add('selected');
+  selectedSlotValue = isoVal; // ISO UTC 저장
+  selectedSlotLabel = displayLabel;
   document.getElementById('request-slot-btn').style.display = 'block';
 }
 
 async function requestSlot() {
   if(!selectedSlotValue) return;
-  try { await api('/api/schedule/request', 'POST', { requestedTime: selectedSlotValue }); alert(selectedSlotValue + ' 으로 요청이 전송되었습니다.'); goScreen('screen-home'); } catch(e) {}
+  const clientTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  try {
+    await api('/api/schedule/request', 'POST', {
+      requestedTime: selectedSlotValue,  // ISO UTC
+      clientTimezone: clientTZ,          // 내담자 시간대
+      displayTime: selectedSlotLabel     // 내담자 로컬 표시 텍스트
+    });
+    alert('요청이 전송되었습니다.');
+    goScreen('screen-home');
+  } catch(e) {}
 }
 
 async function sendCounsel() {
@@ -1508,7 +1624,27 @@ async function loadHostSchedule() {
   try {
     const pending = await api('/api/schedule/host/pending');
     document.getElementById('host-pending-schedule').innerHTML = pending.length > 0
-      ? pending.map(s => '<div class="card"><div style="font-size:14px;font-weight:500;margin-bottom:6px">' + (s.clients?.name||'내담자') + '</div><div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">' + s.requested_time + ' 요청</div><div style="display:flex;gap:8px"><button class="btn primary" style="padding:8px" onclick="confirmSchedule(\'' + s.id + '\',\'' + s.requested_time + '\')">확정</button></div></div>').join('')
+      ? pending.map(s => {
+          // 호스트 시간대로 변환
+          let hostTime = s.requested_time;
+          let clientInfo = '';
+          try {
+            if (hostTime && hostTime.includes('T')) {
+              hostTime = formatDateForHost(hostTime);
+            }
+            if (s.clientTimezone) {
+              clientInfo = `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📍 내담자 시간대: ${s.clientTimezone}</div>`;
+            }
+          } catch(e) {}
+          return `<div class="card">
+            <div style="font-size:14px;font-weight:500;margin-bottom:4px">${s.clients?.name||'내담자'}</div>
+            <div style="font-size:13px;color:var(--text);margin-bottom:4px">🕐 ${hostTime}</div>
+            ${clientInfo}
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn primary" style="padding:8px" onclick="confirmSchedule('${s.id}','${s.requested_time}')">확정</button>
+            </div>
+          </div>`;
+        }).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">대기 중인 요청 없음</p>';
   } catch(e) {}
 }
