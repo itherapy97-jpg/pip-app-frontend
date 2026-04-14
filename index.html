@@ -1042,7 +1042,13 @@ async function loadHome() {
     const schedules = await api('/api/schedule/confirmed');
     if(schedules && schedules.length > 0) {
       const s = schedules[0];
-      document.getElementById('schedule-text').textContent = '다음 세션: ' + (s.confirmed_time || s.requested_time);
+      let rawTime = s.confirmed_time || s.requested_time;
+      try {
+        if (rawTime && rawTime.includes('T')) {
+          rawTime = formatSlotForTZ(new Date(rawTime), Intl.DateTimeFormat().resolvedOptions().timeZone, userLang);
+        }
+      } catch(e) {}
+      document.getElementById('schedule-text').textContent = '다음 세션: ' + rawTime;
       document.getElementById('schedule-badge').textContent = s.status === 'confirmed' ? '확정' : '대기 중';
       document.getElementById('schedule-badge').className = 'badge ' + (s.status === 'confirmed' ? 'green' : 'amber');
     } else {
@@ -1451,8 +1457,22 @@ async function loadClientDetail() {
       ? counsels.map(c => `<div class="card" style="margin-bottom:8px;" id="counsel-card-${c.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;color:var(--text-muted)">${c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}</div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:${c.status==='replied'?'var(--sage-dark)':'var(--danger)'}">● ${c.status==='replied'?'답변완료':'미답변'}</span>${c.status !== 'replied' ? `<button onclick="deleteCounsel('${c.id}')" style="background:none;border:1px solid #eee;border-radius:6px;padding:2px 6px;font-size:10px;color:#ccc;cursor:pointer;">테스트삭제</button>` : ''}</div></div><p style="font-size:13px;line-height:1.6;color:var(--text);margin-bottom:${c.reply?'8px':'0'};cursor:pointer" onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${(c.reply||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${c.sent_at||''}','${c.status||''}')">${(c.message||'').substring(0,80)}${(c.message||'').length>80?'...':''}</p>${c.reply ? `<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 ${(c.reply||'').substring(0,60)}${(c.reply||'').length>60?'...':''}</div>` : `<button onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','','${c.sent_at||''}','${c.status||''}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>`}</div>`).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
     const schedules = data.schedules || [];
+    const hostTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
     document.getElementById('detail-schedule-list').innerHTML = schedules.length > 0
-      ? schedules.map(s => `<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="font-size:14px">${s.confirmed_time || s.requested_time || '시간 미정'}</div><span class="badge ${s.status==='confirmed'?'green':'amber'}">${s.status==='confirmed'?'확정':'대기'}</span></div></div>`).join('')
+      ? schedules.map(s => {
+          let t = s.confirmed_time || s.requested_time || '시간 미정';
+          try { if (t.includes('T')) t = formatDateForHost(t); } catch(e) {}
+          const confirmBtn = s.status !== 'confirmed'
+            ? `<button onclick="confirmSchedule('${s.id}','${s.confirmed_time || s.requested_time}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:8px;width:100%">✓ 확정하기</button>`
+            : '';
+          return `<div class="card" style="margin-bottom:8px">
+            <div class="card-row">
+              <div style="font-size:14px">${t}</div>
+              <span class="badge ${s.status==='confirmed'?'green':'amber'}">${s.status==='confirmed'?'확정':'대기'}</span>
+            </div>
+            ${confirmBtn}
+          </div>`;
+        }).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
   } catch(e) { console.error(e); }
 }
@@ -1650,7 +1670,16 @@ async function loadHostSchedule() {
 }
 
 async function confirmSchedule(id, time) {
-  try { await api('/api/schedule/host/' + id + '/confirm', 'POST', { confirmedTime: time }); alert('확정되었습니다.'); loadHostSchedule(); } catch(e) {}
+  try {
+    await api('/api/schedule/host/' + id + '/confirm', 'POST', { confirmedTime: time });
+    alert('확정되었습니다.');
+    loadHostSchedule();
+    // 내담자 상세 화면에서 확정한 경우 일정 탭도 새로고침
+    if (currentDetailClientId) {
+      await loadClientDetail();
+      showDetailTab('schedule', document.getElementById('dtab-schedule'));
+    }
+  } catch(e) { alert('확정 실패'); }
 }
 
 let currentClientId = null;
