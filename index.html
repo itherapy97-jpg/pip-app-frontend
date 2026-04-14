@@ -646,7 +646,20 @@ function startModule(moduleId, title) {
   document.getElementById('edu-prog-bar').style.width = '0%';
   goScreen('screen-edu');
   setTimeout(() => {
-    api('/api/sessions/modules/' + moduleId + '/start').then(q => showQuestion(q)).catch(() => addBubbleTyping('질문 로드 실패. 다시 시도해 주세요.', null));
+    api('/api/sessions/modules/' + moduleId + '/start').then(q => {
+      if(q.completed) {
+        document.getElementById('edu-prog-bar').style.width = '100%';
+        addBubbleTyping('이 모듈은 이미 완료되었습니다. 수고하셨습니다! ✅', () => {
+          document.getElementById('edu-choices').innerHTML = '<button onclick="goScreen(\'screen-home\')" style="display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>';
+        });
+        return;
+      }
+      if(q.resuming) {
+        addBubbleTyping('이전에 진행하던 부분부터 이어서 시작합니다.', () => showQuestion(q));
+      } else {
+        showQuestion(q);
+      }
+    }).catch(() => addBubbleTyping('질문 로드 실패. 다시 시도해 주세요.', null));
   }, 300);
 }
 
@@ -1041,7 +1054,11 @@ async function loadClientAnswers() {
           · <span style="color:${a.questions?.type==='text'?'#8B5E2A':'var(--sage-dark)'}">${a.questions?.type==='text'?'주관식':'객관식'}</span>
         </div>
         <p style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${a.questions?.text || '질문'}</p>
-        <p style="font-size:14px;color:var(--text);font-weight:500">${a.text_value || a.choice_value || '-'}</p>
+        <p style="font-size:14px;color:var(--text);font-weight:500">${
+          a.questions?.type === 'text'
+            ? (a.text_value || '(입력 없음)')
+            : (a.choice_value || '-')
+        }</p>
       </div>`).join('');
   } catch(e) { listEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>'; }
 }
