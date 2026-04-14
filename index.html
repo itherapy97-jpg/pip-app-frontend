@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google" content="notranslate">
 <title>Peace-In Practice™</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
@@ -745,6 +746,20 @@ function googleTranslateElementInit() {
     autoDisplay: false
   }, 'google_translate_element');
 }
+
+// Google 번역 상단 바 완전 제거
+function suppressTranslateBar() {
+  // 브라우저 내장 번역 바 (iframe)
+  const banner = document.querySelector('.goog-te-banner-frame');
+  if (banner) { banner.style.setProperty('display','none','important'); }
+  // body 밀림 방지
+  if (document.body.style.top && document.body.style.top !== '0px') {
+    document.body.style.setProperty('top','0','important');
+  }
+}
+// 페이지 로드 후 + 주기적으로 실행
+document.addEventListener('DOMContentLoaded', suppressTranslateBar);
+setInterval(suppressTranslateBar, 300);
 </script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
