@@ -1398,16 +1398,18 @@ async function loadHostDashboard() {
     const clients = await api('/api/host/clients');
     document.getElementById('stat-clients').textContent = clients.length;
     document.getElementById('stat-pending').textContent = clients.filter(c => c.hasPending).length;
-    document.getElementById('client-list').innerHTML = clients.map(c => `
-      <div class="client-item" onclick="openClientDetail('${c.id}')">
-        <div class="avatar">${(c.name||'?').substring(0,2).toUpperCase()}</div>
+    document.getElementById('client-list').innerHTML = clients.map(c => {
+      const dispName = c.email ? c.email.split('@')[0] : (c.name || '내담자');
+      return `<div class="client-item" onclick="openClientDetail('${c.id}')">
+        <div class="avatar">${dispName.substring(0,2).toUpperCase()}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:500">${c.name}${c.nickname ? ' ('+c.nickname+')' : ''}</div>
+          <div style="font-size:14px;font-weight:500">${dispName}${c.name && c.name !== dispName ? ' <span style="font-size:11px;color:var(--text-muted)">(${c.name})</span>' : ''}</div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${c.hasPending ? '💬 상담 대기 중' : '미답변 없음'} · 주${c.session_frequency||2}회</div>
           <div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 ${c.invite_code || '-'}</div>
         </div>
         ${c.hasPending ? '<div class="unread-dot"></div>' : ''}
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) { document.getElementById('client-list').innerHTML = '<p style="color:var(--text-muted);font-size:13px">로드 실패</p>'; }
   try {
     const modules = await api('/api/host/modules');
@@ -1640,29 +1642,31 @@ async function sendDetailReply() {
   } catch(e) { alert('전송 실패'); }
 }
 
+// 내담자 표시명: 이메일 @ 앞자리 우선, 그룹명 포함
+function getClientDisplay(client) {
+  const emailId = client?.email ? client.email.split('@')[0] : null;
+  const name = emailId || client?.name || '내담자';
+  const group = client?.group_name || (client?.groups && client.groups.name) || null;
+  return { name, group };
+}
+
 async function loadHostSchedule() {
   try {
     const pending = await api('/api/schedule/host/pending');
     document.getElementById('host-pending-schedule').innerHTML = pending.length > 0
       ? pending.map(s => {
-          // 호스트 시간대로 변환
           let hostTime = s.requested_time;
-          let clientInfo = '';
-          try {
-            if (hostTime && hostTime.includes('T')) {
-              hostTime = formatDateForHost(hostTime);
-            }
-            if (s.clientTimezone) {
-              clientInfo = `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📍 내담자 시간대: ${s.clientTimezone}</div>`;
-            }
-          } catch(e) {}
+          try { if (hostTime && hostTime.includes('T')) hostTime = formatDateForHost(hostTime); } catch(e) {}
+          const { name, group } = getClientDisplay(s.clients);
+          const tzInfo = s.clientTimezone ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">📍 ${s.clientTimezone}</div>` : '';
           return `<div class="card">
-            <div style="font-size:14px;font-weight:500;margin-bottom:4px">${s.clients?.name||'내담자'}</div>
-            <div style="font-size:13px;color:var(--text);margin-bottom:4px">🕐 ${hostTime}</div>
-            ${clientInfo}
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn primary" style="padding:8px" onclick="confirmSchedule('${s.id}','${s.requested_time}')">확정</button>
+            <div style="margin-bottom:6px">
+              <div style="font-size:15px;font-weight:500">${name}</div>
+              ${group ? `<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">📂 ${group}</div>` : '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">그룹 미지정</div>'}
             </div>
+            <div style="font-size:13px;color:var(--text);margin-bottom:6px">🕐 ${hostTime}</div>
+            ${tzInfo}
+            <button class="btn primary" style="padding:8px" onclick="confirmSchedule('${s.id}','${s.requested_time}')">확정</button>
           </div>`;
         }).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">대기 중인 요청 없음</p>';
