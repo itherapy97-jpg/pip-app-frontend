@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- PIP v2.4 -->
+<!DOCTYPE html><!-- PIP v2.5 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -86,6 +86,72 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .field-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; margin-top: 14px; }
 .divider { height: 1px; background: var(--warm); margin: 16px 0; }
 .spacer { height: 16px; }
+
+/* Google Translate 위젯 스타일 */
+.translate-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 20px 0;
+  gap: 8px;
+}
+.translate-bar-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+#google_translate_element .goog-te-gadget-simple {
+  border: 1px solid var(--warm) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+  background: var(--white) !important;
+}
+#google_translate_element .goog-te-gadget-simple span {
+  color: var(--sage-dark) !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+.goog-te-banner-frame { display: none !important; }
+body { top: 0 !important; }
+
+/* 사용설명서 스타일 */
+.manual-section { margin-bottom: 24px; }
+.manual-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--sage-dark);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--warm);
+}
+.manual-step {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+.manual-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--sage);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.manual-step-text { font-size: 13px; line-height: 1.7; color: var(--text); }
+.manual-step-text strong { color: var(--sage-dark); }
+.faq-item { margin-bottom: 14px; }
+.faq-q { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.faq-q::before { content: 'Q. '; color: var(--sage-dark); }
+.faq-a { font-size: 12px; color: var(--text-muted); line-height: 1.7; padding-left: 18px; }
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 #screen-edu.active { display: flex !important; flex-direction: column; height: 100vh; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -94,55 +160,193 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <body>
 <div class="container" id="app">
 
-<div class="screen" id="screen-lang">
-  <div class="pip-header" style="padding:60px 32px 40px">
+<!-- ===== SCREEN: LANDING ===== -->
+<div class="screen" id="screen-landing">
+  <!-- Google Translate 위젯 -->
+  <div class="translate-bar">
+    <span class="translate-bar-label">🌐 언어</span>
+    <div id="google_translate_element"></div>
+  </div>
+
+  <div class="pip-header" style="padding:32px 32px 28px">
     <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#4A6B4D;letter-spacing:0.15em;margin-bottom:8px">PIP</p>
     <h1 class="pip-title">Peace-In <em>Practice</em>™</h1>
     <p class="pip-company" style="margin-top:6px">Intuit Best Friend</p>
     <p class="pip-company" style="margin-top:2px;font-size:10px">Intuit Best Friend Foundation (Non-Profit)</p>
   </div>
-  <div class="content" style="padding-top:40px">
-    <p class="sec-label" style="text-align:center;margin-bottom:20px">언어를 선택하세요 / Select your language</p>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <button class="btn" style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15px" onclick="selectLang('ko')">
-        <span style="font-size:28px">🇰🇷</span>
-        <div style="text-align:left"><div style="font-weight:500">한국어</div><div style="font-size:12px;color:var(--text-muted)">Korean</div></div>
-      </button>
-      <button class="btn" style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15px" onclick="selectLang('en')">
-        <span style="font-size:28px">🇺🇸</span>
-        <div style="text-align:left"><div style="font-weight:500">English</div><div style="font-size:12px;color:var(--text-muted)">영어</div></div>
-      </button>
+
+  <div class="content">
+    <div style="background:linear-gradient(135deg,#EDF4EE,#F5F0E8);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #B8CEBC">
+      <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;color:#2C2C2A;line-height:1.7;margin-bottom:10px">
+        "내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."
+      </p>
+      <p style="font-size:12px;color:#7A7872;line-height:1.7">
+        Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>
+        전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.
+      </p>
     </div>
+
+    <div class="notice">
+      <p><strong>⚠ 중요 안내</strong><br><br>
+      본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong></p>
+    </div>
+
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="goScreen('screen-login')">시작하기 →</button>
+    <button class="btn ghost" onclick="goScreen('screen-manual')" style="font-size:12px;color:var(--sage-dark)">📖 사용설명서 보기</button>
   </div>
 </div>
 
-<div class="screen" id="screen-landing">
-  <div class="pip-header">
-    <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#4A6B4D;letter-spacing:0.15em;margin-bottom:8px">PIP</p>
-    <h1 class="pip-title">Peace-In <em>Practice</em>™</h1>
-    <p class="pip-company" style="margin-top:6px">Intuit Best Friend</p>
-    <p class="pip-company" style="margin-top:2px;font-size:10px">Intuit Best Friend Foundation (Non-Profit)</p>
+<!-- ===== SCREEN: 사용설명서 ===== -->
+<div class="screen" id="screen-manual">
+  <!-- Google Translate 위젯 (사용설명서에도 동일 적용) -->
+  <div class="translate-bar">
+    <span class="translate-bar-label">🌐 언어</span>
+    <div id="google_translate_element2" style="display:none"></div><!-- 더미: 위젯은 하나만 렌더링됨 -->
   </div>
-  <div class="content">
-    <div id="landing-ko">
-      <div style="background:linear-gradient(135deg,#EDF4EE,#F5F0E8);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #B8CEBC">
-        <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;color:#2C2C2A;line-height:1.7;margin-bottom:10px">"내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."</p>
-        <p style="font-size:12px;color:#7A7872;line-height:1.7">Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.</p>
-      </div>
-      <div class="notice"><p><strong>⚠ 중요 안내</strong><br><br>본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong></p></div>
+
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-landing')">← 뒤로</button>
+    <div class="top-bar-title">
+      <h2>사용설명서</h2>
+      <p>Peace-In Practice™ 이용 안내</p>
     </div>
-    <div id="landing-en" style="display:none">
-      <div style="background:linear-gradient(135deg,#EDF4EE,#F5F0E8);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #B8CEBC">
-        <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;color:#2C2C2A;line-height:1.7;margin-bottom:10px">"Inner peace is not something to fix —<br>it is something to <em style="color:#4A6B4D">discover</em>."</p>
-        <p style="font-size:12px;color:#7A7872;line-height:1.7">Peace-In Practice™ is the world's <strong style="color:#4A6B4D">first inner education methodology</strong>.<br><br>Developed by a professional counselor, this program includes <strong style="color:#4A6B4D">regular 1:1 personal counseling</strong> sessions.</p>
+  </div>
+
+  <div class="content" style="padding-top:24px">
+
+    <!-- 프로그램 소개 -->
+    <div class="manual-section">
+      <div class="manual-section-title">🌿 프로그램이란?</div>
+      <p style="font-size:13px;line-height:1.8;color:var(--text-muted);margin-bottom:10px">
+        Peace-In Practice™는 전문 상담가가 개발한 <strong style="color:var(--text)">내면 교육 프로그램</strong>입니다. 앱을 통해 교육 모듈을 진행하고, 상담가와 1:1 상담을 주고받습니다.
+      </p>
+      <div class="notice" style="margin-bottom:0">
+        <p>본 프로그램은 반드시 <strong>상담가의 초대코드</strong>를 통해서만 참여할 수 있습니다. 일반 공개 가입은 불가합니다.</p>
       </div>
-      <div class="notice"><p><strong>⚠ Important Notice</strong><br><br>This program is effective only under the guidance of a trained professional counselor. <strong>Authorized participants only.</strong></p></div>
     </div>
+
+    <!-- 시작하기 -->
+    <div class="manual-section">
+      <div class="manual-section-title">🚀 시작하는 방법</div>
+
+      <div class="manual-step">
+        <div class="manual-step-num">1</div>
+        <div class="manual-step-text">
+          <strong>초대코드 받기</strong><br>
+          담당 상담가로부터 6자리 초대코드를 전달받으세요. 초대코드가 없으면 참여할 수 없습니다.
+        </div>
+      </div>
+
+      <div class="manual-step">
+        <div class="manual-step-num">2</div>
+        <div class="manual-step-text">
+          <strong>계정 만들기</strong><br>
+          '시작하기' 버튼 → '초대코드 (첫 방문)' 탭 선택 → 초대코드 입력 → 이메일과 비밀번호 설정
+        </div>
+      </div>
+
+      <div class="manual-step">
+        <div class="manual-step-num">3</div>
+        <div class="manual-step-text">
+          <strong>다음 방문부터는 이메일 로그인</strong><br>
+          '이메일 로그인' 탭에서 등록한 이메일과 비밀번호로 로그인합니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- 주요 기능 -->
+    <div class="manual-section">
+      <div class="manual-section-title">📱 주요 기능 안내</div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">⊙ 홈 화면</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:4px">
+          • 이번 주 진행률 확인<br>
+          • 배정된 교육 모듈 목록<br>
+          • 세션 일정 확인 및 요청<br>
+          • 상담가 답변 알림
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">◈ 교육 세션</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:4px">
+          • 상담가가 준비한 교육 모듈 진행<br>
+          • 객관식·주관식 질문에 답변<br>
+          • 완료한 모듈은 '완료' 표시
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">✉ 개인 상담</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:4px">
+          • 마음속에 있는 내용을 자유롭게 작성<br>
+          • 작성 내용은 암호화되어 전송됩니다<br>
+          • 상담가 답변이 오면 홈 화면에 알림 표시<br>
+          • 답변 확인 후 내용은 화면에서 사라집니다
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">📅 세션 시간 약속</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:4px">
+          • 원하는 세션 시간을 선택해 요청<br>
+          • 상담가 확인 후 최종 확정됩니다
+        </div>
+      </div>
+    </div>
+
+    <!-- 보안 안내 -->
+    <div class="manual-section">
+      <div class="manual-section-title">🔒 개인정보 및 보안</div>
+      <div style="background:#F0F5F1;border-radius:10px;padding:14px 16px">
+        <div style="font-size:12px;color:var(--text);line-height:1.8">
+          ✓ 상담 내용은 <strong>암호화</strong>되어 서버에만 보관됩니다<br>
+          ✓ 작성 내용은 이 기기에 저장되지 않습니다<br>
+          ✓ 상담가 이외의 제3자는 내용을 볼 수 없습니다<br>
+          ✓ AI 번역기 등 외부 서비스에 내용이 전송되지 않습니다
+        </div>
+      </div>
+    </div>
+
+    <!-- 자주 묻는 질문 -->
+    <div class="manual-section">
+      <div class="manual-section-title">❓ 자주 묻는 질문</div>
+
+      <div class="faq-item">
+        <div class="faq-q">초대코드를 잃어버렸어요.</div>
+        <div class="faq-a">담당 상담가에게 연락하여 코드를 다시 받으세요. 한 번 사용된 코드는 재사용할 수 없습니다.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">비밀번호를 잊어버렸어요.</div>
+        <div class="faq-a">현재 비밀번호 재설정 기능은 담당 상담가를 통해 처리됩니다. 상담가에게 문의해 주세요.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">교육 모듈이 보이지 않아요.</div>
+        <div class="faq-a">모듈은 상담가가 직접 배정합니다. 아직 배정받지 못한 경우 상담가에게 문의해 주세요.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">상담 답변은 얼마나 걸리나요?</div>
+        <div class="faq-a">담당 상담가의 일정에 따라 다르며, 일반적으로 24~48시간 이내에 답변이 전송됩니다.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">이 앱은 어떤 언어로 사용할 수 있나요?</div>
+        <div class="faq-a">이 안내 페이지는 상단의 🌐 언어 버튼으로 원하는 언어로 번역할 수 있습니다. 앱 내 교육·상담은 담당 상담가가 설정한 언어로 진행됩니다.</div>
+      </div>
+    </div>
+
     <div class="spacer"></div>
-    <button class="btn primary" id="landing-next-btn" onclick="goScreen('screen-login')">시작하기 / Begin →</button>
-    <button class="btn ghost" onclick="goScreen('screen-lang')">← 언어 변경</button>
+    <button class="btn primary" onclick="goScreen('screen-login')">시작하기 →</button>
+    <div class="spacer"></div>
   </div>
 </div>
+
+<!-- ===== 이하 기존 화면들 (로그인~호스트) ===== -->
 
 <div class="screen" id="screen-login">
   <div class="top-bar">
@@ -150,34 +354,20 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div class="top-bar-title"><h2>로그인</h2><p>Peace-In Practice™</p></div>
   </div>
   <div class="content" style="padding-top:32px">
-    <!-- 탭: 이메일 로그인 / 초대코드 -->
     <div style="display:flex;border:1px solid var(--warm);border-radius:8px;margin-bottom:24px;overflow:hidden">
       <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:10px;border:none;background:var(--sage);color:white;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">이메일 로그인</button>
       <button id="tab-invite-btn" onclick="switchLoginTab('invite')" style="flex:1;padding:10px;border:none;background:var(--white);color:var(--text-muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">초대코드 (첫 방문)</button>
     </div>
-
-    <!-- 이메일 로그인 -->
     <div id="login-email-section">
-      <div class="field">
-        <label>이메일</label>
-        <input type="email" id="login-email" placeholder="이메일 주소" autocomplete="email" />
-      </div>
-      <div class="field">
-        <label>비밀번호</label>
-        <input type="password" id="login-password" placeholder="비밀번호" autocomplete="current-password" />
-      </div>
+      <div class="field"><label>이메일</label><input type="email" id="login-email" placeholder="이메일 주소" autocomplete="email" /></div>
+      <div class="field"><label>비밀번호</label><input type="password" id="login-password" placeholder="비밀번호" autocomplete="current-password" /></div>
       <div class="error-msg" id="login-error">이메일 또는 비밀번호가 올바르지 않습니다.</div>
       <div class="spacer"></div>
       <button class="btn primary" onclick="clientEmailLogin()">로그인</button>
     </div>
-
-    <!-- 초대코드 입력 (첫 방문) -->
     <div id="login-invite-section" style="display:none">
       <div class="notice"><p>📌 처음 방문하시나요?<br>상담가에게 받은 <strong>초대코드</strong>를 입력하면 계정을 만들 수 있어요.</p></div>
-      <div class="field">
-        <label>초대 코드</label>
-        <input type="text" id="invite-code" placeholder="초대 코드 입력" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.1em;font-size:18px;text-align:center" />
-      </div>
+      <div class="field"><label>초대 코드</label><input type="text" id="invite-code" placeholder="초대 코드 입력" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.1em;font-size:18px;text-align:center" /></div>
       <div class="error-msg" id="invite-error">초대 코드가 올바르지 않습니다.</div>
       <div class="spacer"></div>
       <button class="btn primary" onclick="checkInviteCode()">다음 →</button>
@@ -185,7 +375,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
 </div>
 
-<!-- 회원가입 화면 -->
 <div class="screen" id="screen-register">
   <div class="top-bar">
     <button class="back-btn" onclick="goScreen('screen-login')">← 뒤로</button>
@@ -193,18 +382,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
   <div class="content" style="padding-top:32px">
     <div class="notice"><p>✅ 초대코드가 확인되었습니다.<br>앞으로 사용할 <strong>이메일과 비밀번호</strong>를 설정해주세요.</p></div>
-    <div class="field">
-      <label>이메일</label>
-      <input type="email" id="reg-email" placeholder="이메일 주소" autocomplete="email" />
-    </div>
-    <div class="field">
-      <label>비밀번호 (6자 이상)</label>
-      <input type="password" id="reg-password" placeholder="비밀번호 설정" autocomplete="new-password" />
-    </div>
-    <div class="field">
-      <label>비밀번호 확인</label>
-      <input type="password" id="reg-password2" placeholder="비밀번호 재입력" autocomplete="new-password" />
-    </div>
+    <div class="field"><label>이메일</label><input type="email" id="reg-email" placeholder="이메일 주소" autocomplete="email" /></div>
+    <div class="field"><label>비밀번호 (6자 이상)</label><input type="password" id="reg-password" placeholder="비밀번호 설정" autocomplete="new-password" /></div>
+    <div class="field"><label>비밀번호 확인</label><input type="password" id="reg-password2" placeholder="비밀번호 재입력" autocomplete="new-password" /></div>
     <div class="error-msg" id="reg-error"></div>
     <div class="spacer"></div>
     <button class="btn primary" onclick="registerClient()">계정 만들기 →</button>
@@ -304,14 +484,12 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <div class="screen" id="screen-reply">
   <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 홈으로</button><div class="top-bar-title"><h2>상담가 답변 확인</h2></div></div>
   <div class="content">
-    <!-- 답변 확인 전 -->
     <div id="reply-view-section">
       <div class="notice" style="margin-bottom:16px"><p>📌 답변을 확인하면 화면에서 사라집니다.<br>이전 상담은 <strong>개인별 암호화 저장</strong>되어 있습니다.</p></div>
       <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">상담가 답변</div><p style="font-size:14px;line-height:1.8" id="reply-content">로딩 중...</p></div>
       <div class="spacer"></div>
       <button class="btn primary" onclick="confirmReply()">확인했습니다</button>
     </div>
-    <!-- 답변 확인 후 -->
     <div id="reply-confirmed-section" style="display:none;text-align:center;padding-top:40px">
       <div style="width:56px;height:56px;border-radius:50%;background:#EDF4EE;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:22px">🔒</div>
       <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;margin-bottom:12px">이전 상담은<br>개인별 암호화 저장되어있습니다.</h3>
@@ -376,21 +554,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div class="field-label">설명 (선택)</div>
     <input type="text" id="new-group-desc" placeholder="예: 2026년 상반기 계약" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div>
-        <div class="field-label">상담 빈도 (주 N회)</div>
-        <input type="number" id="new-group-freq" value="3" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
-      </div>
-      <div>
-        <div class="field-label">계약 기간 (개월)</div>
-        <input type="number" id="new-group-months" value="6" min="1" max="24" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
-      </div>
+      <div><div class="field-label">상담 빈도 (주 N회)</div><input type="number" id="new-group-freq" value="3" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" /></div>
+      <div><div class="field-label">계약 기간 (개월)</div><input type="number" id="new-group-months" value="6" min="1" max="24" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" /></div>
     </div>
     <div class="field-label">총 모듈 수</div>
     <input type="number" id="new-group-modules" value="24" min="1" max="100" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:12px" />
     <button onclick="createGroup()" style="width:100%;padding:12px;background:var(--sage);color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">+ 그룹 생성</button>
     <div class="success-msg" id="group-create-success" style="margin-top:8px">그룹이 생성되었습니다.</div>
   </div>
-
   <div id="host-tab-edu" class="content" style="display:none">
     <p class="sec-label">공통 교육 모듈</p>
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">모든 내담자에게 공통으로 사용할 교육 모듈을 만들고 질문을 편집하세요.</p>
@@ -455,55 +626,36 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
 </div>
 
-<!-- ===== SCREEN: HOST CLIENT DETAIL ===== -->
 <div class="screen" id="screen-client-detail">
   <div class="top-bar">
     <button class="back-btn" onclick="goScreen('screen-host')">← 뒤로</button>
-    <div class="top-bar-title">
-      <h2 id="detail-client-name">내담자 상세</h2>
-      <p id="detail-client-sub">프로필 · 모듈 · 상담</p>
-    </div>
+    <div class="top-bar-title"><h2 id="detail-client-name">내담자 상세</h2><p id="detail-client-sub">프로필 · 모듈 · 상담</p></div>
     <button id="detail-save-btn" onclick="saveClientProfile()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;display:none;">저장</button>
   </div>
-
-  <!-- 탭 -->
   <div style="display:flex;border-bottom:1px solid var(--warm);">
     <button class="host-tab active" id="dtab-profile" onclick="showDetailTab('profile',this)">프로필</button>
     <button class="host-tab" id="dtab-modules" onclick="showDetailTab('modules',this)">모듈</button>
     <button class="host-tab" id="dtab-counsel" onclick="showDetailTab('counsel',this)">상담</button>
     <button class="host-tab" id="dtab-schedule" onclick="showDetailTab('schedule',this)">일정</button>
   </div>
-
-  <!-- 프로필 탭 -->
   <div id="detail-tab-profile" class="content" style="overflow-y:auto;">
-    <div class="field-label">이름</div>
-    <input type="text" id="dp-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
-    <div class="field-label">별명</div>
-    <input type="text" id="dp-nickname" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
-    <div class="field-label">나이</div>
-    <input type="number" id="dp-age" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
-    <div class="field-label">이메일</div>
-    <input type="email" id="dp-email" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">이름</div><input type="text" id="dp-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">별명</div><input type="text" id="dp-nickname" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">나이</div><input type="number" id="dp-age" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">이메일</div><input type="email" id="dp-email" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
     <div class="field-label">언어</div>
     <select id="dp-language" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px">
-      <option value="ko">한국어</option>
-      <option value="en">English</option>
+      <option value="ko">한국어</option><option value="en">English</option>
     </select>
     <div class="field-label">초대 코드</div>
     <div style="padding:10px 12px;background:var(--cream);border-radius:8px;font-size:14px;letter-spacing:0.1em;color:var(--sage-dark);font-weight:500;margin-bottom:8px" id="dp-invite-code">-</div>
-    <div class="field-label">상담 빈도 (주 N회)</div>
-    <input type="number" id="dp-frequency" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
-    <div class="field-label">프로그램 시작일</div>
-    <input type="date" id="dp-startdate" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
-    <div class="field-label">특징 / 메모</div>
-    <textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="내담자 특징, 주의사항 등"></textarea>
-    <div class="field-label">상담 메모 (호스트 전용)</div>
-    <textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="진행 상황, 특이사항 등"></textarea>
+    <div class="field-label">상담 빈도 (주 N회)</div><input type="number" id="dp-frequency" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">프로그램 시작일</div><input type="date" id="dp-startdate" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">특징 / 메모</div><textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="내담자 특징, 주의사항 등"></textarea>
+    <div class="field-label">상담 메모 (호스트 전용)</div><textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="진행 상황, 특이사항 등"></textarea>
     <div class="success-msg" id="profile-save-success" style="margin-top:8px">저장되었습니다.</div>
     <div class="spacer"></div>
   </div>
-
-  <!-- 모듈 탭 -->
   <div id="detail-tab-modules" class="content" style="display:none;overflow-y:auto;">
     <p class="sec-label">배정된 모듈</p>
     <div id="detail-module-list"><div class="loading">로딩 중...</div></div>
@@ -515,15 +667,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div id="detail-all-modules"><div class="loading">로딩 중...</div></div>
     <div class="spacer"></div>
   </div>
-
-  <!-- 상담 탭 -->
   <div id="detail-tab-counsel" class="content" style="display:none;overflow-y:auto;">
     <p class="sec-label">상담 내역</p>
     <div id="detail-counsel-list"><div class="loading">로딩 중...</div></div>
     <div class="spacer"></div>
   </div>
-
-  <!-- 일정 탭 -->
   <div id="detail-tab-schedule" class="content" style="display:none;overflow-y:auto;">
     <p class="sec-label">일정 현황</p>
     <div id="detail-schedule-list"><div class="loading">로딩 중...</div></div>
@@ -531,7 +679,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
 </div>
 
-<!-- ===== SCREEN: HOST COUNSEL REPLY (상세) ===== -->
 <div class="screen" id="screen-detail-reply">
   <div class="top-bar">
     <button class="back-btn" onclick="goScreen('screen-client-detail');showDetailTab('counsel',document.getElementById('dtab-counsel'))">← 뒤로</button>
@@ -554,7 +701,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
 </div>
 
-<!-- ===== SCREEN: 모듈 질문 편집 ===== -->
 <div class="screen" id="screen-module-editor">
   <div class="top-bar">
     <button class="back-btn" onclick="goScreen('screen-client-detail');showDetailTab('modules',document.getElementById('dtab-modules'))">← 뒤로</button>
@@ -573,6 +719,20 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 </div>
 
 </div>
+
+<!-- Google Translate 스크립트 -->
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'ko',
+    includedLanguages: 'en,zh-CN,zh-TW,ja,es,fr,de,ar,pt,ru,vi,th,id,hi',
+    layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+    autoDisplay: false
+  }, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
 <script>
 const API = 'https://pip-app-backend-production.up.railway.app';
 let token = localStorage.getItem('pip_token');
@@ -597,7 +757,6 @@ function goScreen(id) {
   if(id==='screen-reply') loadReply();
   if(id==='screen-schedule') loadSchedule();
   if(id==='screen-host-reply') loadHostReply();
-  // loadHostSettings는 설정 탭 클릭 시에만 호출 (중복 제거)
 }
 
 async function api(path, method='GET', body=null) {
@@ -608,14 +767,10 @@ async function api(path, method='GET', body=null) {
   try { res = await fetch(API + path, opts); } catch(e) { throw new Error('네트워크 오류'); }
   if(res.status === 401 || res.status === 403) {
     const role = localStorage.getItem('pip_role');
-    token = null;
-    localStorage.removeItem('pip_token');
-    // 이미 로그인 화면이면 중복 이동 방지
+    token = null; localStorage.removeItem('pip_token');
     const current = document.querySelector('.screen.active');
     const currentId = current ? current.id : '';
-    if(currentId === 'screen-host-login' || currentId === 'screen-login') {
-      throw new Error('인증 필요');
-    }
+    if(currentId === 'screen-host-login' || currentId === 'screen-login') throw new Error('인증 필요');
     if(role === 'host') {
       localStorage.removeItem('pip_role');
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -635,13 +790,11 @@ function switchLoginTab(tab) {
   const emailBtn = document.getElementById('tab-email-btn');
   const inviteBtn = document.getElementById('tab-invite-btn');
   if(tab === 'email') {
-    emailSection.style.display = 'block';
-    inviteSection.style.display = 'none';
+    emailSection.style.display = 'block'; inviteSection.style.display = 'none';
     emailBtn.style.background = 'var(--sage)'; emailBtn.style.color = 'white';
     inviteBtn.style.background = 'var(--white)'; inviteBtn.style.color = 'var(--text-muted)';
   } else {
-    emailSection.style.display = 'none';
-    inviteSection.style.display = 'block';
+    emailSection.style.display = 'none'; inviteSection.style.display = 'block';
     inviteBtn.style.background = 'var(--sage)'; inviteBtn.style.color = 'white';
     emailBtn.style.background = 'var(--white)'; emailBtn.style.color = 'var(--text-muted)';
   }
@@ -656,17 +809,11 @@ async function clientEmailLogin() {
   try {
     const data = await api('/api/auth/client/login', 'POST', { email, password });
     if(data.token) {
-      token = data.token;
-      localStorage.setItem('pip_token', token);
+      token = data.token; localStorage.setItem('pip_token', token);
       localStorage.setItem('pip_lang', data.language || userLang);
-      userLang = data.language || userLang;
-      applyLang();
-      showScreen('screen-home');
-      loadHome();
-    } else {
-      errEl.textContent = data.error || '로그인 실패';
-      errEl.classList.add('show');
-    }
+      userLang = data.language || userLang; applyLang();
+      showScreen('screen-home'); loadHome();
+    } else { errEl.textContent = data.error || '로그인 실패'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent = '서버 오류. 다시 시도해주세요.'; errEl.classList.add('show'); }
 }
 
@@ -680,24 +827,15 @@ async function checkInviteCode() {
   try {
     const data = await api('/api/auth/client/login', 'POST', { inviteCode: code });
     if(data.needsRegister) {
-      pendingInviteCode = code;
-      showScreen('screen-register');
+      pendingInviteCode = code; showScreen('screen-register');
     } else if(data.needsLogin) {
-      // 이미 계정 있음 → 이메일 로그인 탭으로
       document.getElementById('login-email').value = data.email || '';
       switchLoginTab('email');
-      errEl.textContent = '이미 계정이 있습니다. 이메일로 로그인해주세요.';
-      errEl.classList.add('show');
+      errEl.textContent = '이미 계정이 있습니다. 이메일로 로그인해주세요.'; errEl.classList.add('show');
     } else if(data.token) {
-      token = data.token;
-      localStorage.setItem('pip_token', token);
-      applyLang();
-      showScreen('screen-home');
-      loadHome();
-    } else {
-      errEl.textContent = data.error || '유효하지 않은 초대코드입니다.';
-      errEl.classList.add('show');
-    }
+      token = data.token; localStorage.setItem('pip_token', token);
+      applyLang(); showScreen('screen-home'); loadHome();
+    } else { errEl.textContent = data.error || '유효하지 않은 초대코드입니다.'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent = '서버 오류.'; errEl.classList.add('show'); }
 }
 
@@ -713,23 +851,12 @@ async function registerClient() {
   try {
     const data = await api('/api/auth/client/register', 'POST', { inviteCode: pendingInviteCode, email, password: pw, language: userLang });
     if(data.token) {
-      token = data.token;
-      localStorage.setItem('pip_token', token);
+      token = data.token; localStorage.setItem('pip_token', token);
       localStorage.setItem('pip_lang', data.language || userLang);
-      userLang = data.language || userLang;
-      applyLang();
-      showScreen('screen-home');
-      loadHome();
-    } else {
-      errEl.textContent = data.error || '가입 실패';
-      errEl.classList.add('show');
-    }
+      userLang = data.language || userLang; applyLang();
+      showScreen('screen-home'); loadHome();
+    } else { errEl.textContent = data.error || '가입 실패'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent = '서버 오류.'; errEl.classList.add('show'); }
-}
-
-async function clientLogin() {
-  // 하위 호환용
-  checkInviteCode();
 }
 
 function applyLang() {
@@ -762,22 +889,18 @@ async function loadHome() {
   try {
     const modules = await api('/api/sessions/modules');
     const completed = modules.filter(m => m.completed).length;
-    const total = modules.length;
     const sessPerWeek = modules.length > 0 ? (modules[0].sessionsPerWeek || 3) : 3;
     const totalModules = 24;
     const pct = totalModules > 0 ? Math.round((completed/totalModules)*100) : 0;
     document.getElementById('prog-bar').style.width = pct + '%';
-    // 진행률 표시: 현재회차/주회차/현재모듈/24
     const currentModuleNum = completed + 1;
-    const weekNum = Math.ceil(currentModuleNum / 1);
     const sessionInWeek = ((completed) % sessPerWeek) + 1;
     document.getElementById('prog-text').textContent = sessionInWeek + '/' + sessPerWeek + '/' + Math.min(currentModuleNum, totalModules) + '/' + totalModules;
     document.getElementById('module-list').innerHTML = modules.map(m => {
       const mIdx = modules.indexOf(m);
       const mSessionInWeek = (mIdx % sessPerWeek) + 1;
-      const mWeek = Math.ceil((mIdx+1) / sessPerWeek);
       const mLabel = mSessionInWeek + '/' + sessPerWeek + '/' + (mIdx+1) + '/' + totalModules;
-      return '<div class="card" style="cursor:pointer;' + (m.completed?'opacity:0.7':'') + '" onclick="' + (m.completed?'':("startModule(\'" + m.id + "\',\'" + m.title + "\')")  ) + '"><div class="card-row"><div><div style="font-size:11px;color:var(--sage);letter-spacing:0.05em;margin-bottom:2px">' + mLabel + '</div><div style="font-size:14px;font-weight:500">' + m.title + '</div></div><span class="badge ' + (m.completed?'green':'amber') + '">' + (m.completed?'완료':'진행') + '</span></div></div>';
+      return '<div class="card" style="cursor:pointer;' + (m.completed?'opacity:0.7':'') + '" onclick="' + (m.completed?'':("startModule(\'" + m.id + "\',\'" + m.title + "\')")) + '"><div class="card-row"><div><div style="font-size:11px;color:var(--sage);letter-spacing:0.05em;margin-bottom:2px">' + mLabel + '</div><div style="font-size:14px;font-weight:500">' + m.title + '</div></div><span class="badge ' + (m.completed?'green':'amber') + '">' + (m.completed?'완료':'진행') + '</span></div></div>';
     }).join('');
   } catch(e) { document.getElementById('module-list').innerHTML = '<p style="color:var(--text-muted);font-size:13px">모듈 로드 실패</p>'; }
   try {
@@ -802,7 +925,6 @@ function loadEduList() {
 }
 
 let currentModuleId = null, currentQuestionId = null, eduTotalSteps = 5, eduCurrentStep = 0;
-let recognition = null, isListening = false;
 
 function playClick() {
   try {
@@ -820,7 +942,6 @@ function playClick() {
 function startModule(moduleId, title) {
   currentModuleId = moduleId; eduCurrentStep = 0;
   document.getElementById('edu-module-title').textContent = title;
-  // 모듈 진행 표시
   document.getElementById('edu-module-sub').textContent = '진행 중...';
   document.getElementById('edu-bubbles').innerHTML = '';
   document.getElementById('edu-choices').innerHTML = '';
@@ -835,26 +956,17 @@ function startModule(moduleId, title) {
         });
         return;
       }
-      if(q.resuming) {
-        addBubbleTyping('이전에 진행하던 부분부터 이어서 시작합니다.', () => showQuestion(q));
-      } else {
-        showQuestion(q);
-      }
+      if(q.resuming) { addBubbleTyping('이전에 진행하던 부분부터 이어서 시작합니다.', () => showQuestion(q)); }
+      else { showQuestion(q); }
     }).catch(() => addBubbleTyping('질문 로드 실패. 다시 시도해 주세요.', null));
   }, 300);
 }
 
 function showQuestion(q) {
-  currentQuestionId = q.questionId;
-  eduCurrentStep++;
+  currentQuestionId = q.questionId; eduCurrentStep++;
   document.getElementById('edu-prog-bar').style.width = Math.min((eduCurrentStep / eduTotalSteps) * 100, 95) + '%';
-  if(q.type === 'text') {
-    // 주관식
-    addBubbleTyping(q.text, () => showTextInput());
-  } else {
-    // 객관식
-    addBubbleTyping(q.text, () => showChoiceCards(q.choices || []));
-  }
+  if(q.type === 'text') { addBubbleTyping(q.text, () => showTextInput()); }
+  else { addBubbleTyping(q.text, () => showChoiceCards(q.choices || [])); }
 }
 
 function showTextInput() {
@@ -870,11 +982,7 @@ function showTextInput() {
   const btn = document.createElement('button');
   btn.innerHTML = '→';
   btn.style.cssText = 'background:var(--sage);color:white;border:none;border-radius:14px;padding:12px 16px;font-size:18px;cursor:pointer;height:80px;flex-shrink:0';
-  btn.onclick = () => {
-    const val = ta.value.trim();
-    if(!val) { ta.style.borderColor='var(--danger)'; return; }
-    submitTextAnswer(val);
-  };
+  btn.onclick = () => { const val = ta.value.trim(); if(!val) { ta.style.borderColor='var(--danger)'; return; } submitTextAnswer(val); };
   wrap.appendChild(ta); wrap.appendChild(btn);
   choicesEl.appendChild(wrap);
   setTimeout(() => ta.focus(), 100);
@@ -883,7 +991,6 @@ function showTextInput() {
 async function submitTextAnswer(value) {
   const choicesEl = document.getElementById('edu-choices');
   choicesEl.innerHTML = '';
-  // 내담자 답변 버블 표시
   const bubblesEl = document.getElementById('edu-bubbles');
   const userWrap = document.createElement('div');
   userWrap.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:4px;animation:fadeIn 0.3s ease';
@@ -895,15 +1002,10 @@ async function submitTextAnswer(value) {
     const res = await api('/api/sessions/answer', 'POST', { questionId: currentQuestionId, textValue: value, moduleId: currentModuleId });
     if(res.completed) {
       document.getElementById('edu-prog-bar').style.width = '100%';
-      setTimeout(() => {
-        addBubbleTyping('수고하셨습니다. 오늘 세션이 완료되었습니다.', () => {
-          document.getElementById('edu-choices').innerHTML = '<button onclick=\"goScreen(\'screen-home\')\" style=\"display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer\">홈으로 돌아가기</button>';
-        });
-      }, 600);
+      setTimeout(() => { addBubbleTyping('수고하셨습니다. 오늘 세션이 완료되었습니다.', () => { document.getElementById('edu-choices').innerHTML = '<button onclick=\"goScreen(\'screen-home\')\" style=\"display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer\">홈으로 돌아가기</button>'; }); }, 600);
     } else { setTimeout(() => showQuestion(res.nextQuestion), 800); }
   } catch(e) { setTimeout(() => addBubbleTyping('오류가 발생했습니다. 다시 시도해 주세요.', null), 600); }
 }
-
 
 function addBubbleTyping(text, callback) {
   const bubblesEl = document.getElementById('edu-bubbles');
@@ -956,22 +1058,12 @@ async function submitAnswer(value, btn, label) {
   }, 150);
   try {
     const res = await api('/api/sessions/answer', 'POST', { questionId: currentQuestionId, choiceValue: value, moduleId: currentModuleId });
-    if(res.error) {
-      setTimeout(() => addBubbleTyping('저장 중 오류가 발생했습니다: ' + res.error, null), 600);
-      return;
-    }
+    if(res.error) { setTimeout(() => addBubbleTyping('저장 중 오류가 발생했습니다: ' + res.error, null), 600); return; }
     if(res.completed) {
       document.getElementById('edu-prog-bar').style.width = '100%';
-      setTimeout(() => {
-        addBubbleTyping('수고하셨습니다. 오늘 세션이 완료되었습니다.', () => {
-          document.getElementById('edu-choices').innerHTML = '<button onclick="goScreen(\'screen-home\')" style="display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>';
-        });
-      }, 600);
-    } else if(res.nextQuestion) {
-      setTimeout(() => showQuestion(res.nextQuestion), 800);
-    } else {
-      setTimeout(() => addBubbleTyping('다음 질문을 불러오지 못했습니다.', null), 600);
-    }
+      setTimeout(() => { addBubbleTyping('수고하셨습니다. 오늘 세션이 완료되었습니다.', () => { document.getElementById('edu-choices').innerHTML = '<button onclick="goScreen(\'screen-home\')" style="display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>'; }); }, 600);
+    } else if(res.nextQuestion) { setTimeout(() => showQuestion(res.nextQuestion), 800); }
+    else { setTimeout(() => addBubbleTyping('다음 질문을 불러오지 못했습니다.', null), 600); }
   } catch(e) { setTimeout(() => addBubbleTyping('오류가 발생했습니다. 다시 시도해 주세요.', null), 600); }
 }
 
@@ -993,11 +1085,7 @@ function selectSlot(el, val) {
 
 async function requestSlot() {
   if(!selectedSlotValue) return;
-  try {
-    await api('/api/schedule/request', 'POST', { requestedTime: selectedSlotValue });
-    alert(selectedSlotValue + ' 으로 요청이 전송되었습니다.');
-    goScreen('screen-home');
-  } catch(e) {}
+  try { await api('/api/schedule/request', 'POST', { requestedTime: selectedSlotValue }); alert(selectedSlotValue + ' 으로 요청이 전송되었습니다.'); goScreen('screen-home'); } catch(e) {}
 }
 
 async function sendCounsel() {
@@ -1017,27 +1105,16 @@ async function loadReply() {
   document.getElementById('reply-confirmed-section').style.display = 'none';
   try {
     const res = await api('/api/counsel/reply');
-    if(res.hasReply) {
-      currentCounselId = res.counselId;
-      document.getElementById('reply-content').textContent = res.reply;
-    } else {
-      document.getElementById('reply-content').textContent = '확인 가능한 답변이 없습니다.';
-    }
+    if(res.hasReply) { currentCounselId = res.counselId; document.getElementById('reply-content').textContent = res.reply; }
+    else { document.getElementById('reply-content').textContent = '확인 가능한 답변이 없습니다.'; }
   } catch(e) {}
 }
 
 async function confirmReply() {
   if(!currentCounselId) { goScreen('screen-home'); return; }
-  try {
-    await api('/api/counsel/reply/read', 'POST', { counselId: currentCounselId });
-  } catch(e) {}
-  // 답변 확인 후 암호화 메시지 표시
+  try { await api('/api/counsel/reply/read', 'POST', { counselId: currentCounselId }); } catch(e) {}
   document.getElementById('reply-view-section').style.display = 'none';
   document.getElementById('reply-confirmed-section').style.display = 'block';
-}
-
-async function deleteReply() {
-  confirmReply();
 }
 
 async function hostLogin() {
@@ -1055,10 +1132,7 @@ function hostLogout() {
   token = null; goScreen('screen-host-login');
 }
 
-
-// ===== HOST DASHBOARD =====
 async function loadHostDashboard() {
-  // 그룹 탭 먼저 로드
   loadGroups();
   try {
     const clients = await api('/api/host/clients');
@@ -1078,27 +1152,13 @@ async function loadHostDashboard() {
   try {
     const modules = await api('/api/host/modules');
     document.getElementById('host-module-list').innerHTML = modules.length > 0
-      ? modules.map(m => `
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-row">
-            <div style="flex:1;cursor:pointer" onclick="openModuleEditor('${m.id}','${(m.title||'').replace(/'/g,"\\'")}')">
-              <div style="font-size:14px;font-weight:500">${m.title}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">클릭하여 질문 편집</div>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button onclick="openModuleEditor('${m.id}','${(m.title||'').replace(/'/g,"\\'")}')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button>
-            </div>
-          </div>
-        </div>`).join('')
+      ? modules.map(m => `<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1;cursor:pointer" onclick="openModuleEditor('${m.id}','${(m.title||'').replace(/'/g,"\\'")}')"><div style="font-size:14px;font-weight:500">${m.title}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">클릭하여 질문 편집</div></div><div style="display:flex;gap:6px;align-items:center"><button onclick="openModuleEditor('${m.id}','${(m.title||'').replace(/'/g,"\\'")}')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button></div></div></div>`).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';
   } catch(e) {}
   loadHostSchedule();
 }
 
-// ===== 내담자 상세 =====
-let currentDetailClientId = null;
-let currentDetailCounselId = null;
-let allModules = [];
+let currentDetailClientId = null, currentDetailCounselId = null, allModules = [];
 
 async function openClientDetail(clientId) {
   currentDetailClientId = clientId;
@@ -1111,8 +1171,6 @@ async function loadClientDetail() {
   try {
     const data = await api('/api/host/clients/' + currentDetailClientId);
     const c = data.client;
-
-    // 프로필 채우기
     document.getElementById('detail-client-name').textContent = c.name + (c.nickname ? ' · ' + c.nickname : '');
     document.getElementById('detail-client-sub').textContent = (c.language==='ko'?'한국어':'English') + ' · 주' + (c.session_frequency||2) + '회';
     document.getElementById('dp-name').value = c.name || '';
@@ -1125,181 +1183,80 @@ async function loadClientDetail() {
     document.getElementById('dp-startdate').value = c.program_start_date || '';
     document.getElementById('dp-characteristics').value = c.characteristics || '';
     document.getElementById('dp-memo').value = c.memo || '';
-
-    // 모듈 탭
     const assigned = data.modules || [];
     document.getElementById('detail-module-list').innerHTML = assigned.length > 0
-      ? assigned.map(m => `
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-row">
-            <div style="flex:1;cursor:pointer" onclick="openModuleEditor('${m.module_id}','${(m.modules?.title||'모듈').replace(/'/g,"\\'")}')">
-              <div style="font-size:14px;font-weight:500">${m.modules?.title || '모듈'}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${m.completed ? '✅ 완료' : (m.is_active ? '🟢 진행 중' : '⏸ 대기')} · 클릭하여 질문 편집</div>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button onclick="openModuleEditor('${m.module_id}','${(m.modules?.title||'모듈').replace(/'/g,"\\'")}'))" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button>
-              <button onclick="toggleModule('${m.module_id}', ${!m.is_active})" style="background:${m.is_active?'#FDF3E7':'#EDF4EE'};color:${m.is_active?'#8B5E2A':'var(--sage-dark)'};border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">
-                ${m.is_active ? '비활성화' : '활성화'}
-              </button>
-              <button onclick="removeModule('${m.module_id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button>
-            </div>
-          </div>
-        </div>`).join('')
+      ? assigned.map(m => `<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1;cursor:pointer" onclick="openModuleEditor('${m.module_id}','${(m.modules?.title||'모듈').replace(/'/g,"\\'")}')"><div style="font-size:14px;font-weight:500">${m.modules?.title || '모듈'}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">${m.completed ? '✅ 완료' : (m.is_active ? '🟢 진행 중' : '⏸ 대기')} · 클릭하여 질문 편집</div></div><div style="display:flex;gap:6px;align-items:center"><button onclick="openModuleEditor('${m.module_id}','${(m.modules?.title||'모듈').replace(/'/g,"\\'")}'))" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button><button onclick="toggleModule('${m.module_id}', ${!m.is_active})" style="background:${m.is_active?'#FDF3E7':'#EDF4EE'};color:${m.is_active?'#8B5E2A':'var(--sage-dark)'};border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">${m.is_active ? '비활성화' : '활성화'}</button><button onclick="removeModule('${m.module_id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button></div></div></div>`).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
-
-    // 답변 조회 버튼 추가
     const answersBtn = document.getElementById('detail-answers-btn');
     if(answersBtn) answersBtn.style.display = 'block';
-
-    // 전체 모듈 목록 (배정용)
     allModules = await api('/api/host/modules');
     const assignedIds = assigned.map(m => m.module_id);
-    document.getElementById('detail-all-modules').innerHTML = allModules
-      .filter(m => !assignedIds.includes(m.id))
-      .map(m => `
-        <div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule('${m.id}')">
-          <div class="card-row">
-            <div style="font-size:14px">${m.title}</div>
-            <span style="color:var(--sage);font-size:12px">+ 배정</span>
-          </div>
-        </div>`).join('') || '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
-
-    // 상담 탭 - 전체 내역 + 선택 삭제
+    document.getElementById('detail-all-modules').innerHTML = allModules.filter(m => !assignedIds.includes(m.id)).map(m => `<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule('${m.id}')"><div class="card-row"><div style="font-size:14px">${m.title}</div><span style="color:var(--sage);font-size:12px">+ 배정</span></div></div>`).join('') || '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
     const counsels = data.counseling || [];
     document.getElementById('detail-counsel-list').innerHTML = counsels.length > 0
-      ? counsels.map(c => `
-        <div class="card" style="margin-bottom:8px;" id="counsel-card-${c.id}">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <div style="font-size:11px;color:var(--text-muted)">${c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}</div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:11px;color:${c.status==='replied'?'var(--sage-dark)':'var(--danger)'}">● ${c.status==='replied'?'답변완료':'미답변'}</span>
-${c.status !== 'replied' ? `<button onclick="deleteCounsel('${c.id}')" style="background:none;border:1px solid #eee;border-radius:6px;padding:2px 6px;font-size:10px;color:#ccc;cursor:pointer;" title="테스트 데이터만 삭제">테스트삭제</button>` : ''}
-            </div>
-          </div>
-          <p style="font-size:13px;line-height:1.6;color:var(--text);margin-bottom:${c.reply?'8px':'0'};cursor:pointer" onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${(c.reply||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${c.sent_at||''}','${c.status||''}')">${(c.message||'').substring(0,80)}${(c.message||'').length>80?'...':''}</p>
-          ${c.reply ? `<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 ${(c.reply||'').substring(0,60)}${(c.reply||'').length>60?'...':''}</div>` : `<button onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','','${c.sent_at||''}','${c.status||''}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>`}
-        </div>`).join('')
+      ? counsels.map(c => `<div class="card" style="margin-bottom:8px;" id="counsel-card-${c.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;color:var(--text-muted)">${c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}</div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:${c.status==='replied'?'var(--sage-dark)':'var(--danger)'}">● ${c.status==='replied'?'답변완료':'미답변'}</span>${c.status !== 'replied' ? `<button onclick="deleteCounsel('${c.id}')" style="background:none;border:1px solid #eee;border-radius:6px;padding:2px 6px;font-size:10px;color:#ccc;cursor:pointer;">테스트삭제</button>` : ''}</div></div><p style="font-size:13px;line-height:1.6;color:var(--text);margin-bottom:${c.reply?'8px':'0'};cursor:pointer" onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${(c.reply||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${c.sent_at||''}','${c.status||''}')">${(c.message||'').substring(0,80)}${(c.message||'').length>80?'...':''}</p>${c.reply ? `<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 ${(c.reply||'').substring(0,60)}${(c.reply||'').length>60?'...':''}</div>` : `<button onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','','${c.sent_at||''}','${c.status||''}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>`}</div>`).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
-
-    // 일정 탭
     const schedules = data.schedules || [];
     document.getElementById('detail-schedule-list').innerHTML = schedules.length > 0
-      ? schedules.map(s => `
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-row">
-            <div style="font-size:14px">${s.confirmed_time || s.requested_time || '시간 미정'}</div>
-            <span class="badge ${s.status==='confirmed'?'green':'amber'}">${s.status==='confirmed'?'확정':'대기'}</span>
-          </div>
-        </div>`).join('')
+      ? schedules.map(s => `<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="font-size:14px">${s.confirmed_time || s.requested_time || '시간 미정'}</div><span class="badge ${s.status==='confirmed'?'green':'amber'}">${s.status==='confirmed'?'확정':'대기'}</span></div></div>`).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
-
   } catch(e) { console.error(e); }
 }
 
 function showDetailTab(tab, btn) {
   document.querySelectorAll('#screen-client-detail .host-tab').forEach(t => t.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  ['profile','modules','counsel','schedule'].forEach(t => {
-    const el = document.getElementById('detail-tab-' + t);
-    if(el) el.style.display = t===tab ? 'block' : 'none';
-  });
-  // 저장 버튼은 프로필 탭일 때만 표시
+  ['profile','modules','counsel','schedule'].forEach(t => { const el = document.getElementById('detail-tab-' + t); if(el) el.style.display = t===tab ? 'block' : 'none'; });
   const saveBtn = document.getElementById('detail-save-btn');
   if(saveBtn) saveBtn.style.display = tab === 'profile' ? 'block' : 'none';
 }
 
 async function saveClientProfile() {
-  const data = {
-    name: document.getElementById('dp-name').value,
-    nickname: document.getElementById('dp-nickname').value,
-    age: parseInt(document.getElementById('dp-age').value) || null,
-    email: document.getElementById('dp-email').value,
-    language: document.getElementById('dp-language').value,
-    session_frequency: parseInt(document.getElementById('dp-frequency').value) || 2,
-    program_start_date: document.getElementById('dp-startdate').value || null,
-    characteristics: document.getElementById('dp-characteristics').value,
-    memo: document.getElementById('dp-memo').value
-  };
+  const data = { name: document.getElementById('dp-name').value, nickname: document.getElementById('dp-nickname').value, age: parseInt(document.getElementById('dp-age').value) || null, email: document.getElementById('dp-email').value, language: document.getElementById('dp-language').value, session_frequency: parseInt(document.getElementById('dp-frequency').value) || 2, program_start_date: document.getElementById('dp-startdate').value || null, characteristics: document.getElementById('dp-characteristics').value, memo: document.getElementById('dp-memo').value };
   try {
     await api('/api/host/clients/' + currentDetailClientId, 'PUT', data);
     const suc = document.getElementById('profile-save-success');
-    suc.classList.add('show');
-    setTimeout(() => suc.classList.remove('show'), 2000);
+    suc.classList.add('show'); setTimeout(() => suc.classList.remove('show'), 2000);
     document.getElementById('detail-client-name').textContent = data.name + (data.nickname ? ' · ' + data.nickname : '');
   } catch(e) { alert('저장 실패'); }
 }
 
 async function assignModule(moduleId) {
-  try {
-    await api('/api/host/clients/' + currentDetailClientId + '/modules/assign', 'POST', { moduleId, orderNum: 1 });
-    await loadClientDetail();
-    showDetailTab('modules', document.getElementById('dtab-modules'));
-  } catch(e) { alert('배정 실패'); }
+  try { await api('/api/host/clients/' + currentDetailClientId + '/modules/assign', 'POST', { moduleId, orderNum: 1 }); await loadClientDetail(); showDetailTab('modules', document.getElementById('dtab-modules')); }
+  catch(e) { alert('배정 실패'); }
 }
 
 async function loadClientAnswers() {
   const listEl = document.getElementById('detail-answers-list');
   const btn = document.getElementById('detail-answers-btn');
-  if(listEl.style.display === 'block') {
-    listEl.style.display = 'none';
-    btn.textContent = '📋 내담자 교육 답변 확인';
-    return;
-  }
-  listEl.style.display = 'block';
-  btn.textContent = '📋 답변 숨기기';
+  if(listEl.style.display === 'block') { listEl.style.display = 'none'; btn.textContent = '📋 내담자 교육 답변 확인'; return; }
+  listEl.style.display = 'block'; btn.textContent = '📋 답변 숨기기';
   listEl.innerHTML = '<div class="loading">로딩 중...</div>';
   try {
     const answers = await api('/api/host/clients/' + currentDetailClientId + '/answers');
-    if(!answers || answers.length === 0) {
-      listEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0">아직 답변이 없습니다.</p>';
-      return;
-    }
-    listEl.innerHTML = answers.map(a => `
-      <div class="card" style="margin-bottom:8px;padding:12px 14px">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">
-          ${a.answered_at ? new Date(a.answered_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}
-          · <span style="color:${a.questions?.type==='text'?'#8B5E2A':'var(--sage-dark)'}">${a.questions?.type==='text'?'주관식':'객관식'}</span>
-        </div>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${a.questions?.text || '질문'}</p>
-        <p style="font-size:14px;color:var(--text);font-weight:500">${
-          a.questions?.type === 'text'
-            ? (a.text_value || '(입력 없음)')
-            : (a.choice_label ? (a.choice_value + '. ' + a.choice_label) : (a.choice_value || '-'))
-        }</p>
-      </div>`).join('');
+    if(!answers || answers.length === 0) { listEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0">아직 답변이 없습니다.</p>'; return; }
+    listEl.innerHTML = answers.map(a => `<div class="card" style="margin-bottom:8px;padding:12px 14px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">${a.answered_at ? new Date(a.answered_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''} · <span style="color:${a.questions?.type==='text'?'#8B5E2A':'var(--sage-dark)'}">${a.questions?.type==='text'?'주관식':'객관식'}</span></div><p style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${a.questions?.text || '질문'}</p><p style="font-size:14px;color:var(--text);font-weight:500">${a.questions?.type === 'text' ? (a.text_value || '(입력 없음)') : (a.choice_label ? (a.choice_value + '. ' + a.choice_label) : (a.choice_value || '-'))}</p></div>`).join('');
   } catch(e) { listEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>'; }
 }
 
 async function toggleModule(moduleId, isActive) {
-  try {
-    await api('/api/host/clients/' + currentDetailClientId + '/modules/' + moduleId + '/toggle', 'PUT', { is_active: isActive });
-    await loadClientDetail();
-    showDetailTab('modules', document.getElementById('dtab-modules'));
-  } catch(e) { alert('변경 실패'); }
+  try { await api('/api/host/clients/' + currentDetailClientId + '/modules/' + moduleId + '/toggle', 'PUT', { is_active: isActive }); await loadClientDetail(); showDetailTab('modules', document.getElementById('dtab-modules')); }
+  catch(e) { alert('변경 실패'); }
 }
 
 async function removeModule(moduleId) {
   if(!confirm('이 모듈을 제거할까요?')) return;
-  try {
-    await api('/api/host/clients/' + currentDetailClientId + '/modules/' + moduleId, 'DELETE');
-    await loadClientDetail();
-    showDetailTab('modules', document.getElementById('dtab-modules'));
-  } catch(e) { alert('제거 실패'); }
+  try { await api('/api/host/clients/' + currentDetailClientId + '/modules/' + moduleId, 'DELETE'); await loadClientDetail(); showDetailTab('modules', document.getElementById('dtab-modules')); }
+  catch(e) { alert('제거 실패'); }
 }
 
-// ===== 상담 선택 삭제 (호스트) =====
 async function deleteCounsel(counselId) {
-  if(!confirm('이 상담 내역을 삭제할까요?\n(내담자 데이터는 보존됩니다)')) return;
-  try {
-    await api('/api/host/counsel/' + counselId, 'DELETE');
-    const card = document.getElementById('counsel-card-' + counselId);
-    if(card) card.remove();
-  } catch(e) { alert('삭제 실패'); }
+  if(!confirm('이 상담 내역을 삭제할까요?')) return;
+  try { await api('/api/host/counsel/' + counselId, 'DELETE'); const card = document.getElementById('counsel-card-' + counselId); if(card) card.remove(); }
+  catch(e) { alert('삭제 실패'); }
 }
 
-// ===== 모듈 질문 편집 =====
-let currentEditorModuleId = null;
-let editorQuestions = [];
+let currentEditorModuleId = null, editorQuestions = [];
 
 async function openModuleEditor(moduleId, title) {
   currentEditorModuleId = moduleId;
@@ -1309,28 +1266,17 @@ async function openModuleEditor(moduleId, title) {
   goScreen('screen-module-editor');
   try {
     const questions = await api('/api/host/modules/' + moduleId + '/questions');
-    editorQuestions = questions.map(q => ({
-      id: q.id,
-      text: q.text || '',
-      type: q.type || 'choice',
-      order_num: q.order_num || 1,
-      choices: (() => { try { return typeof q.choices === 'string' ? JSON.parse(q.choices) : (q.choices || []); } catch(e) { return []; } })()
-    }));
+    editorQuestions = questions.map(q => ({ id: q.id, text: q.text || '', type: q.type || 'choice', order_num: q.order_num || 1, choices: (() => { try { return typeof q.choices === 'string' ? JSON.parse(q.choices) : (q.choices || []); } catch(e) { return []; } })() }));
     renderQuestionList();
   } catch(e) { document.getElementById('question-list').innerHTML = '<p style="color:var(--danger)">질문 로드 실패</p>'; }
 }
 
 function renderQuestionList() {
-  if(editorQuestions.length === 0) {
-    document.getElementById('question-list').innerHTML = '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px">아직 질문이 없습니다.<br>위의 버튼으로 추가하세요.</p>';
-    return;
-  }
+  if(editorQuestions.length === 0) { document.getElementById('question-list').innerHTML = '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px">아직 질문이 없습니다.<br>위의 버튼으로 추가하세요.</p>'; return; }
   document.getElementById('question-list').innerHTML = editorQuestions.map((q, i) => `
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-size:11px;padding:3px 8px;border-radius:12px;background:${q.type==='choice'?'#EDF4EE':'#FDF8F0'};color:${q.type==='choice'?'var(--sage-dark)':'#8B5E2A'}">
-          ${q.type==='choice'?'객관식':'주관식'}
-        </span>
+        <span style="font-size:11px;padding:3px 8px;border-radius:12px;background:${q.type==='choice'?'#EDF4EE':'#FDF8F0'};color:${q.type==='choice'?'var(--sage-dark)':'#8B5E2A'}">${q.type==='choice'?'객관식':'주관식'}</span>
         <div style="display:flex;gap:6px">
           ${i > 0 ? `<button onclick="moveQuestion(${i},-1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↑</button>` : ''}
           ${i < editorQuestions.length-1 ? `<button onclick="moveQuestion(${i},1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↓</button>` : ''}
@@ -1339,25 +1285,7 @@ function renderQuestionList() {
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">질문 ${i+1}</div>
       <textarea id="q-text-${i}" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:70px;outline:none;line-height:1.6">${q.text}</textarea>
-      ${q.type === 'choice' ? `
-        <div style="margin-top:10px">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 3개 (한 줄에 하나)</div>
-          <textarea id="q-choices-${i}" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">${(q.choices||[]).map(c=>c.label||c).join('\n')}</textarea>
-          <div style="margin-top:8px">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">⚡ 선택지별 분기 (특정 답변 시 다른 질문으로 이동)</div>
-            ${(q.choices||[]).map((c,ci) => `
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                <span style="font-size:12px;color:var(--text);min-width:60px">${ci+1}. ${c.label||''}</span>
-                <select id="q-branch-${i}-${ci}" style="flex:1;padding:5px 8px;border:1px solid var(--warm);border-radius:6px;font-size:11px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text)">
-                  <option value="">순서대로 다음 질문</option>
-                  ${editorQuestions.filter((_,qi)=>qi!==i).map(eq=>`<option value="${eq.id||''}" ${(c.next_question_id && c.next_question_id===eq.id)?'selected':''}>${eq.text?eq.text.substring(0,20)+'...':'질문 '+(editorQuestions.indexOf(eq)+1)}</option>`).join('')}
-                </select>
-              </div>`).join('')}
-          </div>
-        </div>` : `
-        <div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">
-          💬 내담자가 직접 텍스트로 입력합니다
-        </div>`}
+      ${q.type === 'choice' ? `<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 (한 줄에 하나)</div><textarea id="q-choices-${i}" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">${(q.choices||[]).map(c=>c.label||c).join('\n')}</textarea></div>` : `<div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">💬 내담자가 직접 텍스트로 입력합니다</div>`}
     </div>`).join('');
 }
 
@@ -1376,10 +1304,7 @@ async function createGlobalModule() {
 }
 
 function addQuestion(type) {
-  // 객관식은 항상 3개 선택지 고정
-  const defaultChoices = type === 'choice'
-    ? [{label:'선택지 1', value:'1'}, {label:'선택지 2', value:'2'}, {label:'선택지 3', value:'3'}]
-    : [];
+  const defaultChoices = type === 'choice' ? [{label:'선택지 1', value:'1'}, {label:'선택지 2', value:'2'}, {label:'선택지 3', value:'3'}] : [];
   editorQuestions.push({ text: '', type, order_num: editorQuestions.length + 1, choices: defaultChoices });
   renderQuestionList();
   setTimeout(() => { const el = document.getElementById('question-list'); if(el) el.scrollTop = el.scrollHeight; }, 100);
@@ -1387,8 +1312,7 @@ function addQuestion(type) {
 
 function deleteQuestion(idx) {
   if(!confirm('이 질문을 삭제할까요?')) return;
-  editorQuestions.splice(idx, 1);
-  renderQuestionList();
+  editorQuestions.splice(idx, 1); renderQuestionList();
 }
 
 function moveQuestion(idx, dir) {
@@ -1398,36 +1322,22 @@ function moveQuestion(idx, dir) {
   renderQuestionList();
 }
 
-function updateChoices(idx, val) {
-  const lines = val.split('\n').filter(l => l.trim());
-  editorQuestions[idx].choices = lines.map((l, i) => ({ label: l.trim(), value: String(i+1) }));
-}
-
 async function saveAllQuestions() {
-  // ID 기반으로 각 textarea 값 직접 읽기
   editorQuestions.forEach((q, i) => {
     const textEl = document.getElementById('q-text-' + i);
     if(textEl) q.text = textEl.value.trim();
     if(q.type === 'choice') {
       const choicesEl = document.getElementById('q-choices-' + i);
-      if(choicesEl) {
-        const lines = choicesEl.value.split('\n').filter(l => l.trim());
-        q.choices = lines.map((l, j) => ({ label: l.trim(), value: String(j+1) }));
-      }
+      if(choicesEl) { const lines = choicesEl.value.split('\n').filter(l => l.trim()); q.choices = lines.map((l, j) => ({ label: l.trim(), value: String(j+1) })); }
     }
     q.order_num = i + 1;
   });
   try {
     await api('/api/host/modules/' + currentEditorModuleId + '/questions', 'POST', { questions: editorQuestions });
     const suc = document.getElementById('editor-save-success');
-    suc.classList.add('show');
-    setTimeout(() => suc.classList.remove('show'), 2000);
-    // 저장 후 id 업데이트를 위해 다시 로드
+    suc.classList.add('show'); setTimeout(() => suc.classList.remove('show'), 2000);
     const updated = await api('/api/host/modules/' + currentEditorModuleId + '/questions');
-    editorQuestions = updated.map(q => ({
-      id: q.id, text: q.text || '', type: q.type || 'choice', order_num: q.order_num || 1,
-      choices: (() => { try { return typeof q.choices === 'string' ? JSON.parse(q.choices) : (q.choices||[]); } catch(e) { return []; } })()
-    }));
+    editorQuestions = updated.map(q => ({ id: q.id, text: q.text || '', type: q.type || 'choice', order_num: q.order_num || 1, choices: (() => { try { return typeof q.choices === 'string' ? JSON.parse(q.choices) : (q.choices||[]); } catch(e) { return []; } })() }));
     renderQuestionList();
   } catch(e) { alert('저장 실패'); }
 }
@@ -1437,12 +1347,8 @@ function openDetailReply(counselId, message, reply, sentAt, status) {
   document.getElementById('detail-counsel-msg').textContent = message;
   document.getElementById('detail-reply-date').textContent = sentAt ? new Date(sentAt).toLocaleDateString('ko-KR') : '';
   document.getElementById('detail-reply-text').value = '';
-  if(reply) {
-    document.getElementById('detail-reply-existing').style.display = 'block';
-    document.getElementById('detail-reply-prev').textContent = reply;
-  } else {
-    document.getElementById('detail-reply-existing').style.display = 'none';
-  }
+  if(reply) { document.getElementById('detail-reply-existing').style.display = 'block'; document.getElementById('detail-reply-prev').textContent = reply; }
+  else { document.getElementById('detail-reply-existing').style.display = 'none'; }
   document.getElementById('detail-reply-success').classList.remove('show');
   goScreen('screen-detail-reply');
 }
@@ -1455,12 +1361,7 @@ async function sendDetailReply() {
     if(res.success) {
       document.getElementById('detail-reply-success').classList.add('show');
       document.getElementById('detail-reply-text').value = '';
-      setTimeout(async () => {
-        // 상담 목록 새로고침 후 상담 탭으로 이동
-        await loadClientDetail();
-        goScreen('screen-client-detail');
-        showDetailTab('counsel', document.getElementById('dtab-counsel'));
-      }, 1500);
+      setTimeout(async () => { await loadClientDetail(); goScreen('screen-client-detail'); showDetailTab('counsel', document.getElementById('dtab-counsel')); }, 1500);
     }
   } catch(e) { alert('전송 실패'); }
 }
@@ -1510,83 +1411,32 @@ async function sendHostReply() {
 async function addClient() {
   const name = document.getElementById('new-client-name').value.trim() || '내담자';
   const lang = document.getElementById('new-client-lang').value;
+  const groupId = currentAddGroupId || null;
   try {
-    const res = await api('/api/host/clients/add', 'POST', { name, language: lang });
-    if(res.inviteCode) { document.getElementById('new-invite-code').textContent = res.inviteCode; document.getElementById('new-invite-result').style.display = 'block'; }
+    const res = await api('/api/host/clients/add', 'POST', { name, language: lang, group_id: groupId });
+    if(res.inviteCode) { document.getElementById('new-invite-code').textContent = res.inviteCode; document.getElementById('new-invite-result').style.display = 'block'; currentAddGroupId = null; }
   } catch(e) { alert('추가 실패'); }
 }
 
-// ===== 그룹 관리 =====
 async function loadGroups() {
   try {
-    const [groups, clients] = await Promise.all([
-      api('/api/host/groups'),
-      api('/api/host/clients')
-    ]);
-
-    if(groups.length === 0) {
-      document.getElementById('group-list').innerHTML = '<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';
-      return;
-    }
-
-    // 그룹별 내담자 분류
+    const [groups, clients] = await Promise.all([api('/api/host/groups'), api('/api/host/clients')]);
+    if(groups.length === 0) { document.getElementById('group-list').innerHTML = '<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>'; return; }
     document.getElementById('group-list').innerHTML = groups.map(g => {
       const groupClients = clients.filter(c => c.group_id === g.id);
       const clientsHtml = groupClients.length > 0
-        ? groupClients.map(c => `
-          <div class="client-item" onclick="openClientDetail('${c.id}')">
-            <div class="avatar" style="width:34px;height:34px;font-size:11px">${(c.name||'?').substring(0,2).toUpperCase()}</div>
-            <div style="flex:1">
-              <div style="font-size:13px;font-weight:500">${c.name}${c.nickname?' ('+c.nickname+')':''}</div>
-              <div style="font-size:11px;color:var(--text-muted)">🔑 ${c.invite_code||'-'} · ${c.hasPending?'💬 상담대기':'미답변없음'}</div>
-            </div>
-            ${c.hasPending?'<div class="unread-dot"></div>':''}
-          </div>`).join('')
+        ? groupClients.map(c => `<div class="client-item" onclick="openClientDetail('${c.id}')"><div class="avatar" style="width:34px;height:34px;font-size:11px">${(c.name||'?').substring(0,2).toUpperCase()}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${c.name}${c.nickname?' ('+c.nickname+')':''}</div><div style="font-size:11px;color:var(--text-muted)">🔑 ${c.invite_code||'-'} · ${c.hasPending?'💬 상담대기':'미답변없음'}</div></div>${c.hasPending?'<div class="unread-dot"></div>':''}</div>`).join('')
         : '<p style="font-size:12px;color:var(--text-muted);padding:8px 0">내담자 없음</p>';
-
-      return `
-        <div class="card" style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div>
-              <div style="font-size:15px;font-weight:500">${g.name}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${g.description||''}</div>
-              <div style="display:flex;gap:8px;margin-top:4px">
-                <span style="font-size:11px;background:#EDF4EE;color:var(--sage-dark);padding:2px 8px;border-radius:10px">주 ${g.session_frequency||3}회</span>
-                <span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.contract_months||6}개월</span>
-                <span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.total_modules||24}모듈</span>
-              </div>
-            </div>
-            <button onclick="addClientToGroup('${g.id}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">+ 내담자</button>
-          </div>
-          <div style="border-top:1px solid var(--warm);padding-top:8px">${clientsHtml}</div>
-        </div>`;
+      return `<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-size:15px;font-weight:500">${g.name}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">${g.description||''}</div><div style="display:flex;gap:8px;margin-top:4px"><span style="font-size:11px;background:#EDF4EE;color:var(--sage-dark);padding:2px 8px;border-radius:10px">주 ${g.session_frequency||3}회</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.contract_months||6}개월</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.total_modules||24}모듈</span></div></div><button onclick="addClientToGroup('${g.id}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">+ 내담자</button></div><div style="border-top:1px solid var(--warm);padding-top:8px">${clientsHtml}</div></div>`;
     }).join('');
-
-    // 미배정 내담자
     const ungrouped = clients.filter(c => !c.group_id);
     if(ungrouped.length > 0) {
-      document.getElementById('group-list').innerHTML += `
-        <div class="card" style="margin-bottom:12px;border-style:dashed">
-          <div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">📌 미배정 내담자</div>
-          ${ungrouped.map(c => `
-            <div class="client-item" onclick="openClientDetail('${c.id}')">
-              <div class="avatar" style="width:34px;height:34px;font-size:11px">${(c.name||'?').substring(0,2).toUpperCase()}</div>
-              <div style="flex:1">
-                <div style="font-size:13px;font-weight:500">${c.name}</div>
-                <div style="font-size:11px;color:var(--text-muted)">🔑 ${c.invite_code||'-'}</div>
-              </div>
-            </div>`).join('')}
-        </div>`;
+      document.getElementById('group-list').innerHTML += `<div class="card" style="margin-bottom:12px;border-style:dashed"><div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">📌 미배정 내담자</div>${ungrouped.map(c => `<div class="client-item" onclick="openClientDetail('${c.id}')"><div class="avatar" style="width:34px;height:34px;font-size:11px">${(c.name||'?').substring(0,2).toUpperCase()}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${c.name}</div><div style="font-size:11px;color:var(--text-muted)">🔑 ${c.invite_code||'-'}</div></div></div>`).join('')}</div>`;
     }
   } catch(e) { document.getElementById('group-list').innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>'; }
 }
 
-function addClientToGroup(groupId) {
-  // 내담자 추가 화면으로 이동하면서 그룹 ID 전달
-  currentAddGroupId = groupId;
-  goScreen('screen-host-add');
-}
-
+function addClientToGroup(groupId) { currentAddGroupId = groupId; goScreen('screen-host-add'); }
 let currentAddGroupId = null;
 
 async function createGroup() {
@@ -1599,18 +1449,12 @@ async function createGroup() {
   try {
     const res = await api('/api/host/groups', 'POST', { name, description: desc, session_frequency: freq, contract_months: months, total_modules: modules });
     if(res.success) {
-      document.getElementById('new-group-name').value = '';
-      document.getElementById('new-group-desc').value = '';
+      document.getElementById('new-group-name').value = ''; document.getElementById('new-group-desc').value = '';
       document.getElementById('group-create-success').classList.add('show');
       setTimeout(() => document.getElementById('group-create-success').classList.remove('show'), 2000);
       loadGroups();
     }
   } catch(e) { alert('생성 실패'); }
-}
-
-function editGroup(groupId, name) {
-  // 추후 그룹 편집 화면으로 이동
-  alert(name + ' 그룹 편집은 다음 업데이트에서 제공됩니다.');
 }
 
 async function loadHostSettings() {
@@ -1635,23 +1479,6 @@ function showHostTab(tab, btn) {
   if(tab==='groups') loadGroups();
 }
 
-function selectLang(lang) {
-  userLang = lang; localStorage.setItem('pip_lang', lang);
-  document.getElementById('landing-ko').style.display = lang==='ko'?'block':'none';
-  document.getElementById('landing-en').style.display = lang==='en'?'block':'none';
-  document.getElementById('landing-next-btn').textContent = lang==='ko'?'시작하기 →':'Begin →';
-  const loginTitle = document.getElementById('login-title');
-  const loginSub = document.getElementById('login-sub');
-  const inviteLabel = document.getElementById('invite-label');
-  const inviteInput = document.getElementById('invite-code');
-  if(loginTitle) loginTitle.textContent = lang==='ko'?'참여 코드 입력':'Enter Invite Code';
-  if(loginSub) loginSub.textContent = lang==='ko'?'초대받은 참여자만 입력 가능합니다':'Authorized participants only';
-  if(inviteLabel) inviteLabel.textContent = lang==='ko'?'참여 코드':'Invite Code';
-  if(inviteInput) inviteInput.placeholder = lang==='ko'?'초대 코드를 입력하세요':'Enter your invite code';
-  goScreen('screen-landing');
-}
-
-
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(id);
@@ -1667,29 +1494,20 @@ function initApp() {
     token = savedToken || null;
 
     if(isHost) {
-      if(savedToken && savedRole === 'host') {
-        showScreen('screen-host');
-        loadHostDashboard();
-      } else {
-        localStorage.removeItem('pip_token');
-        localStorage.removeItem('pip_role');
-        token = null;
-        showScreen('screen-host-login');
-      }
+      if(savedToken && savedRole === 'host') { showScreen('screen-host'); loadHostDashboard(); }
+      else { localStorage.removeItem('pip_token'); localStorage.removeItem('pip_role'); token = null; showScreen('screen-host-login'); }
     } else {
       if(savedToken && savedRole !== 'host') {
         try { applyLang(); } catch(e) {}
-        showScreen('screen-home');
-        loadHome();
+        showScreen('screen-home'); loadHome();
       } else {
-        showScreen('screen-lang');
+        // A안: 언어선택 없이 바로 랜딩페이지로
+        showScreen('screen-landing');
       }
     }
   } catch(e) {
-    // 오류 시 언어 선택 화면으로
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    const el = document.getElementById('screen-lang');
-    if(el) el.classList.add('active');
+    document.getElementById('screen-landing').classList.add('active');
   }
 }
 
