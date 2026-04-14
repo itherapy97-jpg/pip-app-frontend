@@ -300,6 +300,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
   <div class="host-tabs">
     <button class="host-tab active" onclick="showHostTab('clients',this)">내담자</button>
+    <button class="host-tab" onclick="showHostTab('groups',this)">그룹</button>
     <button class="host-tab" onclick="showHostTab('edu',this)">교육과정</button>
     <button class="host-tab" onclick="showHostTab('schedule',this)">일정</button>
     <button class="host-tab" onclick="showHostTab('settings',this)">설정</button>
@@ -314,6 +315,31 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div class="spacer"></div>
     <button class="btn" onclick="goScreen('screen-host-add')">+ 내담자 추가 (초대 코드 생성)</button>
   </div>
+  <div id="host-tab-groups" class="content" style="display:none">
+    <p class="sec-label">그룹 목록</p>
+    <div id="group-list"><div class="loading">로딩 중...</div></div>
+    <div class="divider"></div>
+    <p class="sec-label">새 그룹 만들기</p>
+    <div class="field-label">그룹 이름 (예: A기업, 가족상담팀)</div>
+    <input type="text" id="new-group-name" placeholder="그룹 이름 입력" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">설명 (선택)</div>
+    <input type="text" id="new-group-desc" placeholder="예: 2026년 상반기 계약" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <div class="field-label">상담 빈도 (주 N회)</div>
+        <input type="number" id="new-group-freq" value="3" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
+      </div>
+      <div>
+        <div class="field-label">계약 기간 (개월)</div>
+        <input type="number" id="new-group-months" value="6" min="1" max="24" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
+      </div>
+    </div>
+    <div class="field-label">총 모듈 수</div>
+    <input type="number" id="new-group-modules" value="24" min="1" max="100" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:12px" />
+    <button onclick="createGroup()" style="width:100%;padding:12px;background:var(--sage);color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">+ 그룹 생성</button>
+    <div class="success-msg" id="group-create-success" style="margin-top:8px">그룹이 생성되었습니다.</div>
+  </div>
+
   <div id="host-tab-edu" class="content" style="display:none">
     <p class="sec-label">공통 교육 모듈</p>
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">모든 내담자에게 공통으로 사용할 교육 모듈을 만들고 질문을 편집하세요.</p>
@@ -1343,6 +1369,54 @@ async function addClient() {
   } catch(e) { alert('추가 실패'); }
 }
 
+// ===== 그룹 관리 =====
+async function loadGroups() {
+  try {
+    const groups = await api('/api/host/groups');
+    document.getElementById('group-list').innerHTML = groups.length > 0
+      ? groups.map(g => `
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-row">
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:500">${g.name}</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:3px">${g.description || ''}</div>
+              <div style="display:flex;gap:12px;margin-top:6px">
+                <span style="font-size:11px;background:#EDF4EE;color:var(--sage-dark);padding:2px 8px;border-radius:10px">주 ${g.session_frequency||3}회</span>
+                <span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.contract_months||6}개월</span>
+                <span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">${g.total_modules||24}모듈</span>
+              </div>
+            </div>
+            <button onclick="editGroup('${g.id}','${(g.name||'').replace(/'/g,"\'")}')" style="background:none;border:1px solid var(--warm);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text-muted);cursor:pointer">편집</button>
+          </div>
+        </div>`).join('')
+      : '<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';
+  } catch(e) { document.getElementById('group-list').innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>'; }
+}
+
+async function createGroup() {
+  const name = document.getElementById('new-group-name').value.trim();
+  if(!name) { document.getElementById('new-group-name').style.borderColor='var(--danger)'; return; }
+  const desc = document.getElementById('new-group-desc').value.trim();
+  const freq = parseInt(document.getElementById('new-group-freq').value) || 3;
+  const months = parseInt(document.getElementById('new-group-months').value) || 6;
+  const modules = parseInt(document.getElementById('new-group-modules').value) || 24;
+  try {
+    const res = await api('/api/host/groups', 'POST', { name, description: desc, session_frequency: freq, contract_months: months, total_modules: modules });
+    if(res.success) {
+      document.getElementById('new-group-name').value = '';
+      document.getElementById('new-group-desc').value = '';
+      document.getElementById('group-create-success').classList.add('show');
+      setTimeout(() => document.getElementById('group-create-success').classList.remove('show'), 2000);
+      loadGroups();
+    }
+  } catch(e) { alert('생성 실패'); }
+}
+
+function editGroup(groupId, name) {
+  // 추후 그룹 편집 화면으로 이동
+  alert(name + ' 그룹 편집은 다음 업데이트에서 제공됩니다.');
+}
+
 async function loadHostSettings() {
   try {
     const s = await api('/api/host/settings');
@@ -1359,9 +1433,10 @@ async function saveSettings() {
 function showHostTab(tab, btn) {
   document.querySelectorAll('.host-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  ['clients','edu','schedule','settings'].forEach(t => { const el = document.getElementById('host-tab-' + t); if(el) el.style.display = t===tab?'block':'none'; });
+  ['clients','groups','edu','schedule','settings'].forEach(t => { const el = document.getElementById('host-tab-' + t); if(el) el.style.display = t===tab?'block':'none'; });
   if(tab==='settings') loadHostSettings();
   if(tab==='schedule') loadHostSchedule();
+  if(tab==='groups') loadGroups();
 }
 
 function selectLang(lang) {
