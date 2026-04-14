@@ -227,8 +227,8 @@ body { top: 0px !important; }
 
 <!-- ===== SCREEN: LANDING ===== -->
 <div class="screen" id="screen-landing">
-  <!-- Google Translate 실제 위젯 (화면 밖으로 숨김 - 초기화 유지) -->
-  <div style="position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;z-index:-1;">
+  <!-- Google Translate 위젯 (투명 1px - 초기화 유지, 눈에 안보임) -->
+  <div style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;">
     <div id="google_translate_element"></div>
   </div>
 
