@@ -315,8 +315,16 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <button class="btn" onclick="goScreen('screen-host-add')">+ 내담자 추가 (초대 코드 생성)</button>
   </div>
   <div id="host-tab-edu" class="content" style="display:none">
-    <p class="sec-label">교육 모듈 편집</p>
+    <p class="sec-label">공통 교육 모듈</p>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">모든 내담자에게 공통으로 사용할 교육 모듈을 만들고 질문을 편집하세요.</p>
     <div id="host-module-list"><div class="loading">로딩 중...</div></div>
+    <div class="divider"></div>
+    <p class="sec-label">새 모듈 추가</p>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="new-module-title" placeholder="모듈 제목 입력" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
+      <button onclick="createGlobalModule()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;white-space:nowrap">+ 추가</button>
+    </div>
+    <div class="success-msg" id="module-create-success" style="margin-top:8px">모듈이 생성되었습니다.</div>
   </div>
   <div id="host-tab-schedule" class="content" style="display:none">
     <p class="sec-label">세션 요청 대기 중</p>
@@ -894,7 +902,20 @@ async function loadHostDashboard() {
   } catch(e) { document.getElementById('client-list').innerHTML = '<p style="color:var(--text-muted);font-size:13px">로드 실패</p>'; }
   try {
     const modules = await api('/api/host/modules');
-    document.getElementById('host-module-list').innerHTML = modules.map(m => `<div class="card"><div class="card-row"><div style="font-size:14px;font-weight:500">${m.title}</div><span class="badge ${m.is_active?'green':'gray'}">${m.is_active?'활성':'비활성'}</span></div></div>`).join('') + '<button class="btn" style="margin-top:8px" onclick="alert(\'다음 업데이트에서 제공됩니다.\')">+ 새 모듈 추가</button>';
+    document.getElementById('host-module-list').innerHTML = modules.length > 0
+      ? modules.map(m => `
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-row">
+            <div style="flex:1;cursor:pointer" onclick="openModuleEditor('${m.id}','${(m.title||'').replace(/'/g,"\\'")}')">
+              <div style="font-size:14px;font-weight:500">${m.title}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">클릭하여 질문 편집</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button onclick="openModuleEditor('${m.id}','${(m.title||'').replace(/'/g,"\\'")}')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button>
+            </div>
+          </div>
+        </div>`).join('')
+      : '<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';
   } catch(e) {}
   loadHostSchedule();
 }
@@ -1145,7 +1166,7 @@ function renderQuestionList() {
       <textarea id="q-text-${i}" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:70px;outline:none;line-height:1.6">${q.text}</textarea>
       ${q.type === 'choice' ? `
         <div style="margin-top:10px">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 (한 줄에 하나)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 3개 (한 줄에 하나)</div>
           <textarea id="q-choices-${i}" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">${(q.choices||[]).map(c=>c.label||c).join('\n')}</textarea>
         </div>` : `
         <div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">
@@ -1154,8 +1175,26 @@ function renderQuestionList() {
     </div>`).join('');
 }
 
+async function createGlobalModule() {
+  const title = document.getElementById('new-module-title').value.trim();
+  if(!title) { document.getElementById('new-module-title').style.borderColor='var(--danger)'; return; }
+  try {
+    const res = await api('/api/host/modules', 'POST', { title, order_num: 1 });
+    if(res.success || res.moduleId) {
+      document.getElementById('new-module-title').value = '';
+      document.getElementById('module-create-success').classList.add('show');
+      setTimeout(() => document.getElementById('module-create-success').classList.remove('show'), 2000);
+      loadHostDashboard();
+    }
+  } catch(e) { alert('생성 실패'); }
+}
+
 function addQuestion(type) {
-  editorQuestions.push({ text: '', type, order_num: editorQuestions.length + 1, choices: type==='choice' ? [{label:'선택지 1',value:'1'},{label:'선택지 2',value:'2'}] : [] });
+  // 객관식은 항상 3개 선택지 고정
+  const defaultChoices = type === 'choice'
+    ? [{label:'선택지 1', value:'1'}, {label:'선택지 2', value:'2'}, {label:'선택지 3', value:'3'}]
+    : [];
+  editorQuestions.push({ text: '', type, order_num: editorQuestions.length + 1, choices: defaultChoices });
   renderQuestionList();
   setTimeout(() => { const el = document.getElementById('question-list'); if(el) el.scrollTop = el.scrollHeight; }, 100);
 }
