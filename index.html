@@ -1264,7 +1264,7 @@ async function loadClientAnswers() {
         <p style="font-size:14px;color:var(--text);font-weight:500">${
           a.questions?.type === 'text'
             ? (a.text_value || '(입력 없음)')
-            : (a.choice_value || '-')
+            : (a.choice_label ? (a.choice_value + '. ' + a.choice_label) : (a.choice_value || '-'))
         }</p>
       </div>`).join('');
   } catch(e) { listEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>'; }
@@ -1343,6 +1343,17 @@ function renderQuestionList() {
         <div style="margin-top:10px">
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 3개 (한 줄에 하나)</div>
           <textarea id="q-choices-${i}" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">${(q.choices||[]).map(c=>c.label||c).join('\n')}</textarea>
+          <div style="margin-top:8px">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">⚡ 선택지별 분기 (특정 답변 시 다른 질문으로 이동)</div>
+            ${(q.choices||[]).map((c,ci) => `
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <span style="font-size:12px;color:var(--text);min-width:60px">${ci+1}. ${c.label||''}</span>
+                <select id="q-branch-${i}-${ci}" style="flex:1;padding:5px 8px;border:1px solid var(--warm);border-radius:6px;font-size:11px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text)">
+                  <option value="">순서대로 다음 질문</option>
+                  ${editorQuestions.filter((_,qi)=>qi!==i).map(eq=>`<option value="${eq.id||''}" ${(c.next_question_id && c.next_question_id===eq.id)?'selected':''}>${eq.text?eq.text.substring(0,20)+'...':'질문 '+(editorQuestions.indexOf(eq)+1)}</option>`).join('')}
+                </select>
+              </div>`).join('')}
+          </div>
         </div>` : `
         <div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">
           💬 내담자가 직접 텍스트로 입력합니다
