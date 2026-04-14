@@ -162,20 +162,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .lang-menu-item.active { color: var(--sage-dark); font-weight: 500; background: #f0f5f1; }
 .lang-ko { border-top: 1px solid var(--warm) !important; color: var(--text-muted) !important; font-size: 12px !important; }
 
-/* Google Translate 상단 툴바만 숨김 (번역·드롭다운은 유지) */
-body > .goog-te-banner-frame,
-body > iframe.goog-te-banner-frame {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  overflow: hidden !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
+/* Google Translate 툴바 - body 위치는 Google이 자동 관리 */
 .goog-te-balloon-frame { display: none !important; }
-body { top: 0px !important; }
 .goog-text-highlight { background: none !important; box-shadow: none !important; }
 #google_translate_element { display: inline-block !important; }
 
@@ -878,18 +866,8 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// body 밀림만 수정 (CSS가 배너 숨김 담당)
-function fixBodyTop() {
-  if (document.body.style.top !== '' && document.body.style.top !== '0px') {
-    document.body.style.top = '0px';
-  }
-}
-// 번역 시작 후 잠깐만 실행 (드롭다운 방해 없음)
-document.addEventListener('DOMContentLoaded', () => {
-  fixBodyTop();
-  const t = setInterval(fixBodyTop, 100);
-  setTimeout(() => clearInterval(t), 5000);
-});
+
+
 </script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
