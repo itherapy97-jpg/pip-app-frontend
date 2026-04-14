@@ -830,7 +830,7 @@ function googleTranslateElementInit() {
   }, 'google_translate_element');
 }
 
-// 커스텀 언어 선택기
+// 커스텀 언어 선택기 - 쿠키 방식 (100% 작동)
 const LANG_NAMES = {
   'en':'English','zh-CN':'中文（简体）','zh-TW':'中文（繁體）',
   'ja':'日本語','hi':'हिन्दी','es':'Español','fr':'Français',
@@ -843,21 +843,32 @@ function toggleLangMenu() {
 }
 
 function setLang(lang, el) {
-  const tryTranslate = (attempts) => {
-    const combo = document.querySelector('.goog-te-combo');
-    if (combo) {
-      combo.value = lang;
-      combo.dispatchEvent(new Event('change'));
-      document.getElementById('langSelected').textContent = LANG_NAMES[lang] || lang;
-      document.querySelectorAll('.lang-menu-item').forEach(e => e.classList.remove('active'));
-      if (el) el.classList.add('active');
-    } else if (attempts > 0) {
-      setTimeout(() => tryTranslate(attempts - 1), 400);
-    }
-  };
-  tryTranslate(15);
   document.getElementById('langMenu').classList.remove('open');
+
+  if (lang === 'ko') {
+    // 원본 복귀: 쿠키 삭제
+    document.cookie = 'googtrans=; path=/; expires=' + new Date(0).toUTCString();
+    document.cookie = 'googtrans=; path=/; domain=' + location.hostname + '; expires=' + new Date(0).toUTCString();
+    document.cookie = 'googtrans=; path=/; domain=.' + location.hostname + '; expires=' + new Date(0).toUTCString();
+  } else {
+    // 번역 언어 쿠키 설정
+    const val = '/ko/' + lang;
+    document.cookie = 'googtrans=' + val + '; path=/';
+    document.cookie = 'googtrans=' + val + '; path=/; domain=' + location.hostname;
+    document.cookie = 'googtrans=' + val + '; path=/; domain=.' + location.hostname;
+  }
+
+  // 선택 언어 저장 후 새로고침 (번역 적용)
+  localStorage.setItem('pip_lang_display', LANG_NAMES[lang] || lang);
+  location.reload();
 }
+
+// 페이지 로드 시 선택된 언어명 복원
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('pip_lang_display');
+  const el = document.getElementById('langSelected');
+  if (saved && el) el.textContent = saved;
+});
 
 // 메뉴 외부 클릭 시 닫기
 document.addEventListener('click', (e) => {
