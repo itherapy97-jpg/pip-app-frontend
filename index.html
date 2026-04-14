@@ -423,6 +423,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <p class="sec-label">배정된 모듈</p>
     <div id="detail-module-list"><div class="loading">로딩 중...</div></div>
     <div class="divider"></div>
+    <button id="detail-answers-btn" onclick="loadClientAnswers()" style="display:none;width:100%;padding:11px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;margin-bottom:12px;">📋 내담자 교육 답변 확인</button>
+    <div id="detail-answers-list" style="display:none;margin-bottom:16px;"></div>
+    <div class="divider"></div>
     <p class="sec-label">모듈 추가</p>
     <div id="detail-all-modules"><div class="loading">로딩 중...</div></div>
     <div class="spacer"></div>
@@ -927,6 +930,10 @@ async function loadClientDetail() {
         </div>`).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
 
+    // 답변 조회 버튼 추가
+    const answersBtn = document.getElementById('detail-answers-btn');
+    if(answersBtn) answersBtn.style.display = 'block';
+
     // 전체 모듈 목록 (배정용)
     allModules = await api('/api/host/modules');
     const assignedIds = assigned.map(m => m.module_id);
@@ -1008,6 +1015,35 @@ async function assignModule(moduleId) {
     await loadClientDetail();
     showDetailTab('modules', document.getElementById('dtab-modules'));
   } catch(e) { alert('배정 실패'); }
+}
+
+async function loadClientAnswers() {
+  const listEl = document.getElementById('detail-answers-list');
+  const btn = document.getElementById('detail-answers-btn');
+  if(listEl.style.display === 'block') {
+    listEl.style.display = 'none';
+    btn.textContent = '📋 내담자 교육 답변 확인';
+    return;
+  }
+  listEl.style.display = 'block';
+  btn.textContent = '📋 답변 숨기기';
+  listEl.innerHTML = '<div class="loading">로딩 중...</div>';
+  try {
+    const answers = await api('/api/host/clients/' + currentDetailClientId + '/answers');
+    if(!answers || answers.length === 0) {
+      listEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0">아직 답변이 없습니다.</p>';
+      return;
+    }
+    listEl.innerHTML = answers.map(a => `
+      <div class="card" style="margin-bottom:8px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">
+          ${a.answered_at ? new Date(a.answered_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}
+          · <span style="color:${a.questions?.type==='text'?'#8B5E2A':'var(--sage-dark)'}">${a.questions?.type==='text'?'주관식':'객관식'}</span>
+        </div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${a.questions?.text || '질문'}</p>
+        <p style="font-size:14px;color:var(--text);font-weight:500">${a.text_value || a.choice_value || '-'}</p>
+      </div>`).join('');
+  } catch(e) { listEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>'; }
 }
 
 async function toggleModule(moduleId, isActive) {
