@@ -164,7 +164,6 @@ body { top: 0 !important; }
 <div class="screen" id="screen-landing">
   <!-- Google Translate 위젯 -->
   <div class="translate-bar">
-    <span class="translate-bar-label">🌐 언어</span>
     <div id="google_translate_element"></div>
   </div>
 
@@ -201,8 +200,7 @@ body { top: 0 !important; }
 <div class="screen" id="screen-manual">
   <!-- Google Translate 위젯 (사용설명서에도 동일 적용) -->
   <div class="translate-bar">
-    <span class="translate-bar-label">🌐 언어</span>
-    <div id="google_translate_element2" style="display:none"></div><!-- 더미: 위젯은 하나만 렌더링됨 -->
+    <div id="google_translate_element2" style="display:none"></div>
   </div>
 
   <div class="top-bar">
@@ -417,12 +415,25 @@ body { top: 0 !important; }
     </div>
     <p class="sec-label" style="margin-top:8px" id="lbl-counsel">개인 상담</p>
     <button class="btn" onclick="goScreen('screen-counsel')" id="btn-counsel">상담 내용 작성하기</button>
-    <button class="btn ghost" onclick="logout()">로그아웃</button>
+
+    <!-- 3개 메뉴 버튼 (중간 콘텐츠 영역) -->
+    <div class="spacer"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;margin-bottom:4px">
+      <button onclick="goScreen('screen-home')" style="flex:1;padding:14px 6px;border:1px solid var(--warm);border-radius:10px;background:var(--sage);color:white;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <span style="font-size:18px">⊙</span><span id="nav-home-lbl">홈</span>
+      </button>
+      <button onclick="goScreen('screen-edu-list')" style="flex:1;padding:14px 6px;border:1px solid var(--warm);border-radius:10px;background:var(--white);color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <span style="font-size:18px">◈</span><span id="nav-edu">교육</span>
+      </button>
+      <button onclick="goScreen('screen-counsel')" style="flex:1;padding:14px 6px;border:1px solid var(--warm);border-radius:10px;background:var(--white);color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <span style="font-size:18px">✉</span><span id="nav-counsel">상담</span>
+      </button>
+    </div>
   </div>
-  <div class="nav">
-    <button class="nav-tab active" onclick="goScreen('screen-home')"><span class="nav-icon">⊙</span>홈</button>
-    <button class="nav-tab" onclick="goScreen('screen-edu-list')"><span class="nav-icon">◈</span><span id="nav-edu">교육</span></button>
-    <button class="nav-tab" onclick="goScreen('screen-counsel')"><span class="nav-icon">✉</span><span id="nav-counsel">상담</span></button>
+
+  <!-- 하단 바: 로그아웃 -->
+  <div style="border-top:1px solid var(--warm);background:var(--white);padding:10px 32px">
+    <button onclick="logout()" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;padding:6px;letter-spacing:0.05em">로그아웃</button>
   </div>
 </div>
 
