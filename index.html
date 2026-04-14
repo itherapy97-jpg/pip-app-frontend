@@ -603,10 +603,22 @@ async function loadHome() {
     const modules = await api('/api/sessions/modules');
     const completed = modules.filter(m => m.completed).length;
     const total = modules.length;
-    const pct = total > 0 ? Math.round((completed/total)*100) : 0;
+    const sessPerWeek = modules.length > 0 ? (modules[0].sessionsPerWeek || 3) : 3;
+    const totalModules = 24;
+    const pct = totalModules > 0 ? Math.round((completed/totalModules)*100) : 0;
     document.getElementById('prog-bar').style.width = pct + '%';
-    document.getElementById('prog-text').textContent = completed + '/' + total + ' 완료';
-    document.getElementById('module-list').innerHTML = modules.map(m => '<div class="card" style="cursor:pointer" onclick="startModule(\'' + m.id + '\',\'' + m.title + '\')"><div class="card-row"><div><div style="font-size:14px;font-weight:500">' + m.title + '</div><div style="font-size:12px;color:var(--text-muted);margin-top:3px">' + (userLang==='en'?'Interactive session':'선택형 대화 세션') + '</div></div><span class="badge ' + (m.completed?'green':'amber') + '">' + (m.completed?(userLang==='en'?'Done':'완료'):(userLang==='en'?'In progress':'진행 중')) + '</span></div></div>').join('');
+    // 진행률 표시: 현재회차/주회차/현재모듈/24
+    const currentModuleNum = completed + 1;
+    const weekNum = Math.ceil(currentModuleNum / 1);
+    const sessionInWeek = ((completed) % sessPerWeek) + 1;
+    document.getElementById('prog-text').textContent = sessionInWeek + '/' + sessPerWeek + '/' + Math.min(currentModuleNum, totalModules) + '/' + totalModules;
+    document.getElementById('module-list').innerHTML = modules.map(m => {
+      const mIdx = modules.indexOf(m);
+      const mSessionInWeek = (mIdx % sessPerWeek) + 1;
+      const mWeek = Math.ceil((mIdx+1) / sessPerWeek);
+      const mLabel = mSessionInWeek + '/' + sessPerWeek + '/' + (mIdx+1) + '/' + totalModules;
+      return '<div class="card" style="cursor:pointer;' + (m.completed?'opacity:0.7':'') + '" onclick="' + (m.completed?'':("startModule(\'" + m.id + "\',\'" + m.title + "\')")  ) + '"><div class="card-row"><div><div style="font-size:11px;color:var(--sage);letter-spacing:0.05em;margin-bottom:2px">' + mLabel + '</div><div style="font-size:14px;font-weight:500">' + m.title + '</div></div><span class="badge ' + (m.completed?'green':'amber') + '">' + (m.completed?'완료':'진행') + '</span></div></div>';
+    }).join('');
   } catch(e) { document.getElementById('module-list').innerHTML = '<p style="color:var(--text-muted);font-size:13px">모듈 로드 실패</p>'; }
   try {
     const schedules = await api('/api/schedule/confirmed');
@@ -648,6 +660,7 @@ function playClick() {
 function startModule(moduleId, title) {
   currentModuleId = moduleId; eduCurrentStep = 0;
   document.getElementById('edu-module-title').textContent = title;
+  // 모듈 진행 표시
   document.getElementById('edu-module-sub').textContent = '진행 중...';
   document.getElementById('edu-bubbles').innerHTML = '';
   document.getElementById('edu-choices').innerHTML = '';
