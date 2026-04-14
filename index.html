@@ -111,13 +111,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   color: var(--sage-dark) !important;
   font-family: 'DM Sans', sans-serif !important;
 }
-/* Google Translate 상단 툴바만 숨김 (번역은 계속 유지) */
-.goog-te-banner-frame { display: none !important; visibility: hidden !important; height: 0 !important; }
+/* Google Translate 상단 툴바만 숨김 (번역·드롭다운은 유지) */
+.goog-te-banner-frame { display: none !important; height: 0 !important; }
 .goog-te-balloon-frame { display: none !important; }
 body { top: 0px !important; }
-#goog-gt-tt { display: none !important; }
 .goog-text-highlight { background: none !important; box-shadow: none !important; }
-/* 위젯 자체는 표시 유지 */
 #google_translate_element { display: inline-block !important; }
 
 /* 사용설명서 스타일 */
@@ -748,33 +746,17 @@ function googleTranslateElementInit() {
   }, 'google_translate_element');
 }
 
-// Google 번역 상단 툴바 완전 제거 (번역은 유지)
+// Google 번역 상단 툴바만 제거 (드롭다운은 유지)
 function suppressTranslateBar() {
-  // 배너 iframe 숨김
   const banner = document.querySelector('.goog-te-banner-frame');
   if (banner) {
     banner.style.setProperty('display', 'none', 'important');
-    banner.style.setProperty('visibility', 'hidden', 'important');
     banner.style.setProperty('height', '0', 'important');
   }
-  // body 밀림 방지
   document.body.style.setProperty('top', '0', 'important');
-
-  // skiptranslate 클래스 중 위젯 아닌 것만 숨김
-  document.querySelectorAll('.skiptranslate').forEach(el => {
-    if (!el.closest('#google_translate_element')) {
-      el.style.setProperty('display', 'none', 'important');
-    }
-  });
 }
 document.addEventListener('DOMContentLoaded', suppressTranslateBar);
-setInterval(suppressTranslateBar, 200);
-
-// MutationObserver로 iframe 생성 즉시 감지
-const observer = new MutationObserver(suppressTranslateBar);
-document.addEventListener('DOMContentLoaded', () => {
-  observer.observe(document.body, { childList: true, subtree: true });
-});
+setInterval(suppressTranslateBar, 500);
 </script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
