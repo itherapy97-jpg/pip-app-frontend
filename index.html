@@ -111,8 +111,12 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   color: var(--sage-dark) !important;
   font-family: 'DM Sans', sans-serif !important;
 }
-.goog-te-banner-frame { display: none !important; }
-body { top: 0 !important; }
+/* Google Translate 상단 바 완전 숨김 */
+.goog-te-banner-frame, .goog-te-balloon-frame { display: none !important; }
+body { top: 0 !important; position: static !important; }
+.skiptranslate { display: none !important; }
+#goog-gt-tt, .goog-tooltip { display: none !important; }
+.goog-text-highlight { background: none !important; box-shadow: none !important; }
 
 /* 사용설명서 스타일 */
 .manual-section { margin-bottom: 24px; }
@@ -448,8 +452,8 @@ body { top: 0 !important; }
     <div class="top-bar-title"><h2 id="edu-module-title">모듈</h2><p id="edu-module-sub" style="font-size:11px;color:var(--text-muted)"></p></div>
   </div>
   <div style="padding:0 20px 6px;flex-shrink:0"><div style="height:3px;background:var(--warm);border-radius:2px"><div id="edu-prog-bar" style="height:3px;background:var(--sage);border-radius:2px;width:0%;transition:width 0.5s"></div></div></div>
-  <div class="bubble-wrap" id="edu-bubbles" style="flex:1;overflow-y:auto;padding:12px 16px 4px;min-height:0;justify-content:flex-end;display:flex;flex-direction:column;gap:8px"></div>
-  <div id="edu-choices" style="flex-shrink:0;padding:8px 16px 20px;background:var(--white);border-top:1px solid var(--warm)"></div>
+  <div class="bubble-wrap" id="edu-bubbles" translate="no" style="flex:1;overflow-y:auto;padding:12px 16px 4px;min-height:0;justify-content:flex-end;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="edu-choices" translate="no" style="flex-shrink:0;padding:8px 16px 20px;background:var(--white);border-top:1px solid var(--warm)"></div>
 </div>
 
 <div class="screen" id="screen-schedule">
@@ -474,7 +478,7 @@ body { top: 0 !important; }
   <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 뒤로</button><div class="top-bar-title"><h2 id="counsel-title">개인 상담 신청</h2><p>암호화 전송 · 서버에만 보관</p></div></div>
   <div class="content">
     <div class="warn"><p>📌 작성하신 내용은 암호화되어 전송되며, 이 기기에는 저장되지 않습니다.</p></div>
-    <div class="field"><label id="counsel-label">지금 마음속에 있는 것을 자유롭게 적어주세요</label><textarea id="counsel-text" placeholder="여기에 작성하세요..."></textarea></div>
+    <div class="field"><label id="counsel-label">지금 마음속에 있는 것을 자유롭게 적어주세요</label><textarea id="counsel-text" translate="no" placeholder="여기에 작성하세요..."></textarea></div>
     <div class="error-msg" id="counsel-error"></div>
     <div class="spacer"></div>
     <button class="btn primary" onclick="sendCounsel()">암호화하여 전송하기</button>
@@ -497,7 +501,7 @@ body { top: 0 !important; }
   <div class="content">
     <div id="reply-view-section">
       <div class="notice" style="margin-bottom:16px"><p>📌 답변을 확인하면 화면에서 사라집니다.<br>이전 상담은 <strong>개인별 암호화 저장</strong>되어 있습니다.</p></div>
-      <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">상담가 답변</div><p style="font-size:14px;line-height:1.8" id="reply-content">로딩 중...</p></div>
+      <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">상담가 답변</div><p style="font-size:14px;line-height:1.8" id="reply-content" translate="no">로딩 중...</p></div>
       <div class="spacer"></div>
       <button class="btn primary" onclick="confirmReply()">확인했습니다</button>
     </div>
@@ -606,9 +610,9 @@ body { top: 0 !important; }
 <div class="screen" id="screen-host-reply">
   <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-host')">← 뒤로</button><div class="top-bar-title"><h2 id="host-reply-title">상담 답변</h2><p id="host-reply-sub"></p></div></div>
   <div class="content">
-    <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">내담자 원문</div><p style="font-size:14px;line-height:1.8" id="host-counsel-text">로딩 중...</p></div>
+    <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">내담자 원문</div><p style="font-size:14px;line-height:1.8" id="host-counsel-text" translate="no">로딩 중...</p></div>
     <div class="field-label">답변 작성</div>
-    <textarea class="editor-area" id="host-reply-text" rows="6" placeholder="내담자에게 보낼 답변을 작성하세요..."></textarea>
+    <textarea class="editor-area" id="host-reply-text" rows="6" placeholder="내담자에게 보낼 답변을 작성하세요..." translate="no"></textarea>
     <div class="spacer"></div>
     <button class="btn primary" onclick="sendHostReply()">답변 전송 + 알림 발송</button>
     <div class="success-msg" id="reply-success">답변이 전송되었습니다.</div>
@@ -698,14 +702,14 @@ body { top: 0 !important; }
   <div class="content">
     <div class="card">
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px" id="detail-reply-date"></div>
-      <p style="font-size:14px;line-height:1.8" id="detail-counsel-msg">로딩 중...</p>
+      <p style="font-size:14px;line-height:1.8" id="detail-counsel-msg" translate="no">로딩 중...</p>
     </div>
     <div id="detail-reply-existing" style="display:none">
       <div class="field-label">기존 답변</div>
-      <div class="card" style="background:var(--cream)"><p style="font-size:13px;line-height:1.7;color:var(--sage-dark)" id="detail-reply-prev"></p></div>
+      <div class="card" style="background:var(--cream)"><p style="font-size:13px;line-height:1.7;color:var(--sage-dark)" id="detail-reply-prev" translate="no"></p></div>
     </div>
     <div class="field-label">답변 작성</div>
-    <textarea class="editor-area" id="detail-reply-text" rows="6" placeholder="답변을 작성하세요..."></textarea>
+    <textarea class="editor-area" id="detail-reply-text" rows="6" placeholder="답변을 작성하세요..." translate="no"></textarea>
     <div class="spacer"></div>
     <button class="btn primary" onclick="sendDetailReply()">답변 전송</button>
     <div class="success-msg" id="detail-reply-success">전송되었습니다.</div>
