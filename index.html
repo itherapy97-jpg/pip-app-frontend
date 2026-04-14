@@ -378,7 +378,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
       <h2 id="detail-client-name">내담자 상세</h2>
       <p id="detail-client-sub">프로필 · 모듈 · 상담</p>
     </div>
-    <button onclick="saveClientProfile()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">저장</button>
+    <button id="detail-save-btn" onclick="saveClientProfile()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;display:none;">저장</button>
   </div>
 
   <!-- 탭 -->
@@ -1007,6 +1007,9 @@ function showDetailTab(tab, btn) {
     const el = document.getElementById('detail-tab-' + t);
     if(el) el.style.display = t===tab ? 'block' : 'none';
   });
+  // 저장 버튼은 프로필 탭일 때만 표시
+  const saveBtn = document.getElementById('detail-save-btn');
+  if(saveBtn) saveBtn.style.display = tab === 'profile' ? 'block' : 'none';
 }
 
 async function saveClientProfile() {
