@@ -1662,6 +1662,48 @@ async function loadHostSchedule() {
     const clientMap = {};
     allClients.forEach(c => { clientMap[c.id] = c; });
 
+    // 확정된 세션도 함께 조회 (cross-ref 이메일/그룹)
+    let confirmed = [];
+    try {
+      confirmed = await api('/api/schedule/host/confirmed');
+    } catch(e) {
+      // fallback: 모든 내담자 일정에서 confirmed 수집
+      try {
+        const allSchedules = [];
+        for (const c of allClients) {
+          try {
+            const detail = await api('/api/host/clients/' + c.id);
+            const sched = (detail.schedules || []).filter(s => s.status === 'confirmed');
+            sched.forEach(s => { s._client = c; });
+            allSchedules.push(...sched);
+          } catch(e2) {}
+        }
+        confirmed = allSchedules;
+      } catch(e3) {}
+    }
+
+    document.getElementById('host-confirmed-schedule').innerHTML = confirmed.length > 0
+      ? confirmed.map(s => {
+          const clientId = s.client_id || s.clients?.id;
+          const fullClient = s._client || clientMap[clientId] || s.clients || {};
+          const { name, group } = getClientDisplay(fullClient);
+          let hostTime = s.confirmed_time || s.requested_time;
+          try { if (hostTime && hostTime.includes('T')) hostTime = formatDateForHost(hostTime); } catch(e) {}
+          return `<div class="card" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:12px;font-weight:500;color:var(--text)">${name}</div>
+                ${group
+                  ? `<div style="font-size:11px;color:var(--sage-dark)">📂 ${group}</div>`
+                  : '<div style="font-size:11px;color:var(--text-muted)">그룹 미지정</div>'}
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">🕐 ${hostTime}</div>
+              </div>
+              <span class="badge green">확정</span>
+            </div>
+          </div>`;
+        }).join('')
+      : '<p style="font-size:13px;color:var(--text-muted)">확정된 세션 없음</p>';
+
     document.getElementById('host-pending-schedule').innerHTML = pending.length > 0
       ? pending.map(s => {
           // 전체 내담자 정보 병합
