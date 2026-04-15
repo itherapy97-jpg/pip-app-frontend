@@ -1652,50 +1652,54 @@ function getClientDisplay(client) {
 
 async function loadHostSchedule() {
   try {
-    // 일정 + 전체 내담자 목록 동시 조회 → 이메일 교차 참조
+    document.getElementById('host-confirmed-schedule').innerHTML = '<div class="loading">로딩 중...</div>';
+
+    // 1. 대기중 일정 + 전체 내담자 목록 동시 조회
     const [pending, allClients] = await Promise.all([
       api('/api/schedule/host/pending'),
       api('/api/host/clients')
     ]);
 
-    // client_id 기준 이메일·그룹 조회 맵
+    // client_id → 내담자 정보 맵
     const clientMap = {};
     allClients.forEach(c => { clientMap[c.id] = c; });
 
-    // 확정된 세션도 함께 조회 (cross-ref 이메일/그룹)
-    let confirmed = [];
-    try {
-      confirmed = await api('/api/schedule/host/confirmed');
-    } catch(e) {
-      // fallback: 모든 내담자 일정에서 confirmed 수집
-      try {
-        const allSchedules = [];
-        for (const c of allClients) {
-          try {
-            const detail = await api('/api/host/clients/' + c.id);
-            const sched = (detail.schedules || []).filter(s => s.status === 'confirmed');
-            sched.forEach(s => { s._client = c; });
-            allSchedules.push(...sched);
-          } catch(e2) {}
-        }
-        confirmed = allSchedules;
-      } catch(e3) {}
-    }
+    // 2. 모든 내담자 상세를 병렬로 조회 → confirmed 일정 수집
+    const detailResults = await Promise.all(
+      allClients.map(c =>
+        api('/api/host/clients/' + c.id)
+          .then(d => ({ client: c, schedules: d.schedules || [] }))
+          .catch(() => ({ client: c, schedules: [] }))
+      )
+    );
 
-    document.getElementById('host-confirmed-schedule').innerHTML = confirmed.length > 0
-      ? confirmed.map(s => {
-          const clientId = s.client_id || s.clients?.id;
-          const fullClient = s._client || clientMap[clientId] || s.clients || {};
-          const { name, group } = getClientDisplay(fullClient);
+    const allConfirmed = [];
+    detailResults.forEach(({ client, schedules }) => {
+      schedules
+        .filter(s => s.status === 'confirmed')
+        .forEach(s => { allConfirmed.push({ ...s, _client: client }); });
+    });
+
+    // 시간순 정렬
+    allConfirmed.sort((a, b) => {
+      const ta = a.confirmed_time || a.requested_time || '';
+      const tb = b.confirmed_time || b.requested_time || '';
+      return ta.localeCompare(tb);
+    });
+
+    // 3. 확정 세션 렌더링
+    document.getElementById('host-confirmed-schedule').innerHTML = allConfirmed.length > 0
+      ? allConfirmed.map(s => {
+          const { name, group } = getClientDisplay(s._client);
           let hostTime = s.confirmed_time || s.requested_time;
           try { if (hostTime && hostTime.includes('T')) hostTime = formatDateForHost(hostTime); } catch(e) {}
           return `<div class="card" style="margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:center">
               <div>
-                <div style="font-size:12px;font-weight:500;color:var(--text)">${name}</div>
+                <div style="font-size:13px;font-weight:500;color:var(--text)">${name}</div>
                 ${group
-                  ? `<div style="font-size:11px;color:var(--sage-dark)">📂 ${group}</div>`
-                  : '<div style="font-size:11px;color:var(--text-muted)">그룹 미지정</div>'}
+                  ? `<div style="font-size:11px;color:var(--sage-dark);margin-top:1px">📂 ${group}</div>`
+                  : '<div style="font-size:11px;color:var(--text-muted);margin-top:1px">그룹 미지정</div>'}
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px">🕐 ${hostTime}</div>
               </div>
               <span class="badge green">확정</span>
@@ -1704,20 +1708,18 @@ async function loadHostSchedule() {
         }).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">확정된 세션 없음</p>';
 
+    // 4. 대기중 세션 렌더링
     document.getElementById('host-pending-schedule').innerHTML = pending.length > 0
       ? pending.map(s => {
-          // 전체 내담자 정보 병합
           const clientId = s.client_id || s.clients?.id;
           const fullClient = clientMap[clientId] || s.clients || {};
           const { name, group } = getClientDisplay(fullClient);
-
           let hostTime = s.requested_time;
           try { if (hostTime && hostTime.includes('T')) hostTime = formatDateForHost(hostTime); } catch(e) {}
           const tzInfo = s.clientTimezone ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">📍 ${s.clientTimezone}</div>` : '';
-
           return `<div class="card">
             <div style="margin-bottom:6px">
-              <div style="font-size:15px;font-weight:500">${name}</div>
+              <div style="font-size:14px;font-weight:500">${name}</div>
               ${group
                 ? `<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">📂 ${group}</div>`
                 : '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">그룹 미지정</div>'}
@@ -1728,7 +1730,10 @@ async function loadHostSchedule() {
           </div>`;
         }).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">대기 중인 요청 없음</p>';
-  } catch(e) {}
+
+  } catch(e) {
+    document.getElementById('host-confirmed-schedule').innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>';
+  }
 }
 
 async function confirmSchedule(id, time) {
