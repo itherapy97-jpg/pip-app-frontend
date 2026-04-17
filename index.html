@@ -916,18 +916,21 @@ const L = {
   en: { greeting:'Welcome', progress:"This week's progress", sessions:'Education Sessions', schedule:'Session Schedule', counsel:'Personal Counseling', btnCounsel:'Write a counseling message', navEdu:'Learn', navCounsel:'Counsel', counselTitle:'Personal Counseling Request', counselLabel:"Freely write what's on your mind right now", notif:'Your counseling reply has arrived' }
 };
 
-// ===== 자동 번역 함수 (Google 무료 API) =====
+// ===== 자동 번역 함수 (백엔드 Railway 경유 - 보안) =====
+// 브라우저 → Railway 서버 → Google → Railway → 브라우저
+// 상담 내용이 브라우저에서 직접 외부로 나가지 않음
 async function translateText(text, targetLang, sourceLang) {
   if (!text || !text.trim()) return text;
   if (!sourceLang) sourceLang = 'auto';
   if (sourceLang === targetLang) return text;
   try {
-    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl='
-      + sourceLang + '&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text);
-    const res = await fetch(url);
-    const data = await res.json();
-    return data[0].map(c => c[0]).join('');
-  } catch(e) { return text; }
+    const res = await api('/api/translate', 'POST', {
+      text,
+      targetLang,
+      sourceLang
+    });
+    return res.translated || text;
+  } catch(e) { return text; } // 실패 시 원문 반환
 }
 
 // 호스트 현재 표시 언어 반환 (구글번역 쿠키 기준, 기본 ko)
