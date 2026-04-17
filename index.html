@@ -895,6 +895,35 @@ const L = {
   en: { greeting:'Welcome', progress:"This week's progress", sessions:'Education Sessions', schedule:'Session Schedule', counsel:'Personal Counseling', btnCounsel:'Write a counseling message', navEdu:'Learn', navCounsel:'Counsel', counselTitle:'Personal Counseling Request', counselLabel:"Freely write what's on your mind right now", notif:'Your counseling reply has arrived' }
 };
 
+// ===== 자동 번역 함수 (Google 무료 API) =====
+async function translateText(text, targetLang, sourceLang) {
+  if (!text || !text.trim()) return text;
+  if (!sourceLang) sourceLang = 'auto';
+  if (sourceLang === targetLang) return text;
+  try {
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl='
+      + sourceLang + '&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text);
+    const res = await fetch(url);
+    const data = await res.json();
+    return data[0].map(c => c[0]).join('');
+  } catch(e) { return text; }
+}
+
+// 호스트 현재 표시 언어 반환 (구글번역 쿠키 기준, 기본 ko)
+function getHostDisplayLang() {
+  const c = document.cookie.split(';').find(x => x.trim().startsWith('googtrans='));
+  if (c) {
+    const parts = c.split('=')[1].split('/');
+    return parts[2] || 'ko';
+  }
+  return 'ko';
+}
+
+// 번역 뱃지 HTML
+function translateBadge() {
+  return '<span style="font-size:10px;color:var(--sage);margin-left:6px;vertical-align:middle">🌐 번역됨</span>';
+}
+
 function goScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(id);
@@ -1388,6 +1417,7 @@ async function loadHostDashboard() {
 }
 
 let currentDetailClientId = null, currentDetailCounselId = null, allModules = [];
+let currentClientLang = 'ko'; // 현재 열린 내담자 언어
 
 async function openClientDetail(clientId) {
   currentDetailClientId = clientId;
@@ -1407,6 +1437,7 @@ async function loadClientDetail() {
     document.getElementById('dp-age').value = c.age || '';
     document.getElementById('dp-email').value = c.email || '';
     document.getElementById('dp-language').value = c.language || 'ko';
+    currentClientLang = c.language || 'ko'; // 내담자 언어 저장
     document.getElementById('dp-invite-code').textContent = c.invite_code || '-';
     document.getElementById('dp-frequency').value = c.session_frequency || 2;
     document.getElementById('dp-startdate').value = c.program_start_date || '';
@@ -1425,6 +1456,10 @@ async function loadClientDetail() {
     document.getElementById('detail-counsel-list').innerHTML = counsels.length > 0
       ? counsels.map(c => `<div class="card" style="margin-bottom:8px;" id="counsel-card-${c.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;color:var(--text-muted)">${c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}</div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:${c.status==='replied'?'var(--sage-dark)':'var(--danger)'}">● ${c.status==='replied'?'답변완료':'미답변'}</span>${c.status !== 'replied' ? `<button onclick="deleteCounsel('${c.id}')" style="background:none;border:1px solid #eee;border-radius:6px;padding:2px 6px;font-size:10px;color:#ccc;cursor:pointer;">테스트삭제</button>` : ''}</div></div><p style="font-size:13px;line-height:1.6;color:var(--text);margin-bottom:${c.reply?'8px':'0'};cursor:pointer" onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${(c.reply||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${c.sent_at||''}','${c.status||''}')">${(c.message||'').substring(0,80)}${(c.message||'').length>80?'...':''}</p>${c.reply ? `<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 ${(c.reply||'').substring(0,60)}${(c.reply||'').length>60?'...':''}</div>` : `<button onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','','${c.sent_at||''}','${c.status||''}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>`}</div>`).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
+    // ★ 상담 메시지 자동 번역 (내담자 언어 ≠ 한국어일 때)
+    if (currentClientLang && currentClientLang !== 'ko') {
+      translateCounselList(counsels, currentClientLang);
+    }
     const schedules = data.schedules || [];
     document.getElementById('detail-schedule-list').innerHTML = schedules.length > 0
       ? schedules.map(s => {
@@ -1437,6 +1472,33 @@ async function loadClientDetail() {
         }).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
   } catch(e) { console.error(e); }
+}
+
+// ===== 상담 목록 자동 번역 =====
+async function translateCounselList(counsels, clientLang) {
+  const hostLang = getHostDisplayLang();
+  for (const c of counsels) {
+    const card = document.getElementById('counsel-card-' + c.id);
+    if (!card) continue;
+    // 메시지 미리보기 p 태그 (첫번째 p)
+    const msgEl = card.querySelector('p');
+    if (msgEl && c.message) {
+      const translated = await translateText(c.message, hostLang, clientLang);
+      if (translated && translated !== c.message) {
+        const preview = translated.substring(0, 80) + (translated.length > 80 ? '...' : '');
+        msgEl.innerHTML = preview + translateBadge();
+        // 클릭 핸들러도 번역된 메시지로 업데이트
+        msgEl.onclick = () => openDetailReply(
+          c.id,
+          c.message,        // 원문 (백엔드 전송용)
+          c.reply || '',
+          c.sent_at || '',
+          c.status || '',
+          translated        // 번역문 (화면 표시용)
+        );
+      }
+    }
+  }
 }
 
 function showDetailTab(tab, btn) {
@@ -1471,27 +1533,38 @@ async function loadClientAnswers() {
   try {
     const answers = await api('/api/host/clients/' + currentDetailClientId + '/answers');
     if(!answers || answers.length === 0) { listEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0">아직 답변이 없습니다.</p>'; return; }
-    // ★ 수정 3: 답변 로드 후 구글 번역 재실행
-    listEl.innerHTML = answers.map(a => {
+    listEl.innerHTML = answers.map((a, ai) => {
       const answerDisplay = a.questions?.type === 'text'
         ? (a.text_value || '(입력 없음)')
         : (a.choice_label ? (a.choice_value + '. ' + a.choice_label) : (a.choice_value || '-'));
+      const dateStr = a.answered_at ? new Date(a.answered_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
       return `<div class="card" style="margin-bottom:8px;padding:12px 14px">
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">
-          ${a.answered_at ? new Date(a.answered_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''} · 
+          ${dateStr}
           <span style="color:${a.questions?.type==='text'?'#8B5E2A':'var(--sage-dark)'}">
             ${a.questions?.type==='text'?'주관식':'객관식'}
           </span>
         </div>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${a.questions?.text || '질문'}</p>
-        <p style="font-size:14px;color:var(--text);font-weight:500">${answerDisplay}</p>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:4px" id="ans-q-${ai}">${a.questions?.text || '질문'}</p>
+        <p style="font-size:14px;color:var(--text);font-weight:500" id="ans-a-${ai}">${answerDisplay}</p>
       </div>`;
     }).join('');
-    // 동적 컨텐츠 로드 후 구글 번역 재실행
-    setTimeout(() => {
-      const sel = document.querySelector('.goog-te-combo');
-      if(sel && sel.value && sel.value !== '') sel.dispatchEvent(new Event('change'));
-    }, 400);
+    // ★ 주관식 답변 + 질문 자동 번역 (내담자 언어 ≠ 한국어)
+    if (currentClientLang && currentClientLang !== 'ko') {
+      const hostLang = getHostDisplayLang();
+      answers.forEach(async (a, ai) => {
+        if (a.questions?.text) {
+          const tq = await translateText(a.questions.text, hostLang, currentClientLang);
+          const qEl = document.getElementById('ans-q-' + ai);
+          if (qEl && tq !== a.questions.text) qEl.innerHTML = tq + translateBadge();
+        }
+        if (a.questions?.type === 'text' && a.text_value) {
+          const ta = await translateText(a.text_value, hostLang, currentClientLang);
+          const aEl = document.getElementById('ans-a-' + ai);
+          if (aEl && ta !== a.text_value) aEl.innerHTML = ta + translateBadge();
+        }
+      });
+    }
   } catch(e) { listEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>'; }
 }
 
@@ -1598,9 +1671,18 @@ async function saveAllQuestions() {
   } catch(e) { alert('저장 실패'); }
 }
 
-function openDetailReply(counselId, message, reply, sentAt, status) {
+function openDetailReply(counselId, message, reply, sentAt, status, translatedMsg) {
   currentDetailCounselId = counselId;
-  document.getElementById('detail-counsel-msg').textContent = message;
+  // 번역된 메시지가 있으면 번역본 표시, 없으면 원문
+  const displayMsg = translatedMsg || message;
+  const el = document.getElementById('detail-counsel-msg');
+  el.textContent = displayMsg;
+  if (translatedMsg && translatedMsg !== message) {
+    el.innerHTML = displayMsg + translateBadge()
+      + '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="this.parentElement.textContent='' 
+      + message.replace(/'/g, "\'").replace(/
+/g, ' ') + ''">원문 보기 ▾</div>';
+  }
   document.getElementById('detail-reply-date').textContent = sentAt ? new Date(sentAt).toLocaleDateString('ko-KR') : '';
   document.getElementById('detail-reply-text').value = '';
   if(reply) { document.getElementById('detail-reply-existing').style.display = 'block'; document.getElementById('detail-reply-prev').textContent = reply; }
