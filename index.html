@@ -571,6 +571,32 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     </div>
   </div>
 
+  <!-- ★ 수정2: 호스트 패널 번역 선택기 -->
+  <div class="lang-selector-wrap" style="padding:6px 20px 0">
+    <div class="lang-selector" onclick="toggleHostLangMenu()">
+      <span style="font-size:13px;color:var(--text-muted)">🌐</span>
+      <span id="hostLangSelected" style="font-size:12px;color:var(--text);font-weight:500">Language</span>
+      <span style="font-size:10px;color:var(--text-muted)">▾</span>
+    </div>
+    <div class="lang-menu" id="hostLangMenu">
+      <div class="lang-menu-item" onclick="setHostLang('en',this)">English</div>
+      <div class="lang-menu-item" onclick="setHostLang('zh-CN',this)">中文（简体）</div>
+      <div class="lang-menu-item" onclick="setHostLang('zh-TW',this)">中文（繁體）</div>
+      <div class="lang-menu-item" onclick="setHostLang('ja',this)">日本語</div>
+      <div class="lang-menu-item" onclick="setHostLang('hi',this)">हिन्दी</div>
+      <div class="lang-menu-item" onclick="setHostLang('es',this)">Español</div>
+      <div class="lang-menu-item" onclick="setHostLang('fr',this)">Français</div>
+      <div class="lang-menu-item" onclick="setHostLang('de',this)">Deutsch</div>
+      <div class="lang-menu-item" onclick="setHostLang('ar',this)">العربية</div>
+      <div class="lang-menu-item" onclick="setHostLang('pt',this)">Português</div>
+      <div class="lang-menu-item" onclick="setHostLang('ru',this)">Русский</div>
+      <div class="lang-menu-item" onclick="setHostLang('vi',this)">Tiếng Việt</div>
+      <div class="lang-menu-item" onclick="setHostLang('th',this)">ภาษาไทย</div>
+      <div class="lang-menu-item" onclick="setHostLang('id',this)">Bahasa Indonesia</div>
+      <div class="lang-menu-item lang-ko" onclick="setHostLang('ko',this)">한국어 (원본)</div>
+    </div>
+  </div>
+
   <div class="host-tabs">
     <button class="host-tab active" onclick="showHostTab('groups',this)">그룹</button>
     <button class="host-tab" onclick="showHostTab('clients',this)">전체 내담자</button>
@@ -802,18 +828,44 @@ function setLang(lang, el) {
   location.reload();
 }
 
+// ★ 수정2: 호스트용 번역 함수
+function toggleHostLangMenu() {
+  document.getElementById('hostLangMenu').classList.toggle('open');
+}
+
+function setHostLang(lang, el) {
+  document.getElementById('hostLangMenu').classList.remove('open');
+  if (lang === 'ko') {
+    document.cookie = 'googtrans=; path=/; expires=' + new Date(0).toUTCString();
+    document.cookie = 'googtrans=; path=/; domain=' + location.hostname + '; expires=' + new Date(0).toUTCString();
+    document.cookie = 'googtrans=; path=/; domain=.' + location.hostname + '; expires=' + new Date(0).toUTCString();
+  } else {
+    const val = '/ko/' + lang;
+    document.cookie = 'googtrans=' + val + '; path=/';
+    document.cookie = 'googtrans=' + val + '; path=/; domain=' + location.hostname;
+    document.cookie = 'googtrans=' + val + '; path=/; domain=.' + location.hostname;
+  }
+  localStorage.setItem('pip_host_lang_display', LANG_NAMES[lang] || lang);
+  location.reload();
+}
+
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('pip_lang_display');
   const el = document.getElementById('langSelected');
   if (saved && el) el.textContent = saved;
-  const hel = document.getElementById('hostLangSelected');
-  if (saved && hel) hel.textContent = saved;
+
+  // 호스트 언어 선택기 복원
+  const hostSaved = localStorage.getItem('pip_host_lang_display');
+  const hostEl = document.getElementById('hostLangSelected');
+  if (hostSaved && hostEl) hostEl.textContent = hostSaved;
 });
 
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.lang-selector-wrap')) {
     const menu = document.getElementById('langMenu');
     if (menu) menu.classList.remove('open');
+    const hostMenu = document.getElementById('hostLangMenu');
+    if (hostMenu) hostMenu.classList.remove('open');
   }
 });
 </script>
