@@ -339,7 +339,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
           ✓ 상담 내용은 <strong>암호화</strong>되어 서버에만 보관됩니다<br>
           ✓ 작성 내용은 이 기기에 저장되지 않습니다<br>
           ✓ 상담가 이외의 제3자는 내용을 볼 수 없습니다<br>
-          ✓ AI 번역기 등 외부 서비스에 내용이 전송되지 않습니다
+          ✓ 상담 내용은 상담가와 서버 간에만 전송됩니다
         </div>
       </div>
     </div>
@@ -1445,6 +1445,7 @@ async function loadHostDashboard() {
 
 let currentDetailClientId = null, currentDetailCounselId = null, allModules = [];
 let currentClientLang = 'ko'; // 현재 열린 내담자 언어
+let _counselList = []; // 상담 데이터 전역 저장 (onclick에 메시지 직접 삽입 방지)
 
 async function openClientDetail(clientId) {
   currentDetailClientId = clientId;
@@ -1480,13 +1481,27 @@ async function loadClientDetail() {
     const assignedIds = assigned.map(m => m.module_id);
     document.getElementById('detail-all-modules').innerHTML = allModules.filter(m => !assignedIds.includes(m.id)).map(m => `<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule('${m.id}')"><div class="card-row"><div style="font-size:14px">${m.title}</div><span style="color:var(--sage);font-size:12px">+ 배정</span></div></div>`).join('') || '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
     const counsels = data.counseling || [];
+    _counselList = counsels; // 전역 저장
     document.getElementById('detail-counsel-list').innerHTML = counsels.length > 0
-      ? counsels.map(c => `<div class="card" style="margin-bottom:8px;" id="counsel-card-${c.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;color:var(--text-muted)">${c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}</div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:${c.status==='replied'?'var(--sage-dark)':'var(--danger)'}">● ${c.status==='replied'?'답변완료':'미답변'}</span>${c.status !== 'replied' ? `<button onclick="deleteCounsel('${c.id}')" style="background:none;border:1px solid #eee;border-radius:6px;padding:2px 6px;font-size:10px;color:#ccc;cursor:pointer;">테스트삭제</button>` : ''}</div></div><p style="font-size:13px;line-height:1.6;color:var(--text);margin-bottom:${c.reply?'8px':'0'};cursor:pointer" onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${(c.reply||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','${c.sent_at||''}','${c.status||''}')">${(c.message||'').substring(0,80)}${(c.message||'').length>80?'...':''}</p>${c.reply ? `<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 ${(c.reply||'').substring(0,60)}${(c.reply||'').length>60?'...':''}</div>` : `<button onclick="openDetailReply('${c.id}','${(c.message||'').replace(/'/g,"\\'").replace(/\n/g,' ')}','','${c.sent_at||''}','${c.status||''}')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>`}</div>`).join('')
+      ? counsels.map((c, ci) => {
+          const dateStr = c.sent_at ? new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+          const statusColor = c.status==='replied' ? 'var(--sage-dark)' : 'var(--danger)';
+          const statusLabel = c.status==='replied' ? '답변완료' : '미답변';
+          const preview = (c.message||'').substring(0,80) + ((c.message||'').length>80?'...':'');
+          const replyHtml = c.reply ? `<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 ${(c.reply||'').substring(0,60)}${(c.reply||'').length>60?'...':''}</div>` : '';
+          const replyBtn = !c.reply ? `<button onclick="openDetailReplyByIdx(${ci})" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>` : '';
+          return `<div class="card" style="margin-bottom:8px;" id="counsel-card-${c.id}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <div style="font-size:11px;color:var(--text-muted)">${dateStr}</div>
+              <span style="font-size:11px;color:${statusColor}">● ${statusLabel}</span>
+            </div>
+            <p style="font-size:13px;line-height:1.6;color:var(--text);margin-bottom:${c.reply?'8px':'0'};cursor:pointer" id="counsel-preview-${c.id}" onclick="openDetailReplyByIdx(${ci})">${preview}</p>
+            ${replyHtml}${replyBtn}
+          </div>`;
+        }).join('')
       : '<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
-    // ★ 상담 메시지 자동 번역 (내담자 언어 ≠ 한국어일 때)
-    if (currentClientLang && currentClientLang !== 'ko') {
-      translateCounselList(counsels, currentClientLang);
-    }
+    // ★ 상담 메시지 자동 번역 (항상 실행 - 언어 자동 감지)
+    translateCounselList(counsels);
     const schedules = data.schedules || [];
     document.getElementById('detail-schedule-list').innerHTML = schedules.length > 0
       ? schedules.map(s => {
@@ -1501,28 +1516,40 @@ async function loadClientDetail() {
   } catch(e) { console.error(e); }
 }
 
-// ===== 상담 목록 자동 번역 =====
-async function translateCounselList(counsels, clientLang) {
+// ===== 인덱스로 상담 열기 (onclick에 메시지 직접 삽입 안함) =====
+function openDetailReplyByIdx(idx) {
+  const c = _counselList[idx];
+  if (!c) return;
+  openDetailReply(c.id, c.message || '', c.reply || '', c.sent_at || '', c.status || '');
+}
+
+// ===== 상담 목록 자동 번역 (항상 실행, 언어 자동 감지) =====
+async function translateCounselList(counsels) {
   const hostLang = getHostDisplayLang();
-  for (const c of counsels) {
+  for (let i = 0; i < counsels.length; i++) {
+    const c = counsels[i];
+    if (!c.message) continue;
+    // 자동 감지(auto)로 번역 시도 → 이미 hostLang이면 원문 그대로 반환됨
+    const translated = await translateText(c.message, hostLang, 'auto');
+    if (!translated || translated === c.message) continue;
+    // 미리보기 업데이트
+    const msgEl = document.getElementById('counsel-preview-' + c.id);
+    if (msgEl) {
+      const preview = translated.substring(0, 80) + (translated.length > 80 ? '...' : '');
+      msgEl.innerHTML = preview + translateBadge();
+      // 클릭 시 번역본 함께 전달
+      const tMsg = translated;
+      const origMsg = c.message;
+      msgEl.onclick = () => openDetailReply(c.id, origMsg, c.reply||'', c.sent_at||'', c.status||'', tMsg);
+    }
+    // 답변 작성 버튼도 번역본 전달하도록 업데이트
     const card = document.getElementById('counsel-card-' + c.id);
-    if (!card) continue;
-    // 메시지 미리보기 p 태그 (첫번째 p)
-    const msgEl = card.querySelector('p');
-    if (msgEl && c.message) {
-      const translated = await translateText(c.message, hostLang, clientLang);
-      if (translated && translated !== c.message) {
-        const preview = translated.substring(0, 80) + (translated.length > 80 ? '...' : '');
-        msgEl.innerHTML = preview + translateBadge();
-        // 클릭 핸들러도 번역된 메시지로 업데이트
-        msgEl.onclick = () => openDetailReply(
-          c.id,
-          c.message,        // 원문 (백엔드 전송용)
-          c.reply || '',
-          c.sent_at || '',
-          c.status || '',
-          translated        // 번역문 (화면 표시용)
-        );
+    if (card) {
+      const btn = card.querySelector('button');
+      if (btn && btn.textContent === '답변 작성') {
+        const tMsg = translated;
+        const origMsg = c.message;
+        btn.onclick = () => openDetailReply(c.id, origMsg, c.reply||'', c.sent_at||'', c.status||'', tMsg);
       }
     }
   }
