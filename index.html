@@ -1698,17 +1698,23 @@ async function saveAllQuestions() {
   } catch(e) { alert('저장 실패'); }
 }
 
+// 원문 보기용 전역 변수
+let _originalCounselMsg = '';
+
+function showOriginalMsg() {
+  const el = document.getElementById('detail-counsel-msg');
+  if (el) el.textContent = _originalCounselMsg;
+}
+
 function openDetailReply(counselId, message, reply, sentAt, status, translatedMsg) {
   currentDetailCounselId = counselId;
-  // 번역된 메시지가 있으면 번역본 표시, 없으면 원문
+  _originalCounselMsg = message;
   const displayMsg = translatedMsg || message;
   const el = document.getElementById('detail-counsel-msg');
   el.textContent = displayMsg;
   if (translatedMsg && translatedMsg !== message) {
     el.innerHTML = displayMsg + translateBadge()
-      + '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="this.parentElement.textContent='' 
-      + message.replace(/'/g, "\'").replace(/
-/g, ' ') + ''">원문 보기 ▾</div>';
+      + '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="showOriginalMsg()">원문 보기 ▾</div>';
   }
   document.getElementById('detail-reply-date').textContent = sentAt ? new Date(sentAt).toLocaleDateString('ko-KR') : '';
   document.getElementById('detail-reply-text').value = '';
