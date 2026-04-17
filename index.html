@@ -518,6 +518,31 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 
 <!-- ===== 호스트 로그인 ===== -->
 <div class="screen" id="screen-host-login">
+  <!-- 호스트 로그인 언어 선택기 -->
+  <div class="lang-selector-wrap">
+    <div class="lang-selector" onclick="toggleHostLangMenu()">
+      <span style="font-size:13px;color:var(--text-muted)">🌐</span>
+      <span id="hostLoginLangSelected" style="font-size:12px;color:var(--text);font-weight:500">Language</span>
+      <span style="font-size:10px;color:var(--text-muted)">▾</span>
+    </div>
+    <div class="lang-menu" id="hostLoginLangMenu">
+      <div class="lang-menu-item" onclick="setHostLang('en',this)">English</div>
+      <div class="lang-menu-item" onclick="setHostLang('zh-CN',this)">中文（简体）</div>
+      <div class="lang-menu-item" onclick="setHostLang('zh-TW',this)">中文（繁體）</div>
+      <div class="lang-menu-item" onclick="setHostLang('ja',this)">日本語</div>
+      <div class="lang-menu-item" onclick="setHostLang('hi',this)">हिन्दी</div>
+      <div class="lang-menu-item" onclick="setHostLang('es',this)">Español</div>
+      <div class="lang-menu-item" onclick="setHostLang('fr',this)">Français</div>
+      <div class="lang-menu-item" onclick="setHostLang('de',this)">Deutsch</div>
+      <div class="lang-menu-item" onclick="setHostLang('ar',this)">العربية</div>
+      <div class="lang-menu-item" onclick="setHostLang('pt',this)">Português</div>
+      <div class="lang-menu-item" onclick="setHostLang('ru',this)">Русский</div>
+      <div class="lang-menu-item" onclick="setHostLang('vi',this)">Tiếng Việt</div>
+      <div class="lang-menu-item" onclick="setHostLang('th',this)">ภาษาไทย</div>
+      <div class="lang-menu-item" onclick="setHostLang('id',this)">Bahasa Indonesia</div>
+      <div class="lang-menu-item lang-ko" onclick="setHostLang('ko',this)">한국어 (원본)</div>
+    </div>
+  </div>
   <div class="pip-header">
     <div class="pip-logo" style="background:var(--sage-dark)">H</div>
     <h1 class="pip-title">호스트 <em>로그인</em></h1>
@@ -545,31 +570,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     </div>
   </div>
 
-  <!-- ★ 수정 2: 호스트 패널 언어 선택기 추가 -->
-  <div class="lang-selector-wrap" style="padding:6px 20px 0">
-    <div class="lang-selector" onclick="toggleLangMenu()">
-      <span style="font-size:13px;color:var(--text-muted)">🌐</span>
-      <span id="hostLangSelected" style="font-size:12px;color:var(--text);font-weight:500">Language</span>
-      <span style="font-size:10px;color:var(--text-muted)">▾</span>
-    </div>
-    <div class="lang-menu" id="langMenu">
-      <div class="lang-menu-item" onclick="setLang('en',this)">English</div>
-      <div class="lang-menu-item" onclick="setLang('zh-CN',this)">中文（简体）</div>
-      <div class="lang-menu-item" onclick="setLang('zh-TW',this)">中文（繁體）</div>
-      <div class="lang-menu-item" onclick="setLang('ja',this)">日本語</div>
-      <div class="lang-menu-item" onclick="setLang('hi',this)">हिन्दी</div>
-      <div class="lang-menu-item" onclick="setLang('es',this)">Español</div>
-      <div class="lang-menu-item" onclick="setLang('fr',this)">Français</div>
-      <div class="lang-menu-item" onclick="setLang('de',this)">Deutsch</div>
-      <div class="lang-menu-item" onclick="setLang('ar',this)">العربية</div>
-      <div class="lang-menu-item" onclick="setLang('pt',this)">Português</div>
-      <div class="lang-menu-item" onclick="setLang('ru',this)">Русский</div>
-      <div class="lang-menu-item" onclick="setLang('vi',this)">Tiếng Việt</div>
-      <div class="lang-menu-item" onclick="setLang('th',this)">ภาษาไทย</div>
-      <div class="lang-menu-item" onclick="setLang('id',this)">Bahasa Indonesia</div>
-      <div class="lang-menu-item lang-ko" onclick="setLang('ko',this)">한국어 (원본)</div>
-    </div>
-  </div>
+  
 
   <!-- ★ 수정2: 호스트 패널 번역 선택기 -->
   <div class="lang-selector-wrap" style="padding:6px 20px 0">
@@ -830,7 +831,12 @@ function setLang(lang, el) {
 
 // ★ 수정2: 호스트용 번역 함수
 function toggleHostLangMenu() {
-  document.getElementById('hostLangMenu').classList.toggle('open');
+  // 호스트 패널용
+  const hm = document.getElementById('hostLangMenu');
+  if (hm) hm.classList.toggle('open');
+  // 호스트 로그인용
+  const lm = document.getElementById('hostLoginLangMenu');
+  if (lm) lm.classList.toggle('open');
 }
 
 function setHostLang(lang, el) {
@@ -854,10 +860,12 @@ window.addEventListener('load', () => {
   const el = document.getElementById('langSelected');
   if (saved && el) el.textContent = saved;
 
-  // 호스트 언어 선택기 복원
+  // 호스트 언어 선택기 복원 (패널 + 로그인)
   const hostSaved = localStorage.getItem('pip_host_lang_display');
   const hostEl = document.getElementById('hostLangSelected');
   if (hostSaved && hostEl) hostEl.textContent = hostSaved;
+  const hostLoginEl = document.getElementById('hostLoginLangSelected');
+  if (hostSaved && hostLoginEl) hostLoginEl.textContent = hostSaved;
 });
 
 document.addEventListener('click', (e) => {
@@ -866,6 +874,8 @@ document.addEventListener('click', (e) => {
     if (menu) menu.classList.remove('open');
     const hostMenu = document.getElementById('hostLangMenu');
     if (hostMenu) hostMenu.classList.remove('open');
+    const hostLoginMenu = document.getElementById('hostLoginLangMenu');
+    if (hostLoginMenu) hostLoginMenu.classList.remove('open');
   }
 });
 </script>
