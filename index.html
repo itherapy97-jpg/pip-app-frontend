@@ -510,9 +510,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
       <div class="card">
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
           상담가 답변
-          <button onclick="speakWithPersona(document.getElementById('reply-content').textContent, getCurrentDisplayLang(), localStorage.getItem('pip_client_id'))" 
+          <button class="notranslate" onclick="pipSpeak()" 
             style="background:#EDF4EE;border:1px solid var(--sage-light);border-radius:6px;cursor:pointer;font-size:13px;padding:4px 8px;color:var(--sage-dark)" 
-            title="🔊 음성으로 듣기 (PIP)">🔊 듣기</button>
+            title="음성으로 듣기">🔊 듣기</button>
         </div>
         <p style="font-size:14px;line-height:1.8" id="reply-content">로딩 중...</p>
       </div>
@@ -1215,11 +1215,24 @@ function loadPersonaUI(clientId) {
 }
 
 // TTS 재생 - 내담자별 언어별 설정 목소리 사용
+// ★ 답변 화면 전용 TTS 함수 (notranslate 버튼에서 직접 호출)
+function pipSpeak() {
+  const el = document.getElementById('reply-content');
+  if (!el) { console.log('[PIP] reply-content 없음'); return; }
+  const text = el.innerText || el.textContent || '';
+  console.log('[PIP] pipSpeak 호출, text 길이:', text.length, '내용:', text.substring(0,50));
+  if (!text.trim()) { console.log('[PIP] text 비어있음'); return; }
+  const lang = getCurrentDisplayLang() || 'ko';
+  const clientId = localStorage.getItem('pip_client_id');
+  console.log('[PIP] lang:', lang, 'clientId:', clientId);
+  speakWithPersona(text.trim(), lang, clientId);
+}
+
 // ★ speakWithPersona - 반드시 사용자 클릭 이벤트에서 직접 호출
 // Chrome 보안정책: setTimeout/onvoiceschanged 내부 호출 시 차단됨
 function speakWithPersona(text, lang, clientId) {
-  if (!text) return;
-  if (!window.speechSynthesis) { alert('이 브라우저는 TTS를 지원하지 않습니다.'); return; }
+  if (!text || !text.trim()) { console.log('[PIP TTS] 텍스트 없음'); return; }
+  if (!window.speechSynthesis) { alert('이 브라우저는 음성을 지원하지 않습니다. (speechSynthesis 없음)'); return; }
   
   speechSynthesis.cancel();
   
@@ -1227,23 +1240,35 @@ function speakWithPersona(text, lang, clientId) {
   const lc = targetLang.split('-')[0];
   const persona = clientId ? getClientPersona(clientId) : null;
   const savedVoiceName = (persona?.voices||{})[lc] || localStorage.getItem('pip_voice_for_'+lc) || null;
+  const allVoices = speechSynthesis.getVoices();
   
-  const utter = new SpeechSynthesisUtterance(text);
+  console.log('[PIP TTS] ▶ 재생 시작');
+  console.log('  - 텍스트:', text.substring(0,30));
+  console.log('  - 언어:', targetLang);
+  console.log('  - clientId:', clientId);
+  console.log('  - 저장 목소리:', savedVoiceName);
+  console.log('  - 기기 목소리 수:', allVoices.length);
+  
+  const utter = new SpeechSynthesisUtterance(text.trim());
   utter.lang = targetLang;
   utter.rate = 0.92;
   utter.pitch = 1.0;
   
-  // 저장된 목소리 적용
   if (savedVoiceName) {
-    const v = speechSynthesis.getVoices().find(vv => vv.name === savedVoiceName);
-    if (v) { utter.voice = v; }
+    const v = allVoices.find(vv => vv.name === savedVoiceName);
+    if (v) { utter.voice = v; console.log('  - 목소리 적용:', v.name); }
+    else { console.log('  - 저장 목소리 없음, 기본 사용'); }
   }
   
-  // 사용자 클릭 컨텍스트에서 직접 호출 (Chrome 보안 요건)
+  utter.onerror = (e) => console.error('[PIP TTS] ✗ 오류:', e.error);
+  utter.onstart = () => console.log('[PIP TTS] ✓ 재생 시작됨');
+  utter.onend = () => console.log('[PIP TTS] ✓ 재생 완료');
+  
   try {
     speechSynthesis.speak(utter);
+    console.log('[PIP TTS] speak() 호출됨, pending:', speechSynthesis.pending, 'speaking:', speechSynthesis.speaking);
   } catch(e) {
-    console.error('[PIP TTS] speak 오류:', e);
+    console.error('[PIP TTS] speak() 예외:', e);
   }
 }
 
@@ -1700,7 +1725,16 @@ document.addEventListener('click',(e)=>{
     const hm=document.getElementById('hostLangMenu');if(hm)hm.classList.remove('open');
     const lm=document.getElementById('hostLoginLangMenu');if(lm)lm.classList.remove('open');
   }
+  // Google Translate 툴팁 클릭 시 제거
+  const tooltip = document.querySelector('.goog-te-tooltip');
+  if (tooltip) tooltip.style.display = 'none';
 });
+
+// Google Translate 툴팁 주기적 숨기기
+setInterval(() => {
+  const tt = document.querySelector('.goog-te-tooltip');
+  if (tt && tt.style.display !== 'none') tt.style.display = 'none';
+}, 500);
 
 // ===== 호스트 =====
 async function hostLogin(){
