@@ -1541,12 +1541,26 @@ async function loadReply(){
   document.getElementById('reply-confirmed-section').style.display='none';
   const replyEl = document.getElementById('reply-content');
   replyEl.textContent = '...';
+  
+  // api() 래퍼 대신 직접 fetch (401 시 로그인 리다이렉트 방지)
+  const tk = localStorage.getItem('pip_token') || token;
+  if (!tk) { replyEl.textContent = '로그인이 필요합니다.'; return; }
+  
   try {
-    const res = await api('/api/counsel/reply');
+    const fetchRes = await fetch(API + '/api/counsel/reply', {
+      headers: { 'Authorization': 'Bearer ' + tk }
+    });
+    if (!fetchRes.ok) {
+      replyEl.textContent = fetchRes.status === 401 
+        ? '세션이 만료되었습니다. 다시 로그인해 주세요.'
+        : '답변을 불러올 수 없습니다. (' + fetchRes.status + ')';
+      return;
+    }
+    const res = await fetchRes.json();
     if (res && res.hasReply) {
       currentCounselId = res.counselId;
       let replyText = res.reply || '';
-      // 직접 fetch로 번역 (api() 래퍼 사용 안함 - 401시 리다이렉트 방지)
+      // 현재 표시 언어로 번역
       const clientLang = getCurrentDisplayLang() || 'ko';
       const translated = await translateText(replyText, clientLang, 'auto');
       if (translated && translated.trim()) replyText = translated;
@@ -1555,7 +1569,8 @@ async function loadReply(){
       replyEl.textContent = '확인 가능한 답변이 없습니다.';
     }
   } catch(e) {
-    replyEl.textContent = '답변 로드 실패. 다시 시도해 주세요.';
+    replyEl.textContent = '네트워크 오류. 인터넷 연결을 확인해 주세요.';
+    console.error('loadReply 오류:', e);
   }
 }
 
