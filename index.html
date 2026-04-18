@@ -744,6 +744,23 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div class="field-label">프로그램 시작일</div><input type="date" id="dp-startdate" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
     <div class="field-label">특징 / 메모</div><textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="내담자 특징, 주의사항 등"></textarea>
     <div class="field-label">상담 메모 (호스트 전용)</div><textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="진행 상황, 특이사항 등"></textarea>
+    <!-- ★ 목소리 페르소나 -->
+    <div class="field-label" style="margin-top:14px">🔊 TTS 목소리 설정 (내담자용)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+      <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">성별</div>
+        <select id="vp-gender" style="width:100%;padding:8px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none">
+          <option value="auto">🔀 자동</option><option value="female">👩 여성</option><option value="male">👨 남성</option>
+        </select></div>
+      <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">나이대</div>
+        <select id="vp-age" style="width:100%;padding:8px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none">
+          <option value="auto">🔀 자동</option><option value="child">🧒 어린이</option><option value="youth">🧑 청년</option><option value="adult">👨‍💼 중년</option><option value="senior">👴 노년</option>
+        </select></div>
+      <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">톤</div>
+        <select id="vp-tone" style="width:100%;padding:8px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none">
+          <option value="auto">🔀 자동</option><option value="calm">🌙 차분</option><option value="bright">☀️ 밝음</option><option value="warm">🌱 따뜻</option>
+        </select></div>
+    </div>
+    <button onclick="testPersonaVoice()" style="width:100%;padding:9px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">▶ 선택한 목소리 미리 듣기</button>
     <div class="success-msg" id="profile-save-success" style="margin-top:8px">저장되었습니다.</div>
     <div class="spacer"></div>
   </div>
@@ -924,6 +941,117 @@ function getBestVoice(langCode) {
 }
 
 // ===== 보이스 설정 함수 =====
+// ===== 내담자별 목소리 페르소나 시스템 =====
+const VOICE_PERSONA_OPTIONS = {
+  gender: {
+    auto:   {label:'🔀 자동', keys:[]},
+    female: {label:'👩 여성', keys:['female','woman','fiona','victoria','karen','samantha','sora','yuna','na-young','seon-hi','hyun-soo']},
+    male:   {label:'👨 남성', keys:['male','man','daniel','thomas','alex','fred','oliver','jun-su','google uk english male']}
+  },
+  age: {
+    auto:   {label:'🔀 자동',  keys:[]},
+    child:  {label:'🧒 어린이', keys:['child','junior','young','kid']},
+    youth:  {label:'🧑 청년',  keys:['neural','natural','enhanced','premium']},
+    adult:  {label:'👨‍💼 중년',  keys:['standard','default','classic']},
+    senior: {label:'👴 노년',  keys:['senior','old','deep','bass']}
+  },
+  tone: {
+    auto:   {label:'🔀 자동',   rate:0,     pitch:0},
+    calm:   {label:'🌙 차분',   rate:-0.12, pitch:-0.15},
+    bright: {label:'☀️ 밝음',   rate:+0.1,  pitch:+0.15},
+    warm:   {label:'🌱 따뜻',   rate:-0.05, pitch:+0.05}
+  }
+};
+
+function getClientPersona(clientId) {
+  if (!clientId) return null;
+  try { return JSON.parse(localStorage.getItem('pip_persona_' + clientId) || 'null'); } catch(e) { return null; }
+}
+
+function saveClientPersona(clientId, persona) {
+  if (!clientId) return;
+  localStorage.setItem('pip_persona_' + clientId, JSON.stringify(persona));
+}
+
+function getVoiceByPersona(langCode, persona) {
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return getBestVoice(langCode);
+  const lc = (langCode||'ko').toLowerCase().split('-')[0];
+  let pool = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
+  if (!pool.length) pool = voices;
+  if (!persona) return getBestVoice(langCode);
+
+  // 성별 필터
+  const gKeys = VOICE_PERSONA_OPTIONS.gender[persona.gender||'auto']?.keys || [];
+  if (gKeys.length) {
+    const gf = pool.filter(v => gKeys.some(k => v.name.toLowerCase().includes(k)));
+    if (gf.length) pool = gf;
+  }
+  // 나이 필터
+  const aKeys = VOICE_PERSONA_OPTIONS.age[persona.age||'auto']?.keys || [];
+  if (aKeys.length) {
+    const af = pool.filter(v => aKeys.some(k => v.name.toLowerCase().includes(k)));
+    if (af.length) pool = af;
+  }
+  // 로컬 고품질 우선
+  const hq = pool.filter(v => /neural|premium|enhanced|wavenet|natural/i.test(v.name) && v.localService);
+  if (hq.length) return hq[0];
+  const hq2 = pool.filter(v => /neural|premium|enhanced|wavenet|natural/i.test(v.name));
+  if (hq2.length) return hq2[0];
+  const local = pool.filter(v => v.localService);
+  if (local.length) return local[0];
+  return pool[0] || getBestVoice(langCode);
+}
+
+function speakWithPersona(text, lang, clientId) {
+  if (!text || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const persona = getClientPersona(clientId);
+  const targetLang = lang || getCurrentDisplayLang();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.voice = persona ? getVoiceByPersona(targetLang, persona) : getBestVoice(targetLang);
+  utter.lang = targetLang;
+  const tone = VOICE_PERSONA_OPTIONS.tone[persona?.tone||'auto'];
+  utter.rate = Math.max(0.5, Math.min(1.5, 0.92 + (tone?.rate||0)));
+  utter.pitch = Math.max(0, Math.min(2, 1.0 + (tone?.pitch||0)));
+  speechSynthesis.speak(utter);
+}
+
+function testPersonaVoice() {
+  const gender = document.getElementById('vp-gender')?.value || 'auto';
+  const age = document.getElementById('vp-age')?.value || 'auto';
+  const tone = document.getElementById('vp-tone')?.value || 'auto';
+  const lang = getHostDisplayLang() || 'ko';
+  const testTexts = {
+    ko:'안녕하세요. 오늘 어떻게 지내셨나요?',
+    en:'Hello. How are you feeling today?',
+    ja:'こんにちは。今日はどんな気分ですか?',
+    zh:'你好。今天感觉怎么样?'
+  };
+  speakWithPersona(testTexts[lang]||testTexts.ko, lang, null);
+  // 현재 선택된 페르소나로 임시 재생
+  const tmpPersona = {gender, age, tone};
+  const voices = speechSynthesis.getVoices();
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(testTexts[lang]||testTexts.ko);
+  utter.voice = getVoiceByPersona(lang, tmpPersona);
+  utter.lang = lang;
+  const toneOpts = VOICE_PERSONA_OPTIONS.tone[tone];
+  utter.rate = Math.max(0.5, 0.92 + (toneOpts?.rate||0));
+  utter.pitch = Math.max(0, 1.0 + (toneOpts?.pitch||0));
+  speechSynthesis.speak(utter);
+}
+
+function loadPersonaUI(clientId) {
+  const persona = getClientPersona(clientId) || {gender:'auto', age:'auto', tone:'auto'};
+  const g = document.getElementById('vp-gender');
+  const a = document.getElementById('vp-age');
+  const t = document.getElementById('vp-tone');
+  if (g) g.value = persona.gender || 'auto';
+  if (a) a.value = persona.age || 'auto';
+  if (t) t.value = persona.tone || 'auto';
+}
+
 function loadVoiceList(lang) {
   const sel = document.getElementById('voice-pref-select');
   if (!sel) return;
@@ -1477,6 +1605,8 @@ async function loadClientDetail(){
     const assigned=data.modules||[];
     document.getElementById('detail-module-list').innerHTML=assigned.length>0?assigned.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1"><div style="font-size:14px;font-weight:500">'+(m.modules?.title||'모듈')+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+(m.completed?'✅ 완료':(m.is_active?'🟢 진행 중':'⏸ 대기'))+'</div></div><div style="display:flex;gap:6px;align-items:center"><button onclick="openModuleEditor(\''+m.module_id+'\',\''+((m.modules?.title||'모듈').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button><button onclick="toggleModule(\''+m.module_id+'\','+!m.is_active+')" style="background:'+(m.is_active?'#FDF3E7':'#EDF4EE')+';color:'+(m.is_active?'#8B5E2A':'var(--sage-dark)')+';border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">'+(m.is_active?'비활성화':'활성화')+'</button><button onclick="removeModule(\''+m.module_id+'\')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button></div></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
     const answersBtn=document.getElementById('detail-answers-btn');if(answersBtn)answersBtn.style.display='block';
+    // 목소리 페르소나 UI 복원
+    loadPersonaUI(currentDetailClientId);
     allModules=await api('/api/host/modules');
     const assignedIds=assigned.map(m=>m.module_id);
     document.getElementById('detail-all-modules').innerHTML=allModules.filter(m=>!assignedIds.includes(m.id)).map(m=>'<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule(\''+m.id+'\')"><div class="card-row"><div style="font-size:14px">'+m.title+'</div><span style="color:var(--sage);font-size:12px">+ 배정</span></div></div>').join('')||'<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
@@ -1551,6 +1681,13 @@ function showDetailTab(tab,btn){
 }
 
 async function saveClientProfile(){
+  // 목소리 페르소나 저장
+  const persona = {
+    gender: document.getElementById('vp-gender')?.value || 'auto',
+    age:    document.getElementById('vp-age')?.value    || 'auto',
+    tone:   document.getElementById('vp-tone')?.value   || 'auto'
+  };
+  if (currentDetailClientId) saveClientPersona(currentDetailClientId, persona);
   const data={name:document.getElementById('dp-name').value,nickname:document.getElementById('dp-nickname').value,age:parseInt(document.getElementById('dp-age').value)||null,email:document.getElementById('dp-email').value,language:document.getElementById('dp-language').value,session_frequency:parseInt(document.getElementById('dp-frequency').value)||2,program_start_date:document.getElementById('dp-startdate').value||null,characteristics:document.getElementById('dp-characteristics').value,memo:document.getElementById('dp-memo').value};
   try{await api('/api/host/clients/'+currentDetailClientId,'PUT',data);const suc=document.getElementById('profile-save-success');suc.classList.add('show');setTimeout(()=>suc.classList.remove('show'),2000);document.getElementById('detail-client-name').textContent=data.name+(data.nickname?' · '+data.nickname:'');}
   catch(e){alert('저장 실패');}
