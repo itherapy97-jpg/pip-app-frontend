@@ -1404,54 +1404,32 @@ const KO_TRANSLATIONS = {
   }
 };
 
-// ===== MutationObserver - DOM 변경 시 자동 재번역 =====
-let _activeTranslationLang = null;
-let _translationTimer = null;
-let _isTranslating = false;
-let _observer = null;
+// ===== setInterval 폴링 번역 (MutationObserver 대체 - 단순/확실) =====
+let _pollLang = null;
+let _pollInterval = null;
+let _pollCount = 0;
 
 function startAutoTranslation(lang) {
-  if (!lang || lang === 'ko') { stopAutoTranslation(); return; }
-  _activeTranslationLang = lang;
-  
-  // 이미 옵저버가 있으면 중지 후 재시작
-  stopAutoTranslation();
-  
-  _observer = new MutationObserver((mutations) => {
-    if (_isTranslating) return; // 번역 중 재귀 방지
-    let hasNewText = false;
-    for (const m of mutations) {
-      if (m.addedNodes.length > 0) { hasNewText = true; break; }
+  _pollLang = lang;
+  if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
+  if (!lang || lang === 'ko') return;
+  _pollCount = 0;
+  // 즉시 1회
+  try { translateDOM(lang); } catch(e) {}
+  // 이후 500ms마다 최대 20회(10초)
+  _pollInterval = setInterval(function() {
+    try { translateDOM(lang); } catch(e) {}
+    _pollCount++;
+    if (_pollCount >= 20) {
+      clearInterval(_pollInterval); _pollInterval = null;
+      // DeepL로 한국어 DB 데이터 번역
+      translateDataElements(lang);
     }
-    if (!hasNewText) return;
-    
-    // 디바운스 - 연속 변경 시 마지막 것만 처리
-    clearTimeout(_translationTimer);
-    _translationTimer = setTimeout(() => {
-      if (_activeTranslationLang && _activeTranslationLang !== 'ko') {
-        _isTranslating = true;
-        try { translateDOM(_activeTranslationLang); } finally { _isTranslating = false; }
-      }
-    }, 150);
-  });
-  
-  _observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: false,
-    attributes: false
-  });
-  
-  // 즉시 한 번 번역
-  setTimeout(() => {
-    _isTranslating = true;
-    try { translateDOM(lang); } finally { _isTranslating = false; }
-  }, 50);
+  }, 500);
 }
 
 function stopAutoTranslation() {
-  if (_observer) { _observer.disconnect(); _observer = null; }
-  clearTimeout(_translationTimer);
+  if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
 }
 
 
@@ -1627,7 +1605,7 @@ function applyFullTranslation(lang) {
   if (lang === 'ko') { location.reload(); return; }
   applyPageTranslation(lang);
   
-  // MutationObserver로 동적 콘텐츠 자동 번역 시작
+  // 폴링으로 동적 콘텐츠 자동 번역 시작
   startAutoTranslation(lang);
   
   // 개별 ID 기반 추가 번역 (동적 생성 요소 대비)
@@ -1675,9 +1653,9 @@ function goScreen(id) {
     ? (localStorage.getItem('pip_host_lang_pref')||'ko')
     : (localStorage.getItem('pip_client_lang_pref')||'ko');
   if (activeLang !== 'ko') {
-    // MutationObserver가 이미 실행 중이면 건드리지 않음
-    if (_activeTranslationLang !== activeLang) startAutoTranslation(activeLang);
-    else setTimeout(()=>{ _isTranslating=true; translateDOM(activeLang); _isTranslating=false; }, 100);
+    
+    startAutoTranslation(activeLang);
+    
   }
   if (id==='screen-home') loadHome();
   if (id==='screen-edu-list') loadEduList();
@@ -2350,6 +2328,8 @@ async function loadHostSettings(){try{const s=await api('/api/host/settings');if
 async function saveSettings(){const data={landing_text:document.getElementById('landing-text').value,company_name:document.getElementById('company-name').value,program_name:document.getElementById('program-name').value};try{await api('/api/host/settings','PUT',data);document.getElementById('settings-success').classList.add('show');setTimeout(()=>document.getElementById('settings-success').classList.remove('show'),2000);}catch(e){alert('저장 실패');}}
 
 function showHostTab(tab,btn){
+  const hl=localStorage.getItem('pip_host_lang_pref')||'ko';
+  if(hl!=='ko') startAutoTranslation(hl);
   document.querySelectorAll('.host-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
   ['groups','clients','edu','schedule','settings'].forEach(t=>{const el=document.getElementById('host-tab-'+t);if(el)el.style.display=t===tab?'block':'none';});
   if(tab==='settings')loadHostSettings();if(tab==='schedule')loadHostSchedule();if(tab==='groups')loadGroups();
