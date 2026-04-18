@@ -1084,11 +1084,16 @@ function buildClientVoiceList(lang) {
   list.innerHTML = '';
   
   if (!byLang.length) {
-    list.innerHTML = '<div style="padding:14px;text-align:center">'
-      + '<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">이 언어의 목소리가 기기에 없습니다.</div>'
-      + '<div style="font-size:11px;color:var(--sage-dark);line-height:1.6">'
-      + (lc === 'ko' ? '한국어 목소리 추가: Windows 설정 → 시간 및 언어 → 언어 및 지역 → 한국어 → 음성 합성기 추가' : '기기 설정에서 이 언어팩을 설치해 주세요.')
-      + '</div></div>';
+    list.innerHTML = '<div style="padding:14px">'
+      + '<div style="font-size:13px;color:var(--danger);margin-bottom:8px">⚠️ 이 언어의 목소리가 기기에 없습니다.</div>'
+      + (lc === 'ko' ? '<div style="font-size:11px;color:var(--sage-dark);line-height:1.7;background:#EDF4EE;padding:10px;border-radius:8px">'
+        + '<b>한국어 남성/여성 목소리 추가 방법 (Windows):</b><br>'
+        + '1. Windows 설정 → 시간 및 언어 → 언어 및 지역<br>'
+        + '2. 한국어 → 언어 옵션 → 음성 합성기<br>'
+        + '3. Microsoft <b>Minjun</b> (남성) / <b>Jimin</b> (여성) 추가<br>'
+        + '4. 브라우저 재시작 후 목록에 나타납니다'
+        + '</div>' : '<div style="font-size:11px;color:var(--text-muted)">기기 설정에서 이 언어팩을 설치해 주세요.</div>')
+      + '</div>';
     return;
   }
   
@@ -1109,6 +1114,17 @@ function buildClientVoiceList(lang) {
   renderGroup('👩 여성', femaleVoices);
   renderGroup('👨 남성', maleVoices);
   if (otherVoices.length) renderGroup('🔊 기타', otherVoices);
+  
+  // 한국어인데 남성 목소리 없을 때 설치 안내
+  if (lc === 'ko' && maleVoices.length === 0) {
+    const guide = document.createElement('div');
+    guide.style.cssText = 'margin-top:8px;padding:10px;background:#FDF8F0;border-radius:8px;font-size:11px;color:#8B5E2A;line-height:1.6;border:1px solid #e8d5b0';
+    guide.innerHTML = '👨 <b>한국어 남성 목소리 없음</b><br>'
+      + 'Windows 설정 → 시간 및 언어 → 한국어 → 음성 합성기<br>'
+      + '→ Microsoft <b>Minjun</b>(남성) 또는 <b>Seojun</b>(남성) 추가<br>'
+      + '→ 브라우저 재시작 후 자동으로 목록에 표시됩니다';
+    list.appendChild(guide);
+  }
 }
 
 function renderVoiceItem(v, selectedName, lc, list) {
@@ -1140,22 +1156,19 @@ function renderVoiceItem(v, selectedName, lc, list) {
 
 // 목소리 미리 듣기
 function testClientVoice(voiceName, lang) {
-  const voices = speechSynthesis.getVoices();
-  const v = voices.find(vv => vv.name === voiceName);
-  const tests = {
-    ko:'안녕하세요. 오늘 어떻게 지내셨나요?',
-    en:'Hello. How are you feeling today?',
-    ja:'こんにちは。今日はどんな気分ですか？',
-    zh:'你好，今天感觉怎么样？',
-    es:'Hola. ¿Cómo te sientes hoy?',
-    fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"
-  };
+  const tests = {ko:'안녕하세요. 오늘 어떻게 지내셨나요?',en:'Hello. How are you feeling today?',ja:'こんにちは。今日はどんな気分ですか？',zh:'你好，今天感觉怎么样？',es:'Hola. ¿Cómo te sientes hoy?',fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"};
   speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(tests[lang] || tests.en);
-  if (v) utter.voice = v;
-  utter.lang = lang;
-  utter.rate = 0.92;
-  speechSynthesis.speak(utter);
+  const run = () => {
+    const utter = new SpeechSynthesisUtterance(tests[lang] || tests.en);
+    const v = speechSynthesis.getVoices().find(vv => vv.name === voiceName);
+    if (v) utter.voice = v;
+    utter.lang = lang;
+    utter.rate = 0.92;
+    speechSynthesis.speak(utter);
+  };
+  const voices = speechSynthesis.getVoices();
+  if (voices.length > 0) { run(); }
+  else { speechSynthesis.onvoiceschanged = () => { speechSynthesis.onvoiceschanged = null; run(); }; }
 }
 
 // 목소리 선택 저장
@@ -1185,25 +1198,45 @@ function loadPersonaUI(clientId) {
 }
 
 // TTS 재생 - 내담자별 언어별 설정 목소리 사용
+function _executeSpeak(text, targetLang, voiceName) {
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = targetLang;
+  utter.rate = 0.92;
+  utter.pitch = 1.0;
+  if (voiceName) {
+    const v = speechSynthesis.getVoices().find(vv => vv.name === voiceName);
+    if (v) utter.voice = v;
+  }
+  speechSynthesis.speak(utter);
+}
+
 function speakWithPersona(text, lang, clientId) {
   if (!text || !window.speechSynthesis) return;
   speechSynthesis.cancel();
   const targetLang = lang || getCurrentDisplayLang() || 'ko';
   const lc = targetLang.split('-')[0];
   const persona = clientId ? getClientPersona(clientId) : null;
-  const savedVoiceName = (persona?.voices||{})[lc] || null;
-  
-  const utter = new SpeechSynthesisUtterance(text);
-  if (savedVoiceName) {
-    const saved = speechSynthesis.getVoices().find(v => v.name === savedVoiceName);
-    utter.voice = saved || getBestVoice(targetLang);
+  const savedVoiceName = (persona?.voices||{})[lc] || localStorage.getItem('pip_voice_for_'+lc) || null;
+
+  // Chrome에서 첫 호출 시 getVoices()가 빈 배열 반환하는 문제 해결
+  const voices = speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    _executeSpeak(text, targetLang, savedVoiceName);
   } else {
-    utter.voice = getBestVoice(targetLang);
+    // 목소리 로드 완료 이벤트 대기
+    const handler = () => {
+      speechSynthesis.onvoiceschanged = null;
+      _executeSpeak(text, targetLang, savedVoiceName);
+    };
+    speechSynthesis.onvoiceschanged = handler;
+    // 최대 1초 대기 fallback
+    setTimeout(() => { 
+      if (speechSynthesis.onvoiceschanged === handler) {
+        speechSynthesis.onvoiceschanged = null;
+        _executeSpeak(text, targetLang, savedVoiceName);
+      }
+    }, 1000);
   }
-  utter.lang = targetLang;
-  utter.rate = 0.92;
-  utter.pitch = 1.0;
-  speechSynthesis.speak(utter);
 }
 
 // ===== 화면 전환 =====
