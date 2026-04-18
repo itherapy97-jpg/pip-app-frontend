@@ -7,7 +7,2026 @@
 <title>Peace-In Practice™</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+:root {<!DOCTYPE html><!-- PIP v2.5 -->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google" content="notranslate">
+<title>Peace-In Practice™</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 :root {
+  --sage: #7C9A7E; --sage-light: #B8CEBC; --sage-dark: #4A6B4D;
+  --cream: #F5F0E8; --warm: #E8DFD0; --text: #2C2C2A;
+  --text-muted: #7A7872; --white: #FDFCFA; --danger: #A0522D;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; }
+.container { width: 100%; max-width: 420px; min-height: 100vh; background: var(--white); display: flex; flex-direction:column; position: relative; overflow: hidden; }
+.screen { display: none; flex-direction: column; min-height: 100vh; }
+.screen.active { display: flex; }
+.pip-header { padding: 48px 32px 32px; text-align: center; border-bottom: 1px solid var(--warm); }
+.pip-logo { width: 48px; height: 48px; background: var(--sage); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: white; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 500; }
+.pip-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; letter-spacing: 0.02em; color: var(--text); font-style: italic; }
+.pip-title em { font-style: italic; color: var(--sage-dark); }
+.pip-company { font-size: 11px; color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 6px; }
+.content { flex: 1; padding: 28px 32px; overflow-y: auto; }
+.notice { background: #FDF8F0; border-left: 3px solid var(--sage); padding: 14px 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0; }
+.notice p { font-size: 12px; line-height: 1.7; color: var(--text-muted); }
+.notice strong { color: var(--sage-dark); }
+.sec-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+.field { margin-bottom: 20px; }
+.field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.05em; }
+.field input, .field textarea { width: 100%; padding: 13px 16px; border: 1px solid var(--warm); border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--white); color: var(--text); transition: border-color 0.2s; outline: none; }
+.field input:focus, .field textarea:focus { border-color: var(--sage); }
+.field textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+.btn { display: block; width: 100%; padding: 14px 20px; border-radius: 8px; border: 1px solid var(--warm); background: var(--white); color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif; cursor: pointer; text-align: center; transition: all 0.2s; margin-bottom: 10px; }
+.btn:hover { background: var(--cream); border-color: var(--sage-light); }
+.btn.primary { background: var(--sage); border-color: var(--sage); color: white; }
+.btn.primary:hover { background: var(--sage-dark); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--text-muted); font-size: 13px; }
+.btn.ghost:hover { color: var(--text); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.prog-wrap { height: 4px; background: var(--warm); border-radius: 2px; margin: 8px 0 4px; }
+.prog-bar { height: 4px; background: var(--sage); border-radius: 2px; transition: width 0.4s; }
+.card { border: 1px solid var(--warm); border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; background: var(--white); }
+.card-row { display: flex; justify-content: space-between; align-items: center; }
+.badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500; }
+.badge.green { background: #EDF4EE; color: var(--sage-dark); }
+.badge.amber { background: #FDF3E7; color: #8B5E2A; }
+.badge.gray { background: var(--warm); color: var(--text-muted); }
+.notif { background: #EDF4EE; border: 1px solid var(--sage-light); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; cursor: pointer; display: none; }
+.notif.show { display: flex; gap: 10px; align-items: flex-start; }
+.notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); margin-top: 5px; flex-shrink: 0; }
+.bubble-wrap { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; justify-content: flex-end; }
+.nav { display: flex; border-top: 1px solid var(--warm); background: var(--white); }
+.nav-tab { flex: 1; padding: 12px 4px 10px; border: none; background: none; cursor: pointer; font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: 'DM Sans', sans-serif; letter-spacing: 0.05em; }
+.nav-tab.active { color: var(--sage-dark); }
+.nav-icon { font-size: 16px; }
+.back-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; font-family: 'DM Sans', sans-serif; }
+.back-btn:hover { background: var(--cream); }
+.top-bar { padding: 14px 20px 10px; border-bottom: 1px solid var(--warm); display: flex; align-items: center; gap: 10px; }
+.top-bar-title { flex: 1; }
+.top-bar-title h2 { font-size: 15px; font-weight: 500; }
+.top-bar-title p { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.warn { background: #FDF3E7; border: 1px solid #E8C99A; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
+.warn p { font-size: 12px; color: #7A4F1A; line-height: 1.7; }
+.error-msg { font-size: 13px; color: var(--danger); margin-top: 8px; display: none; }
+.error-msg.show { display: block; }
+.success-msg { font-size: 13px; color: var(--sage-dark); margin-top: 8px; display: none; }
+.success-msg.show { display: block; }
+.loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+.host-tabs { display: flex; border-bottom: 1px solid var(--warm); }
+.host-tab { flex: 1; padding: 12px 4px; border: none; background: none; cursor: pointer; font-size: 12px; color: var(--text-muted); border-bottom: 2px solid transparent; font-family: 'DM Sans', sans-serif; }
+.host-tab.active { color: var(--sage-dark); border-bottom-color: var(--sage); }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat-card { background: var(--cream); border-radius: 8px; padding: 14px; }
+.stat-num { font-size: 24px; font-weight: 500; color: var(--sage-dark); }
+.stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.client-item { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--warm); cursor: pointer; }
+.client-item:hover { opacity: 0.75; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: #EDF4EE; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: var(--sage-dark); flex-shrink: 0; }
+.unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); }
+.time-slot { padding: 12px 14px; border: 1px solid var(--warm); border-radius: 8px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.time-slot:hover { border-color: var(--sage); background: #F0F5F1; }
+.time-slot.selected { border-color: var(--sage); background: #EDF4EE; }
+.editor-area { width: 100%; padding: 10px 12px; border: 1px solid var(--warm); border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; resize: vertical; min-height: 80px; background: var(--white); color: var(--text); outline: none; }
+.editor-area:focus { border-color: var(--sage); }
+.field-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; margin-top: 14px; }
+.divider { height: 1px; background: var(--warm); margin: 16px 0; }
+.spacer { height: 16px; }
+
+/* Google Translate 위젯 스타일 */
+.translate-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 20px 0;
+  gap: 8px;
+}
+.translate-bar-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+#google_translate_element .goog-te-gadget-simple {
+  border: 1px solid var(--warm) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+  background: var(--white) !important;
+}
+#google_translate_element .goog-te-gadget-simple span {
+  color: var(--sage-dark) !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+/* 커스텀 언어 선택기 */
+.lang-selector-wrap {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 20px 0;
+  z-index: 9999;
+}
+.lang-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--warm);
+  border-radius: 20px;
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.lang-selector:hover { border-color: var(--sage-light); background: var(--cream); }
+.lang-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 20px;
+  background: var(--white);
+  border: 1px solid var(--warm);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  overflow-y: auto;
+  max-height: 260px;
+  min-width: 180px;
+  z-index: 99999;
+  animation: fadeIn 0.15s ease;
+}
+.lang-menu.open { display: block; }
+.lang-menu-item {
+  padding: 10px 18px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f8f5f0;
+}
+.lang-menu-item:last-child { border-bottom: none; }
+.lang-menu-item:hover { background: #EDF4EE; color: var(--sage-dark); }
+.lang-menu-item.active { color: var(--sage-dark); font-weight: 500; background: #f0f5f1; }
+.lang-ko { border-top: 1px solid var(--warm) !important; color: var(--text-muted) !important; font-size: 12px !important; }
+
+/* Google Translate 툴바 */
+.goog-te-balloon-frame { display: none !important; }
+.goog-text-highlight { background: none !important; box-shadow: none !important; }
+#google_translate_element { display: inline-block !important; }
+
+/* 사용설명서 스타일 */
+.manual-section { margin-bottom: 24px; }
+.manual-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--sage-dark);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--warm);
+}
+.manual-step {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+.manual-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--sage);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.manual-step-text { font-size: 13px; line-height: 1.7; color: var(--text); }
+.manual-step-text strong { color: var(--sage-dark); }
+.faq-item { margin-bottom: 14px; }
+.faq-q { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.faq-q::before { content: 'Q. '; color: var(--sage-dark); }
+.faq-a { font-size: 12px; color: var(--text-muted); line-height: 1.7; padding-left: 18px; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+#screen-edu.active { display: flex !important; flex-direction: column; height: 100vh; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ★ Google Translate 오디오/툴팁 차단 */
+  .goog-te-tooltip, .goog-te-tooltip-connector, .goog-te-ftab-float, .goog-tooltip { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+
+<!-- ===== SCREEN: LANDING ===== -->
+<div class="screen" id="screen-landing">
+  <!-- Google Translate 위젯 (투명 1px) -->
+  <div style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;">
+    <div id="google_translate_element"></div>
+  </div>
+
+  <!-- 커스텀 언어 선택기 -->
+  <div class="lang-selector-wrap">
+    <div class="lang-selector" id="langSelector" onclick="toggleLangMenu()">
+      <span style="font-size:13px;color:var(--text-muted)">🌐</span>
+      <span id="langSelected" style="font-size:12px;color:var(--text);font-weight:500">Language</span>
+      <span style="font-size:10px;color:var(--text-muted)">▾</span>
+    </div>
+    <div class="lang-menu" id="langMenu">
+      <div class="lang-menu-item" onclick="setLang('en',this)">English</div>
+      <div class="lang-menu-item" onclick="setLang('zh-CN',this)">中文（简体）</div>
+      <div class="lang-menu-item" onclick="setLang('zh-TW',this)">中文（繁體）</div>
+      <div class="lang-menu-item" onclick="setLang('ja',this)">日本語</div>
+      <div class="lang-menu-item" onclick="setLang('hi',this)">हिन्दी</div>
+      <div class="lang-menu-item" onclick="setLang('es',this)">Español</div>
+      <div class="lang-menu-item" onclick="setLang('fr',this)">Français</div>
+      <div class="lang-menu-item" onclick="setLang('de',this)">Deutsch</div>
+      <div class="lang-menu-item" onclick="setLang('ar',this)">العربية</div>
+      <div class="lang-menu-item" onclick="setLang('pt',this)">Português</div>
+      <div class="lang-menu-item" onclick="setLang('ru',this)">Русский</div>
+      <div class="lang-menu-item" onclick="setLang('vi',this)">Tiếng Việt</div>
+      <div class="lang-menu-item" onclick="setLang('th',this)">ภาษาไทย</div>
+      <div class="lang-menu-item" onclick="setLang('id',this)">Bahasa Indonesia</div>
+      <div class="lang-menu-item lang-ko" onclick="setLang('ko',this)">한국어 (원본)</div>
+    </div>
+  </div>
+
+  <div class="pip-header" style="padding:32px 32px 28px">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px"><p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#4A6B4D;letter-spacing:0.15em;margin:0">PIP</p></div>
+    <h1 class="pip-title">Peace-In <em>Practice</em>™</h1>
+    <p class="pip-company" style="margin-top:6px">Intuit Best Friend</p>
+    <p class="pip-company" style="margin-top:2px;font-size:10px">Intuit Best Friend Foundation (Non-Profit)</p>
+  </div>
+
+  <div class="content">
+    <div style="background:linear-gradient(135deg,#EDF4EE,#F5F0E8);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #B8CEBC">
+      <p id="landing-quote" style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;color:#2C2C2A;line-height:1.7;margin-bottom:10px">
+        "내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."
+      </p>
+      <p id="landing-desc" style="font-size:12px;color:#7A7872;line-height:1.7">
+        Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>
+        전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.
+      </p>
+    </div>
+
+    <div class="notice">
+      <p id="landing-notice"><strong>⚠ 중요 안내</strong><br><br>
+      본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong></p>
+    </div>
+
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="goScreen('screen-login')">시작하기 →</button>
+    <button class="btn ghost" onclick="goScreen('screen-manual')" style="font-size:12px;color:var(--sage-dark)">📖 사용설명서 보기</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN: 사용설명서 ===== -->
+<div class="screen" id="screen-manual">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-landing')">← 뒤로</button>
+    <div class="top-bar-title">
+      <h2>사용설명서</h2>
+      <p>Peace-In Practice™ 이용 안내</p>
+    </div>
+  </div>
+
+  <div class="content" style="padding-top:24px">
+    <div class="manual-section">
+      <div class="manual-section-title">🌿 프로그램이란?</div>
+      <p style="font-size:13px;line-height:1.8;color:var(--text-muted);margin-bottom:10px">
+        Peace-In Practice™는 전문 상담가가 개발한 <strong style="color:var(--text)">내면 교육 프로그램</strong>입니다. 앱을 통해 교육 모듈을 진행하고, 상담가와 1:1 상담을 주고받습니다.
+      </p>
+      <div class="notice" style="margin-bottom:0">
+        <p>본 프로그램은 반드시 <strong>상담가의 초대코드</strong>를 통해서만 참여할 수 있습니다. 일반 공개 가입은 불가합니다.</p>
+      </div>
+    </div>
+
+    <div class="manual-section">
+      <div class="manual-section-title">🚀 시작하는 방법</div>
+      <div class="manual-step">
+        <div class="manual-step-num">1</div>
+        <div class="manual-step-text"><strong>초대코드 받기</strong><br>담당 상담가로부터 6자리 초대코드를 전달받으세요.</div>
+      </div>
+      <div class="manual-step">
+        <div class="manual-step-num">2</div>
+        <div class="manual-step-text"><strong>계정 만들기</strong><br>'시작하기' 버튼 → '초대코드 (첫 방문)' 탭 선택 → 초대코드 입력 → 이메일과 비밀번호 설정</div>
+      </div>
+      <div class="manual-step">
+        <div class="manual-step-num">3</div>
+        <div class="manual-step-text"><strong>다음 방문부터는 이메일 로그인</strong><br>'이메일 로그인' 탭에서 등록한 이메일과 비밀번호로 로그인합니다.</div>
+      </div>
+    </div>
+
+    <div class="manual-section">
+      <div class="manual-section-title">📱 주요 기능 안내</div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">⊙ 홈 화면</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:4px">• 이번 주 진행률 확인<br>• 배정된 교육 모듈 목록<br>• 세션 일정 확인 및 요청<br>• 상담가 답변 알림</div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">◈ 교육 세션</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:4px">• 상담가가 준비한 교육 모듈 진행<br>• 객관식·주관식 질문에 답변<br>• 완료한 모듈은 '완료' 표시</div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">✉ 개인 상담</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:4px">• 마음속에 있는 내용을 자유롭게 작성<br>• 작성 내용은 암호화되어 전송됩니다<br>• 상담가 답변이 오면 홈 화면에 알림 표시</div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">📅 세션 시간 약속</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:4px">• 원하는 세션 시간을 선택해 요청<br>• 상담가 확인 후 최종 확정됩니다</div>
+      </div>
+    </div>
+
+    <div class="manual-section">
+      <div class="manual-section-title">🔒 개인정보 및 보안</div>
+      <div style="background:#F0F5F1;border-radius:10px;padding:14px 16px">
+        <div style="font-size:12px;color:var(--text);line-height:1.8">
+          ✓ 상담 내용은 <strong>암호화</strong>되어 서버에만 보관됩니다<br>
+          ✓ 작성 내용은 이 기기에 저장되지 않습니다<br>
+          ✓ 상담가 이외의 제3자는 내용을 볼 수 없습니다<br>
+          ✓ 상담 내용은 상담가와 서버 간에만 전송됩니다
+        </div>
+      </div>
+    </div>
+
+    <div class="manual-section">
+      <div class="manual-section-title">❓ 자주 묻는 질문</div>
+      <div class="faq-item"><div class="faq-q">초대코드를 잃어버렸어요.</div><div class="faq-a">담당 상담가에게 연락하여 코드를 다시 받으세요.</div></div>
+      <div class="faq-item"><div class="faq-q">비밀번호를 잊어버렸어요.</div><div class="faq-a">현재 비밀번호 재설정 기능은 담당 상담가를 통해 처리됩니다.</div></div>
+      <div class="faq-item"><div class="faq-q">교육 모듈이 보이지 않아요.</div><div class="faq-a">모듈은 상담가가 직접 배정합니다. 아직 배정받지 못한 경우 상담가에게 문의해 주세요.</div></div>
+      <div class="faq-item"><div class="faq-q">상담 답변은 얼마나 걸리나요?</div><div class="faq-a">담당 상담가의 일정에 따라 다르며, 일반적으로 24~48시간 이내에 답변이 전송됩니다.</div></div>
+      <div class="faq-item"><div class="faq-q">이 앱은 어떤 언어로 사용할 수 있나요?</div><div class="faq-a">이 안내 페이지는 상단의 🌐 언어 버튼으로 원하는 언어로 번역할 수 있습니다.</div></div>
+    </div>
+
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="goScreen('screen-login')">시작하기 →</button>
+    <div class="spacer"></div>
+  </div>
+</div>
+
+<!-- ===== 로그인 ===== -->
+<div class="screen" id="screen-login">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-landing')">← 뒤로</button>
+    <div class="top-bar-title"><h2>로그인</h2><p>Peace-In Practice™</p></div>
+  </div>
+  <div class="content" style="padding-top:32px">
+    <div style="display:flex;border:1px solid var(--warm);border-radius:8px;margin-bottom:24px;overflow:hidden">
+      <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:10px;border:none;background:var(--sage);color:white;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">이메일 로그인</button>
+      <button id="tab-invite-btn" onclick="switchLoginTab('invite')" style="flex:1;padding:10px;border:none;background:var(--white);color:var(--text-muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">초대코드 (첫 방문)</button>
+    </div>
+    <div id="login-email-section">
+      <div class="field"><label>이메일</label><input type="email" id="login-email" placeholder="이메일 주소" autocomplete="email" /></div>
+      <div class="field"><label>비밀번호</label><input type="password" id="login-password" placeholder="비밀번호" autocomplete="current-password" /></div>
+      <div class="error-msg" id="login-error">이메일 또는 비밀번호가 올바르지 않습니다.</div>
+      <div class="spacer"></div>
+      <button class="btn primary" onclick="clientEmailLogin()">로그인</button>
+    </div>
+    <div id="login-invite-section" style="display:none">
+      <div class="notice"><p>📌 처음 방문하시나요?<br>상담가에게 받은 <strong>초대코드</strong>를 입력하면 계정을 만들 수 있어요.</p></div>
+      <div class="field"><label>초대 코드</label><input type="text" id="invite-code" placeholder="초대 코드 입력" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.1em;font-size:18px;text-align:center" /></div>
+      <div class="error-msg" id="invite-error">초대 코드가 올바르지 않습니다.</div>
+      <div class="spacer"></div>
+      <button class="btn primary" onclick="checkInviteCode()">다음 →</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-register">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-login')">← 뒤로</button>
+    <div class="top-bar-title"><h2>계정 만들기</h2><p>초대코드 확인 완료</p></div>
+  </div>
+  <div class="content" style="padding-top:32px">
+    <div class="notice"><p>✅ 초대코드가 확인되었습니다.<br>앞으로 사용할 <strong>이메일과 비밀번호</strong>를 설정해주세요.</p></div>
+    <div class="field"><label>이메일</label><input type="email" id="reg-email" placeholder="이메일 주소" autocomplete="email" /></div>
+    <div class="field"><label>비밀번호 (6자 이상)</label><input type="password" id="reg-password" placeholder="비밀번호 설정" autocomplete="new-password" /></div>
+    <div class="field"><label>비밀번호 확인</label><input type="password" id="reg-password2" placeholder="비밀번호 재입력" autocomplete="new-password" /></div>
+    <div class="error-msg" id="reg-error"></div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="registerClient()">계정 만들기 →</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-home">
+  <div class="pip-header" style="padding:20px 32px 16px">
+    <div style="display:flex;align-items:center;gap:10px;text-align:left">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;font-style:italic">Peace-In <em>Practice</em>™</div>
+        <div id="home-greeting" style="font-size:12px;color:var(--text-muted)">안녕하세요</div>
+      </div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="notif" id="notif-banner" onclick="goScreen('screen-reply')">
+      <div class="notif-dot"></div>
+      <div><div style="font-size:13px;font-weight:500;color:var(--sage-dark)" id="notif-text">상담 답변이 도착했습니다</div><div style="font-size:12px;color:var(--sage);margin-top:2px">확인하기 →</div></div>
+    </div>
+    <p class="sec-label" id="lbl-progress">이번 주 진행률</p>
+    <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+    <p style="font-size:12px;color:var(--sage-dark);margin-bottom:20px" id="prog-text">로딩 중...</p>
+    <p class="sec-label" id="lbl-sessions">교육 세션</p>
+    <div id="module-list"><div class="loading">모듈 로딩 중...</div></div>
+    <p class="sec-label" style="margin-top:8px" id="lbl-schedule">세션 시간 약속</p>
+    <div class="card" style="cursor:pointer" onclick="goScreen('screen-schedule')">
+      <div class="card-row"><div style="font-size:14px" id="schedule-text">일정 확인 중...</div><span class="badge green" id="schedule-badge">확인</span></div>
+    </div>
+    <p class="sec-label" style="margin-top:8px" id="lbl-counsel">개인 상담</p>
+    <button class="btn" onclick="goScreen('screen-counsel')" id="btn-counsel">상담 내용 작성하기</button>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;margin-bottom:4px">
+      <button onclick="goScreen('screen-home')" style="flex:1;padding:14px 6px;border:1px solid var(--warm);border-radius:10px;background:var(--sage);color:white;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <span style="font-size:18px">⊙</span><span id="nav-home-lbl">홈</span>
+      </button>
+      <button onclick="goScreen('screen-edu-list')" style="flex:1;padding:14px 6px;border:1px solid var(--warm);border-radius:10px;background:var(--white);color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <span style="font-size:18px">◈</span><span id="nav-edu">교육</span>
+      </button>
+      <button onclick="goScreen('screen-counsel')" style="flex:1;padding:14px 6px;border:1px solid var(--warm);border-radius:10px;background:var(--white);color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <span style="font-size:18px">✉</span><span id="nav-counsel">상담</span>
+      </button>
+    </div>
+  </div>
+  <div style="border-top:1px solid var(--warm);background:var(--white);padding:10px 32px">
+    <button onclick="logout()" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;padding:6px;letter-spacing:0.05em">로그아웃</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-edu-list">
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 뒤로</button><div class="top-bar-title"><h2>교육 세션</h2></div></div>
+  <div class="content"><div id="edu-module-list"><div class="loading">모듈 로딩 중...</div></div></div>
+</div>
+
+<div class="screen" id="screen-edu" style="flex-direction:column;height:100vh;">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-home')">← 뒤로</button>
+    <div class="top-bar-title"><h2 id="edu-module-title">모듈</h2><p id="edu-module-sub" style="font-size:11px;color:var(--text-muted)"></p></div>
+  </div>
+  <div style="padding:0 20px 6px;flex-shrink:0"><div style="height:3px;background:var(--warm);border-radius:2px"><div id="edu-prog-bar" style="height:3px;background:var(--sage);border-radius:2px;width:0%;transition:width 0.5s"></div></div></div>
+  <div class="bubble-wrap" id="edu-bubbles" style="flex:1;overflow-y:auto;padding:12px 16px 4px;min-height:0;justify-content:flex-end;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="edu-choices" style="flex-shrink:0;padding:8px 16px 20px;background:var(--white);border-top:1px solid var(--warm)"></div>
+</div>
+
+<div class="screen" id="screen-schedule">
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 뒤로</button><div class="top-bar-title"><h2>세션 시간 약속</h2></div></div>
+  <div class="content">
+    <div id="confirmed-schedule"><div class="loading">일정 확인 중...</div></div>
+    <div class="divider"></div>
+    <p class="sec-label">새 시간 요청</p>
+    <p id="client-tz-label" style="font-size:11px;color:var(--text-muted);margin-bottom:10px"></p>
+    <div id="time-slots"></div>
+    <div class="spacer"></div>
+    <button class="btn primary" id="request-slot-btn" style="display:none" onclick="requestSlot()">이 시간으로 요청하기</button>
+    <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:10px">상담자 확인 후 최종 확정됩니다</p>
+  </div>
+</div>
+
+<div class="screen" id="screen-counsel">
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 뒤로</button><div class="top-bar-title"><h2 id="counsel-title">개인 상담 신청</h2><p>암호화 전송 · 서버에만 보관</p></div></div>
+  <div class="content">
+    <div class="warn"><p>📌 작성하신 내용은 암호화되어 전송되며, 이 기기에는 저장되지 않습니다.</p></div>
+    <div class="field"><label id="counsel-label">지금 마음속에 있는 것을 자유롭게 적어주세요</label><textarea id="counsel-text" placeholder="여기에 작성하세요..." style="min-height:140px"></textarea>
+    <button id="mic-counsel-text" onclick="startVoiceInput('counsel-text', userLang==='en'?'en-US':'ko-KR')" style="margin-top:8px;width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">🎤 음성 입력</button>
+    </div>
+    <div class="error-msg" id="counsel-error"></div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="sendCounsel()">암호화하여 전송하기</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-counsel-sent">
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 홈으로</button><div class="top-bar-title"><h2>전송 완료</h2></div></div>
+  <div class="content" style="text-align:center;padding-top:60px">
+    <div style="width:56px;height:56px;border-radius:50%;background:#EDF4EE;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:22px;color:var(--sage-dark)">✓</div>
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;margin-bottom:12px">전송되었습니다</h3>
+    <p style="font-size:13px;color:var(--text-muted);line-height:1.8">상담자가 검토 후 답변을 보내드립니다.</p>
+    <div class="spacer"></div><div class="spacer"></div>
+    <button class="btn" onclick="goScreen('screen-home')">홈으로 돌아가기</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-reply">
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 홈으로</button><div class="top-bar-title"><h2>상담가 답변 확인</h2></div></div>
+  <div class="content">
+    <div id="reply-view-section">
+      <div class="notice" style="margin-bottom:16px"><p>📌 답변을 확인하면 화면에서 사라집니다.</p></div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+          상담가 답변
+          <button class="notranslate" onclick="pipSpeak()" 
+            style="background:#EDF4EE;border:1px solid var(--sage-light);border-radius:6px;cursor:pointer;font-size:13px;padding:4px 8px;color:var(--sage-dark)" 
+            title="음성으로 듣기">🔊 듣기</button>
+        </div>
+        <p style="font-size:14px;line-height:1.8" id="reply-content" class="notranslate">로딩 중...</p>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn primary" onclick="confirmReply()">확인했습니다</button>
+    </div>
+    <div id="reply-confirmed-section" style="display:none;text-align:center;padding-top:40px">
+      <div style="width:56px;height:56px;border-radius:50%;background:#EDF4EE;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:22px">🔒</div>
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;margin-bottom:12px">이전 상담은<br>개인별 암호화 저장되어있습니다.</h3>
+      <div class="spacer"></div>
+      <button class="btn primary" onclick="goScreen('screen-counsel')">새 상담 신청하기</button>
+      <button class="btn ghost" onclick="goScreen('screen-home')">홈으로</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 호스트 로그인 ===== -->
+<div class="screen" id="screen-host-login">
+  <!-- 호스트 로그인 언어 선택기 -->
+  <div class="lang-selector-wrap">
+    <div class="lang-selector" onclick="toggleHostLangMenu()">
+      <span style="font-size:13px;color:var(--text-muted)">🌐</span>
+      <span id="hostLoginLangSelected" style="font-size:12px;color:var(--text);font-weight:500">Language</span>
+      <span style="font-size:10px;color:var(--text-muted)">▾</span>
+    </div>
+    <div class="lang-menu" id="hostLoginLangMenu">
+      <div class="lang-menu-item" onclick="setHostLang('en',this)">English</div>
+      <div class="lang-menu-item" onclick="setHostLang('zh-CN',this)">中文（简体）</div>
+      <div class="lang-menu-item" onclick="setHostLang('zh-TW',this)">中文（繁體）</div>
+      <div class="lang-menu-item" onclick="setHostLang('ja',this)">日本語</div>
+      <div class="lang-menu-item" onclick="setHostLang('hi',this)">हिन्दी</div>
+      <div class="lang-menu-item" onclick="setHostLang('es',this)">Español</div>
+      <div class="lang-menu-item" onclick="setHostLang('fr',this)">Français</div>
+      <div class="lang-menu-item" onclick="setHostLang('de',this)">Deutsch</div>
+      <div class="lang-menu-item" onclick="setHostLang('ar',this)">العربية</div>
+      <div class="lang-menu-item" onclick="setHostLang('pt',this)">Português</div>
+      <div class="lang-menu-item" onclick="setHostLang('ru',this)">Русский</div>
+      <div class="lang-menu-item" onclick="setHostLang('vi',this)">Tiếng Việt</div>
+      <div class="lang-menu-item" onclick="setHostLang('th',this)">ภาษาไทย</div>
+      <div class="lang-menu-item" onclick="setHostLang('id',this)">Bahasa Indonesia</div>
+      <div class="lang-menu-item lang-ko" onclick="setHostLang('ko',this)">한국어 (원본)</div>
+    </div>
+  </div>
+  <div class="pip-header">
+    <div class="pip-logo" style="background:var(--sage-dark)">H</div>
+    <h1 class="pip-title">호스트 <em>로그인</em></h1>
+    <p class="pip-company">상담자 전용 / Host Only</p>
+  </div>
+  <div class="content">
+    <div class="warn"><p>🔒 상담자 전용 구역입니다.</p></div>
+    <div class="field"><label>비밀번호 / Password</label><input type="password" id="host-pw" placeholder="호스트 비밀번호" /></div>
+    <div class="error-msg" id="host-error">비밀번호가 올바르지 않습니다.</div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="hostLogin()">로그인</button>
+    <button class="btn ghost" onclick="window.open(window.location.origin,'_blank')">내담자 화면 (새 탭)</button>
+  </div>
+</div>
+
+<!-- ===== 호스트 메인 (수정 2: 번역기 추가됨) ===== -->
+<div class="screen" id="screen-host">
+  <div class="pip-header" style="padding:20px 32px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="pip-logo" style="width:32px;height:32px;background:var(--sage-dark);font-size:11px">H</div>
+        <div style="text-align:left"><div style="font-size:14px;font-weight:500">호스트 패널</div><div style="font-size:11px;color:var(--text-muted)">Intuit Best Friend</div></div>
+      </div>
+      <button class="btn ghost" style="width:auto;padding:4px 10px;font-size:12px" onclick="hostLogout()">로그아웃</button>
+    </div>
+  </div>
+
+  
+
+  <!-- ★ 수정2: 호스트 패널 번역 선택기 -->
+  <div class="lang-selector-wrap" style="padding:6px 20px 0">
+    <div class="lang-selector" onclick="toggleHostLangMenu()">
+      <span style="font-size:13px;color:var(--text-muted)">🌐</span>
+      <span id="hostLangSelected" style="font-size:12px;color:var(--text);font-weight:500">Language</span>
+      <span style="font-size:10px;color:var(--text-muted)">▾</span>
+    </div>
+    <div class="lang-menu" id="hostLangMenu">
+      <div class="lang-menu-item" onclick="setHostLang('en',this)">English</div>
+      <div class="lang-menu-item" onclick="setHostLang('zh-CN',this)">中文（简体）</div>
+      <div class="lang-menu-item" onclick="setHostLang('zh-TW',this)">中文（繁體）</div>
+      <div class="lang-menu-item" onclick="setHostLang('ja',this)">日本語</div>
+      <div class="lang-menu-item" onclick="setHostLang('hi',this)">हिन्दी</div>
+      <div class="lang-menu-item" onclick="setHostLang('es',this)">Español</div>
+      <div class="lang-menu-item" onclick="setHostLang('fr',this)">Français</div>
+      <div class="lang-menu-item" onclick="setHostLang('de',this)">Deutsch</div>
+      <div class="lang-menu-item" onclick="setHostLang('ar',this)">العربية</div>
+      <div class="lang-menu-item" onclick="setHostLang('pt',this)">Português</div>
+      <div class="lang-menu-item" onclick="setHostLang('ru',this)">Русский</div>
+      <div class="lang-menu-item" onclick="setHostLang('vi',this)">Tiếng Việt</div>
+      <div class="lang-menu-item" onclick="setHostLang('th',this)">ภาษาไทย</div>
+      <div class="lang-menu-item" onclick="setHostLang('id',this)">Bahasa Indonesia</div>
+      <div class="lang-menu-item lang-ko" onclick="setHostLang('ko',this)">한국어 (원본)</div>
+    </div>
+  </div>
+
+  <div class="host-tabs">
+    <button class="host-tab active" onclick="showHostTab('groups',this)">그룹</button>
+    <button class="host-tab" onclick="showHostTab('clients',this)">전체 내담자</button>
+    <button class="host-tab" onclick="showHostTab('edu',this)">교육과정</button>
+    <button class="host-tab" onclick="showHostTab('schedule',this)">일정</button>
+    <button class="host-tab" onclick="showHostTab('settings',this)">설정</button>
+  </div>
+  <div id="host-tab-clients" class="content" style="display:none">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" id="stat-clients">-</div><div class="stat-lbl">활성 내담자</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--danger)" id="stat-pending">-</div><div class="stat-lbl">미답변 상담</div></div>
+    </div>
+    <p class="sec-label">내담자 목록</p>
+    <div id="client-list"><div class="loading">로딩 중...</div></div>
+    <div class="spacer"></div>
+    <button class="btn" onclick="goScreen('screen-host-add')">+ 내담자 추가 (초대 코드 생성)</button>
+  </div>
+  <div id="host-tab-groups" class="content">
+    <p class="sec-label">그룹 목록</p>
+    <div id="group-list"><div class="loading">로딩 중...</div></div>
+    <div class="divider"></div>
+    <p class="sec-label">새 그룹 만들기</p>
+    <div class="field-label">그룹 이름 (예: A기업, 가족상담팀)</div>
+    <input type="text" id="new-group-name" placeholder="그룹 이름 입력" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">설명 (선택)</div>
+    <input type="text" id="new-group-desc" placeholder="예: 2026년 상반기 계약" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><div class="field-label">상담 빈도 (주 N회)</div><input type="number" id="new-group-freq" value="3" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" /></div>
+      <div><div class="field-label">계약 기간 (개월)</div><input type="number" id="new-group-months" value="6" min="1" max="24" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" /></div>
+    </div>
+    <div class="field-label">총 모듈 수</div>
+    <input type="number" id="new-group-modules" value="24" min="1" max="100" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:12px" />
+    <button onclick="createGroup()" style="width:100%;padding:12px;background:var(--sage);color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">+ 그룹 생성</button>
+    <div class="success-msg" id="group-create-success" style="margin-top:8px">그룹이 생성되었습니다.</div>
+  </div>
+  <div id="host-tab-edu" class="content" style="display:none">
+    <p class="sec-label">공통 교육 모듈</p>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">모든 내담자에게 공통으로 사용할 교육 모듈을 만들고 질문을 편집하세요.</p>
+    <div id="host-module-list"><div class="loading">로딩 중...</div></div>
+    <div class="divider"></div>
+    <p class="sec-label">새 모듈 추가</p>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="new-module-title" placeholder="모듈 제목 입력" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
+      <button onclick="createGlobalModule()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;white-space:nowrap">+ 추가</button>
+    </div>
+    <div class="success-msg" id="module-create-success" style="margin-top:8px">모듈이 생성되었습니다.</div>
+  </div>
+  <div id="host-tab-schedule" class="content" style="display:none">
+    <p class="sec-label">세션 요청 대기 중</p>
+    <div id="host-pending-schedule"><div class="loading">로딩 중...</div></div>
+    <div class="divider"></div>
+    <p class="sec-label">확정된 세션</p>
+    <div id="host-confirmed-schedule"><div class="loading">로딩 중...</div></div>
+  </div>
+  <div id="host-tab-settings" class="content" style="display:none">
+    <!-- 언어별 목소리 설정 -->
+    <p class="sec-label">🔊 언어별 목소리 설정</p>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">언어를 선택하여 해당 언어의 목소리를 설정하세요. 내담자가 어떤 언어를 선택하든 그 언어에 맞게 설정된 목소리로 읽어드립니다.</div>
+    <div id="lang-voice-settings">
+      <div style="font-size:12px;color:var(--text-muted);margin-top:8px">목소리 목록 로딩 중...</div>
+    </div>
+    <button onclick="testSpeakLang()" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;margin-top:8px">▶ 현재 언어로 미리 듣기</button>
+    <div class="divider"></div>
+    <p class="sec-label">앱 소개 글 수정</p>
+    <div class="field-label">랜딩 소개 문구</div><textarea class="editor-area" id="landing-text" rows="4"></textarea>
+    <div class="field-label">회사명</div><input type="text" id="company-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
+    <div class="field-label">프로그램 이름</div><input type="text" id="program-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="saveSettings()">저장하기</button>
+    <div class="success-msg" id="settings-success">저장되었습니다.</div>
+  </div>
+</div>
+
+<div class="screen" id="screen-host-reply">
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-host')">← 뒤로</button><div class="top-bar-title"><h2 id="host-reply-title">상담 답변</h2><p id="host-reply-sub"></p></div></div>
+  <div class="content">
+    <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">내담자 원문</div><p style="font-size:14px;line-height:1.8" id="host-counsel-text">로딩 중...</p></div>
+    <div class="field-label">답변 작성</div>
+    <textarea class="editor-area" id="host-reply-text" rows="6" placeholder="답변을 작성하세요... (🎤 음성 입력 가능)"></textarea>
+    <button id="mic-host-reply-text" onclick="startVoiceInput('host-reply-text', 'ko-KR')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px">🎤 음성으로 답변 입력</button>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="stopVoiceInput('host-reply-text');sendHostReply()">답변 전송 + 알림 발송</button>
+    <div class="success-msg" id="reply-success">답변이 전송되었습니다.</div>
+  </div>
+</div>
+
+<div class="screen" id="screen-host-add">
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-host')">← 뒤로</button><div class="top-bar-title"><h2>내담자 추가</h2></div></div>
+  <div class="content">
+    <div class="field"><label>내담자 이름 (내부용)</label><input type="text" id="new-client-name" placeholder="예: 홍길동" /></div>
+    <!-- 언어 선택 제거 - 내담자가 Google 번역으로 직접 선택 -->
+    <input type="hidden" id="new-client-lang" value="ko" />
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="addClient()">초대 코드 생성하기</button>
+    <div id="new-invite-result" style="display:none;margin-top:20px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">생성된 초대 코드</div>
+        <div style="font-size:28px;font-weight:500;letter-spacing:0.15em;color:var(--sage-dark)" id="new-invite-code">------</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:8px">내담자에게 이 코드를 전달하세요</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-client-detail">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-host')">← 뒤로</button>
+    <div class="top-bar-title"><h2 id="detail-client-name">내담자 상세</h2><p id="detail-client-sub">프로필 · 모듈 · 상담</p></div>
+    <button id="detail-save-btn" onclick="saveClientProfile()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;display:none;">저장</button>
+  </div>
+  <div style="display:flex;border-bottom:1px solid var(--warm);">
+    <button class="host-tab active" id="dtab-profile" onclick="showDetailTab('profile',this)">프로필</button>
+    <button class="host-tab" id="dtab-modules" onclick="showDetailTab('modules',this)">모듈</button>
+    <button class="host-tab" id="dtab-counsel" onclick="showDetailTab('counsel',this)">상담</button>
+    <button class="host-tab" id="dtab-schedule" onclick="showDetailTab('schedule',this)">일정</button>
+  </div>
+  <div id="detail-tab-profile" class="content" style="overflow-y:auto;">
+    <div class="field-label">이름</div><input type="text" id="dp-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">별명</div><input type="text" id="dp-nickname" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">나이</div><input type="number" id="dp-age" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">이메일</div><input type="email" id="dp-email" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <!-- 언어 선택 제거 - 내담자가 Google 번역으로 직접 선택 -->
+    <input type="hidden" id="dp-language" value="ko" />
+    <div class="field-label">초대 코드</div>
+    <div style="padding:10px 12px;background:var(--cream);border-radius:8px;font-size:14px;letter-spacing:0.1em;color:var(--sage-dark);font-weight:500;margin-bottom:8px" id="dp-invite-code">-</div>
+    <div class="field-label">상담 빈도 (주 N회)</div><input type="number" id="dp-frequency" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">프로그램 시작일</div><input type="date" id="dp-startdate" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
+    <div class="field-label">특징 / 메모</div><textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="내담자 특징, 주의사항 등"></textarea>
+    <div class="field-label">상담 메모 (호스트 전용)</div><textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="진행 상황, 특이사항 등"></textarea>
+    <!-- ★ 내담자별 언어별 목소리 설정 -->
+    <div class="field-label" style="margin-top:16px">🔊 내담자 목소리 설정 (언어별)</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">언어 탭 선택 → 목소리 ▶ 미리 듣기 → 클릭하여 선택. 내담자가 그 언어를 선택하면 지정한 목소리로 나옵니다.</div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px" id="cv-lang-tabs">
+      <button onclick="showClientVoiceLang('ko',this)" class="cv-lang-btn" id="cv-lang-ko" style="padding:6px 10px;border:1.5px solid var(--sage);border-radius:20px;font-size:11px;cursor:pointer;background:#EDF4EE;color:var(--sage-dark)">🇰🇷 한국어</button>
+      <button onclick="showClientVoiceLang('en',this)" class="cv-lang-btn" id="cv-lang-en" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇺🇸 English</button>
+      <button onclick="showClientVoiceLang('ja',this)" class="cv-lang-btn" id="cv-lang-ja" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇯🇵 日本語</button>
+      <button onclick="showClientVoiceLang('zh',this)" class="cv-lang-btn" id="cv-lang-zh" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇨🇳 中文</button>
+      <button onclick="showClientVoiceLang('es',this)" class="cv-lang-btn" id="cv-lang-es" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇪🇸 Español</button>
+      <button onclick="showClientVoiceLang('fr',this)" class="cv-lang-btn" id="cv-lang-fr" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇫🇷 Français</button>
+    </div>
+    <div id="cv-voice-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--warm);border-radius:10px;padding:6px">
+      <div style="font-size:12px;color:var(--text-muted);padding:8px">언어를 선택하면 목소리 목록이 나옵니다.</div>
+    </div>
+    <div class="success-msg" id="profile-save-success" style="margin-top:8px">저장되었습니다.</div>
+    <div class="spacer"></div>
+  </div>
+  <div id="detail-tab-modules" class="content" style="display:none;overflow-y:auto;">
+    <p class="sec-label">배정된 모듈</p>
+    <div id="detail-module-list"><div class="loading">로딩 중...</div></div>
+    <div class="divider"></div>
+    <button id="detail-answers-btn" onclick="loadClientAnswers()" style="display:none;width:100%;padding:11px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;margin-bottom:12px;">📋 내담자 교육 답변 확인</button>
+    <div id="detail-answers-list" style="display:none;margin-bottom:16px;"></div>
+    <div class="divider"></div>
+    <p class="sec-label">모듈 추가</p>
+    <div id="detail-all-modules"><div class="loading">로딩 중...</div></div>
+    <div class="spacer"></div>
+  </div>
+  <div id="detail-tab-counsel" class="content" style="display:none;overflow-y:auto;">
+    <p class="sec-label">상담 내역</p>
+    <div id="detail-counsel-list"><div class="loading">로딩 중...</div></div>
+    <div class="spacer"></div>
+  </div>
+  <div id="detail-tab-schedule" class="content" style="display:none;overflow-y:auto;">
+    <p class="sec-label">일정 현황</p>
+    <div id="detail-schedule-list"><div class="loading">로딩 중...</div></div>
+    <div class="spacer"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-detail-reply">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-client-detail');showDetailTab('counsel',document.getElementById('dtab-counsel'))">← 뒤로</button>
+    <div class="top-bar-title"><h2 id="detail-reply-title">상담 답변</h2></div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px" id="detail-reply-date"></div>
+      <p style="font-size:14px;line-height:1.8" id="detail-counsel-msg">로딩 중...</p>
+    </div>
+    <div id="detail-reply-existing" style="display:none">
+      <div class="field-label">기존 답변</div>
+      <div class="card" style="background:var(--cream)"><p style="font-size:13px;line-height:1.7;color:var(--sage-dark)" id="detail-reply-prev"></p></div>
+    </div>
+    <div class="field-label">답변 작성</div>
+    <textarea class="editor-area" id="detail-reply-text" rows="6" placeholder="답변을 작성하세요... (🎤 음성 입력 가능)"></textarea>
+    <button id="mic-detail-reply-text" onclick="startVoiceInput('detail-reply-text', 'ko-KR')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px">🎤 음성으로 답변 입력</button>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="stopVoiceInput('detail-reply-text');sendDetailReply()">답변 전송</button>
+    <div class="success-msg" id="detail-reply-success">전송되었습니다.</div>
+  </div>
+</div>
+
+<div class="screen" id="screen-module-editor">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-client-detail');showDetailTab('modules',document.getElementById('dtab-modules'))">← 뒤로</button>
+    <div class="top-bar-title"><h2 id="editor-module-title">모듈 편집</h2><p>객관식/주관식 질문 편집</p></div>
+    <button onclick="saveAllQuestions()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">저장</button>
+  </div>
+  <div class="content" style="overflow-y:auto;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button onclick="addQuestion('choice')" style="flex:1;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;font-size:12px;color:var(--sage-dark);cursor:pointer;">+ 객관식 추가</button>
+      <button onclick="addQuestion('text')" style="flex:1;padding:10px;background:#FDF8F0;border:1px solid #E8C99A;border-radius:8px;font-size:12px;color:#8B5E2A;cursor:pointer;">+ 주관식 추가</button>
+    </div>
+    <div id="question-list"></div>
+    <div class="success-msg" id="editor-save-success" style="margin-top:8px;text-align:center;">저장되었습니다.</div>
+    <div class="spacer"></div>
+  </div>
+</div>
+
+</div>
+
+<!-- Google Translate 스크립트 -->
+<!-- Google Translate 제거됨 (보안) -->
+
+<script>
+// IIFE 제거됨 (Google Translate 제거로 불필요)
+
+const API = 'https://pip-app-backend-production.up.railway.app';
+let token = localStorage.getItem('pip_token');
+let userLang = localStorage.getItem('pip_lang') || 'ko';
+let currentCounselId = null, selectedSlotValue = null, selectedSlotLabel = null, currentHostCounselId = null;
+let currentDetailClientId = null, currentDetailCounselId = null, allModules = [];
+let currentClientLang = 'ko';
+let _counselList = [];
+let _originalCounselMsg = '';
+let _wakeLock = null;
+let _recognition = null, _sttRunning = false;
+
+const L = {
+  ko: { greeting:'안녕하세요', progress:'이번 주 진행률', sessions:'교육 세션', schedule:'세션 시간 약속', counsel:'개인 상담', btnCounsel:'상담 내용 작성하기', navEdu:'교육', navCounsel:'상담', counselTitle:'개인 상담 신청', counselLabel:'지금 마음속에 있는 것을 자유롭게 적어주세요', notif:'상담 답변이 도착했습니다' },
+  en: { greeting:'Welcome', progress:"This week's progress", sessions:'Education Sessions', schedule:'Session Schedule', counsel:'Personal Counseling', btnCounsel:'Write a counseling message', navEdu:'Learn', navCounsel:'Counsel', counselTitle:'Personal Counseling Request', counselLabel:"Freely write what's on your mind right now", notif:'Your counseling reply has arrived' }
+};
+
+// ===== 백엔드 번역 (Railway 경유) =====
+// api() 래퍼 대신 직접 fetch 사용 (401시 로그인 리다이렉트 방지)
+async function translateText(text, targetLang, sourceLang) {
+  if (!text || !text.trim()) return text;
+  if (!sourceLang) sourceLang = 'auto';
+  const tk = localStorage.getItem('pip_token') || token;
+  if (!tk) return text;
+  try {
+    const res = await fetch(API + '/api/translate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + tk
+      },
+      body: JSON.stringify({ text, targetLang, sourceLang })
+    });
+    if (!res.ok) return text;
+    const data = await res.json();
+    return data.translated || text;
+  } catch(e) { return text; }
+}
+
+function getHostDisplayLang() {
+  // Google Translate 제거됨
+  if (c) { const p = c.split('=')[1].split('/'); return p[2] || 'ko'; }
+  return 'ko';
+}
+
+function translateBadge() {
+  return '<span style="font-size:10px;color:var(--sage);margin-left:6px;vertical-align:middle">🌐 번역됨</span>';
+}
+
+// ===== 화면 잠금 방지 =====
+async function requestWakeLock() {
+  try { if ('wakeLock' in navigator) _wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+}
+function releaseWakeLock() {
+  if (_wakeLock) { try { _wakeLock.release(); } catch(e) {} _wakeLock = null; }
+}
+
+// ===== TTS =====
+function getBestVoice(langCode) {
+  const voices = speechSynthesis.getVoices();
+  const lc = (langCode||'ko').toLowerCase().split('-')[0].split('_')[0];
+  const premium = voices.filter(v => v.lang.toLowerCase().startsWith(lc) && /neural|premium|enhanced|wavenet|natural/i.test(v.name));
+  if (premium.length) return premium[0];
+  const normal = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
+  return normal[0] || voices[0] || null;
+}
+function speakText(text, lang) {
+  if (!text || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.voice = getBestVoice(lang || userLang || 'ko');
+  utter.lang = lang || userLang || 'ko';
+  utter.rate = 0.92;
+  speechSynthesis.speak(utter);
+}
+function stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); }
+// ★ TTS 목소리 미리 로드 (페이지 시작 시)
+if (window.speechSynthesis) {
+  speechSynthesis.getVoices(); // 초기 로드 트리거
+  speechSynthesis.onvoiceschanged = () => {
+    speechSynthesis.getVoices(); // 목소리 로드 완료 시 캐시
+  };
+}
+
+// ===== STT (장문 음성 입력) =====
+function startVoiceInput(targetId, lang) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Chrome 브라우저에서 음성 입력이 가능합니다.'); return; }
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  if (_sttRunning) { stopVoiceInput(targetId); return; }
+  _recognition = new SR();
+  _recognition.lang = lang || (userLang==='en'?'en-US':'ko-KR');
+  _recognition.continuous = true;
+  _recognition.interimResults = true;
+  let finalText = el.value || '';
+  _recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    el.value = finalText + interim;
+    el.scrollTop = el.scrollHeight;
+  };
+  _recognition.onend = () => { if (_sttRunning) { try { _recognition.start(); } catch(e){} } };
+  _recognition.onerror = (e) => { if (e.error==='not-allowed') { alert('마이크 권한을 허용해 주세요.'); stopVoiceInput(targetId); } };
+  _sttRunning = true;
+  try { _recognition.start(); } catch(e) { _sttRunning = false; return; }
+  requestWakeLock();
+  _updateMicBtn(targetId, true);
+}
+function stopVoiceInput(targetId) {
+  _sttRunning = false;
+  if (_recognition) { try { _recognition.onend = null; _recognition.stop(); } catch(e) {} _recognition = null; }
+  releaseWakeLock();
+  _updateMicBtn(targetId, false);
+}
+function _updateMicBtn(targetId, on) {
+  const btn = document.getElementById('mic-' + targetId);
+  if (!btn) return;
+  btn.innerHTML = on ? '🔴 중지' : '🎤 음성 입력';
+  btn.style.background = on ? '#e74c3c' : '#EDF4EE';
+  btn.style.color = on ? 'white' : 'var(--sage-dark)';
+}
+
+// ===== 언어별 목소리 시스템 =====
+const TONE_PRESETS = {
+  auto:  {rate:0,     pitch:0},
+  calm:  {rate:-0.12, pitch:-0.15},
+  bright:{rate:+0.10, pitch:+0.15},
+  warm:  {rate:-0.05, pitch:+0.05}
+};
+
+function getVoiceForLang(langCode) {
+  const lc = (langCode||'ko').split('-')[0];
+  const saved = localStorage.getItem('pip_voice_for_' + lc);
+  const voices = speechSynthesis.getVoices();
+  if (saved) { const f=voices.find(v=>v.name===saved); if(f) return f; }
+  return null;
+}
+
+function guessGender(name) {
+  if (/female|woman|fiona|victoria|karen|samantha|yuna|sora|seon-hi|alice|jenny|nova|shimmer/i.test(name)) return '👩';
+  if (/male|man|daniel|thomas|alex|fred|oliver|echo|onyx/i.test(name)) return '👨';
+  return '🔊';
+}
+
+function buildLangVoiceSettings() {
+  const container = document.getElementById('lang-voice-settings');
+  if (!container) return;
+  const voices = speechSynthesis.getVoices();
+  const langs = [{code:'ko',label:'🇰🇷 한국어'},{code:'en',label:'🇺🇸 English'},{code:'ja',label:'🇯🇵 日本語'},{code:'zh',label:'🇨🇳 中文'},{code:'es',label:'🇪🇸 Español'},{code:'fr',label:'🇫🇷 Français'},{code:'de',label:'🇩🇪 Deutsch'},{code:'ar',label:'🇸🇦 العربية'}];
+  container.innerHTML = '';
+  langs.forEach(lang => {
+    const byLang = voices.filter(v => v.lang.toLowerCase().startsWith(lang.code));
+    if (!byLang.length) return;
+    const savedName = localStorage.getItem('pip_voice_for_' + lang.code)||'';
+    const row = document.createElement('div'); row.style.marginBottom='10px';
+    const label = document.createElement('div'); label.style.cssText='font-size:12px;color:var(--text-muted);margin-bottom:4px;display:flex;justify-content:space-between';
+    label.innerHTML = lang.label + '<button onclick="testSpeakLang(\''+lang.code+'\''+')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--sage-dark)">▶</button>';
+    const sel = document.createElement('select'); sel.id='voice-for-'+lang.code;
+    sel.style.cssText='width:100%;padding:9px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none';
+    sel.innerHTML='<option value="">🔀 자동 (기기 최고음질)</option>';
+    byLang.forEach(v => {
+      const opt=document.createElement('option'); opt.value=v.name;
+      const g=guessGender(v.name); const q=/neural|premium|enhanced|wavenet|natural/i.test(v.name)?'⭐':(v.localService?'💾':'🌐');
+      opt.textContent=g+q+' '+v.name; if(v.name===savedName) opt.selected=true; sel.appendChild(opt);
+    });
+    sel.onchange=()=>{ if(sel.value) localStorage.setItem('pip_voice_for_'+lang.code, sel.value); else localStorage.removeItem('pip_voice_for_'+lang.code); };
+    row.appendChild(label); row.appendChild(sel); container.appendChild(row);
+  });
+  if(!container.children.length) container.innerHTML='<div style="font-size:12px;color:var(--text-muted)">기기에 설치된 목소리가 없습니다.</div>';
+}
+
+function testSpeakLang(lang) {
+  const useLang = lang || getHostDisplayLang()||'ko';
+  const tests={ko:'안녕하세요. 상담을 시작하겠습니다.',en:'Hello. How are you feeling today?',ja:'こんにちは。今日はどんな気分ですか?',zh:'你好，今天感觉怎么样？',es:'Hola. ¿Cómo te sientes hoy?',fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"};
+  const sel=document.getElementById('voice-for-'+useLang);
+  speechSynthesis.cancel();
+  const utter=new SpeechSynthesisUtterance(tests[useLang]||tests.en);
+  if(sel?.value){const v=speechSynthesis.getVoices().find(vv=>vv.name===sel.value);if(v)utter.voice=v;}
+  else utter.voice=getBestVoice(useLang);
+  utter.lang=useLang; speechSynthesis.speak(utter);
+}
+
+// ===== 내담자별 언어별 목소리 페르소나 시스템 =====
+function getClientPersona(clientId) {
+  if(!clientId) return null;
+  try{return JSON.parse(localStorage.getItem('pip_persona_'+clientId)||'null');}catch(e){return null;}
+}
+function saveClientPersona(clientId, persona) {
+  if(!clientId) return;
+  localStorage.setItem('pip_persona_'+clientId, JSON.stringify(persona));
+}
+
+// 내담자용 목소리 탭 전환
+let _cvCurrentLang = 'ko';
+function showClientVoiceLang(lang, btn) {
+  _cvCurrentLang = lang;
+  // 탭 버튼 스타일 초기화
+  document.querySelectorAll('.cv-lang-btn').forEach(b => {
+    b.style.borderColor = 'var(--warm)';
+    b.style.background = 'var(--white)';
+    b.style.color = 'var(--text)';
+  });
+  if (btn) {
+    btn.style.borderColor = 'var(--sage)';
+    btn.style.background = '#EDF4EE';
+    btn.style.color = 'var(--sage-dark)';
+  }
+  buildClientVoiceList(lang);
+}
+
+// 언어에 맞는 목소리 목록 표시
+function buildClientVoiceList(lang) {
+  const list = document.getElementById('cv-voice-list');
+  if (!list) return;
+  const voices = speechSynthesis.getVoices();
+  const lc = (lang||'ko').split('-')[0].toLowerCase();
+  
+  // 해당 언어 목소리만 필터 (언어 코드 + 언어명 매칭 강화)
+  const langNames = {
+    ko: ['korean', 'ko-', 'hangul', '한국'],
+    en: ['english', 'en-us', 'en-gb', 'en-au', 'en-ca', 'en-in', 'en-'],
+    ja: ['japanese', 'ja-', 'nihon'],
+    zh: ['chinese', 'zh-', 'mandarin', 'cantonese'],
+    es: ['spanish', 'es-'],
+    fr: ['french', 'fr-'],
+    de: ['german', 'de-'],
+    ar: ['arabic', 'ar-'],
+    pt: ['portuguese', 'pt-'],
+    ru: ['russian', 'ru-']
+  };
+  const keywords = langNames[lc] || [lc+'-', lc+'_'];
+  
+  const byLang = voices.filter(v => {
+    const vl = v.lang.toLowerCase();
+    const vn = v.name.toLowerCase();
+    return vl.startsWith(lc) || keywords.some(k => vl.includes(k) || vn.includes(k));
+  });
+  
+  const persona = getClientPersona(currentDetailClientId) || {voices:{}};
+  const selectedName = (persona.voices||{})[lc] || '';
+
+  list.innerHTML = '';
+  
+  if (!byLang.length) {
+    list.innerHTML = '<div style="padding:14px">'
+      + '<div style="font-size:13px;color:var(--danger);margin-bottom:8px">⚠️ 이 언어의 목소리가 기기에 없습니다.</div>'
+      + (lc === 'ko' ? '<div style="font-size:11px;color:var(--sage-dark);line-height:1.7;background:#EDF4EE;padding:10px;border-radius:8px">'
+        + '<b>한국어 남성/여성 목소리 추가 방법 (Windows):</b><br>'
+        + '1. Windows 설정 → 시간 및 언어 → 언어 및 지역<br>'
+        + '2. 한국어 → 언어 옵션 → 음성 합성기<br>'
+        + '3. Microsoft <b>Minjun</b> (남성) / <b>Jimin</b> (여성) 추가<br>'
+        + '4. 브라우저 재시작 후 목록에 나타납니다'
+        + '</div>' : '<div style="font-size:11px;color:var(--text-muted)">기기 설정에서 이 언어팩을 설치해 주세요.</div>')
+      + '</div>';
+    return;
+  }
+  
+  // 성별 추측으로 여성/남성 분류
+  const femaleVoices = byLang.filter(v => /female|woman|fiona|victoria|karen|samantha|heami|yuna|sora|seon-hi|alice|jenny|nova|shimmer|혜미|hyun-soo/i.test(v.name));
+  const maleVoices = byLang.filter(v => /male|man|daniel|thomas|alex|fred|oliver|echo|onyx|ryan|minjun|민준|seojun|서준|david|mark/i.test(v.name));
+  const otherVoices = byLang.filter(v => !femaleVoices.includes(v) && !maleVoices.includes(v));
+  
+  const renderGroup = (label, group) => {
+    if (!group.length) return;
+    const header = document.createElement('div');
+    header.style.cssText = 'font-size:10px;color:var(--sage-dark);letter-spacing:0.08em;padding:6px 6px 4px;font-weight:600';
+    header.textContent = '── ' + label + ' ──';
+    list.appendChild(header);
+    group.forEach(v => renderVoiceItem(v, selectedName, lc, list));
+  };
+  
+  renderGroup('👩 여성', femaleVoices);
+  renderGroup('👨 남성', maleVoices);
+  if (otherVoices.length) renderGroup('🔊 기타', otherVoices);
+  
+  // 한국어인데 남성 목소리 없을 때 설치 안내
+  if (lc === 'ko' && maleVoices.length === 0) {
+    const guide = document.createElement('div');
+    guide.style.cssText = 'margin-top:8px;padding:10px;background:#FDF8F0;border-radius:8px;font-size:11px;color:#8B5E2A;line-height:1.6;border:1px solid #e8d5b0';
+    guide.innerHTML = '👨 <b>한국어 남성 목소리 없음</b><br>'
+      + 'Windows 설정 → 시간 및 언어 → 한국어 → 음성 합성기<br>'
+      + '→ Microsoft <b>Minjun</b>(남성) 또는 <b>Seojun</b>(남성) 추가<br>'
+      + '→ 브라우저 재시작 후 자동으로 목록에 표시됩니다';
+    list.appendChild(guide);
+  }
+}
+
+function renderVoiceItem(v, selectedName, lc, list) {
+  const q = /neural|premium|enhanced|wavenet|natural/i.test(v.name) ? '⭐' : (v.localService ? '💾' : '🌐');
+  const isSelected = v.name === selectedName;
+  const item = document.createElement('div');
+  item.className = 'cv-voice-item';
+  item.dataset.vname = v.name;
+  item.dataset.vlang = lc;
+  item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:3px;border-radius:8px;cursor:pointer;'
+    + 'border:1.5px solid '+(isSelected?'var(--sage)':'var(--warm)')+';background:'+(isSelected?'#EDF4EE':'var(--white)');
+  item.onclick = function() { selectClientVoice(this.dataset.vlang, this.dataset.vname, this); };
+  const nameEl = document.createElement('div');
+  nameEl.style.cssText = 'font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  nameEl.textContent = q+' '+v.name;
+  if (isSelected) {
+    const mark = document.createElement('span');
+    mark.style.cssText = 'color:var(--sage-dark);font-size:10px;margin-left:4px';
+    mark.textContent = ' ✓ 선택됨';
+    nameEl.appendChild(mark);
+  }
+  const playBtn = document.createElement('button');
+  playBtn.textContent = '▶ 듣기';
+  playBtn.style.cssText = 'background:var(--sage);border:none;border-radius:6px;color:white;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px';
+  playBtn.onclick = function(e) { e.stopPropagation(); testClientVoice(item.dataset.vname, item.dataset.vlang); };
+  item.appendChild(nameEl); item.appendChild(playBtn);
+  list.appendChild(item);
+}
+
+// 목소리 미리 듣기
+function testClientVoice(voiceName, lang) {
+  const tests = {ko:'안녕하세요. 오늘 어떻게 지내셨나요?',en:'Hello. How are you feeling today?',ja:'こんにちは。今日はどんな気分ですか？',zh:'你好，今天感觉怎么样？',es:'Hola. ¿Cómo te sientes hoy?',fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"};
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(tests[lang] || tests.en);
+  const v = speechSynthesis.getVoices().find(vv => vv.name === voiceName);
+  if (v) utter.voice = v;
+  utter.lang = lang;
+  utter.rate = 0.92;
+  try { speechSynthesis.speak(utter); } catch(e) {}
+}
+
+// 목소리 선택 저장
+function selectClientVoice(lang, voiceName, el) {
+  if (!currentDetailClientId) return;
+  const persona = getClientPersona(currentDetailClientId) || {voices:{}};
+  if (!persona.voices) persona.voices = {};
+  persona.voices[lang] = voiceName;
+  saveClientPersona(currentDetailClientId, persona);
+  // UI 즉시 갱신
+  buildClientVoiceList(lang);
+}
+
+// 프로필 탭 열릴 때 목소리 UI 초기화
+function loadPersonaUI(clientId) {
+  _cvCurrentLang = 'ko';
+  // 한국어 탭 기본 활성화
+  document.querySelectorAll('.cv-lang-btn').forEach(b => {
+    b.style.borderColor = 'var(--warm)';
+    b.style.background = 'var(--white)';
+    b.style.color = 'var(--text)';
+  });
+  const koBtn = document.getElementById('cv-lang-ko');
+  if (koBtn) { koBtn.style.borderColor='var(--sage)'; koBtn.style.background='#EDF4EE'; koBtn.style.color='var(--sage-dark)'; }
+  // 목소리 목록 로드 (getVoices 준비 대기)
+  setTimeout(() => buildClientVoiceList('ko'), 350);
+}
+
+// TTS 재생 - 내담자별 언어별 설정 목소리 사용
+// ★ 답변 화면 전용 TTS 함수 (notranslate 버튼에서 직접 호출)
+function pipSpeak() {
+  const el = document.getElementById('reply-content');
+  if (!el) { console.log('[PIP] reply-content 없음'); return; }
+  const text = el.innerText || el.textContent || '';
+  console.log('[PIP] pipSpeak 호출, text 길이:', text.length, '내용:', text.substring(0,50));
+  if (!text.trim()) { console.log('[PIP] text 비어있음'); return; }
+  const lang = getCurrentDisplayLang() || 'ko';
+  const clientId = localStorage.getItem('pip_client_id');
+  console.log('[PIP] lang:', lang, 'clientId:', clientId);
+  speakWithPersona(text.trim(), lang, clientId);
+}
+
+// ★ speakWithPersona - 반드시 사용자 클릭 이벤트에서 직접 호출
+// Chrome 보안정책: setTimeout/onvoiceschanged 내부 호출 시 차단됨
+function speakWithPersona(text, lang, clientId) {
+  if (!text || !text.trim()) { console.log('[PIP TTS] 텍스트 없음'); return; }
+  if (!window.speechSynthesis) { alert('이 브라우저는 음성을 지원하지 않습니다. (speechSynthesis 없음)'); return; }
+  
+  speechSynthesis.cancel();
+  
+  const targetLang = lang || getCurrentDisplayLang() || 'ko';
+  const lc = targetLang.split('-')[0];
+  const persona = clientId ? getClientPersona(clientId) : null;
+  const savedVoiceName = (persona?.voices||{})[lc] || localStorage.getItem('pip_voice_for_'+lc) || null;
+  const allVoices = speechSynthesis.getVoices();
+  
+  console.log('[PIP TTS] ▶ 재생 시작');
+  console.log('  - 텍스트:', text.substring(0,30));
+  console.log('  - 언어:', targetLang);
+  console.log('  - clientId:', clientId);
+  console.log('  - 저장 목소리:', savedVoiceName);
+  console.log('  - 기기 목소리 수:', allVoices.length);
+  
+  const utter = new SpeechSynthesisUtterance(text.trim());
+  utter.lang = targetLang;
+  utter.rate = 0.92;
+  utter.pitch = 1.0;
+  
+  if (savedVoiceName) {
+    const v = allVoices.find(vv => vv.name === savedVoiceName);
+    if (v) { utter.voice = v; console.log('  - 목소리 적용:', v.name); }
+    else { console.log('  - 저장 목소리 없음, 기본 사용'); }
+  }
+  
+  utter.onerror = (e) => console.error('[PIP TTS] ✗ 오류:', e.error);
+  utter.onstart = () => console.log('[PIP TTS] ✓ 재생 시작됨');
+  utter.onend = () => console.log('[PIP TTS] ✓ 재생 완료');
+  
+  try {
+    speechSynthesis.speak(utter);
+    console.log('[PIP TTS] speak() 호출됨, pending:', speechSynthesis.pending, 'speaking:', speechSynthesis.speaking);
+  } catch(e) {
+    console.error('[PIP TTS] speak() 예외:', e);
+  }
+}
+
+// ===== 화면 전환 =====
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('active');
+  if (id==='screen-home') loadHome();
+  if (id==='screen-edu-list') loadEduList();
+  if (id==='screen-host') loadHostDashboard();
+  if (id==='screen-reply') loadReply();
+  if (id==='screen-schedule') loadSchedule();
+  if (id==='screen-host-reply') loadHostReply();
+  if (id==='screen-edu' || id==='screen-counsel') requestWakeLock();
+  else { stopVoiceInput('counsel-text'); stopVoiceInput('edu-text-area'); stopSpeak(); releaseWakeLock(); }
+}
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: { 'Content-Type':'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body) opts.body = JSON.stringify(body);
+  let res;
+  try { res = await fetch(API + path, opts); } catch(e) { throw new Error('네트워크 오류'); }
+  if (res.status === 401 || res.status === 403) {
+    const role = localStorage.getItem('pip_role');
+    token = null; localStorage.removeItem('pip_token');
+    const cur = document.querySelector('.screen.active');
+    const curId = cur ? cur.id : '';
+    if (curId==='screen-host-login'||curId==='screen-login') throw new Error('인증 필요');
+    if (role==='host') { localStorage.removeItem('pip_role'); document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('screen-host-login').classList.add('active'); }
+    else { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('screen-login').classList.add('active'); }
+    throw new Error('인증 만료');
+  }
+  return res.json();
+}
+
+function switchLoginTab(tab) {
+  const es=document.getElementById('login-email-section'), is=document.getElementById('login-invite-section');
+  const eb=document.getElementById('tab-email-btn'), ib=document.getElementById('tab-invite-btn');
+  if (tab==='email') { es.style.display='block'; is.style.display='none'; eb.style.background='var(--sage)'; eb.style.color='white'; ib.style.background='var(--white)'; ib.style.color='var(--text-muted)'; }
+  else { es.style.display='none'; is.style.display='block'; ib.style.background='var(--sage)'; ib.style.color='white'; eb.style.background='var(--white)'; eb.style.color='var(--text-muted)'; }
+}
+
+function extractClientId(jwtToken) {
+  try {
+    const p = jwtToken.split('.')[1];
+    const d = p + '='.repeat((4-p.length%4)%4);
+    const obj = JSON.parse(atob(d));
+    // 백엔드 JWT 필드 모두 시도
+    const id = obj.clientId || obj.id || obj.userId || obj.client_id || obj.sub || null;
+    console.log('[PIP] JWT payload:', JSON.stringify(obj), '→ clientId:', id);
+    return id;
+  } catch(e) { return null; }
+}
+
+async function clientEmailLogin() {
+  const email=document.getElementById('login-email').value.trim(), password=document.getElementById('login-password').value;
+  const errEl=document.getElementById('login-error'); errEl.classList.remove('show');
+  if (!email||!password) { errEl.textContent='이메일과 비밀번호를 입력해주세요.'; errEl.classList.add('show'); return; }
+  try {
+    const data = await api('/api/auth/client/login','POST',{email,password});
+    if (data.token) { token=data.token; localStorage.setItem('pip_token',token); const cid=extractClientId(token); if(cid) localStorage.setItem('pip_client_id',cid); localStorage.setItem('pip_lang',data.language||userLang); userLang=data.language||userLang; applyLang(); showScreen('screen-home'); loadHome(); }
+    else { errEl.textContent=data.error||'로그인 실패'; errEl.classList.add('show'); }
+  } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
+}
+
+let pendingInviteCode='';
+async function checkInviteCode() {
+  const code=document.getElementById('invite-code').value.trim().toUpperCase();
+  const errEl=document.getElementById('invite-error'); errEl.classList.remove('show');
+  if (!code) { errEl.textContent='초대코드를 입력해주세요.'; errEl.classList.add('show'); return; }
+  try {
+    const data = await api('/api/auth/client/login','POST',{inviteCode:code});
+    if (data.needsRegister) { pendingInviteCode=code; showScreen('screen-register'); }
+    else if (data.token) { token=data.token; localStorage.setItem('pip_token',token); applyLang(); showScreen('screen-home'); loadHome(); }
+    else { errEl.textContent=data.error||'유효하지 않은 초대코드입니다.'; errEl.classList.add('show'); }
+  } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
+}
+
+async function registerClient() {
+  const email=document.getElementById('reg-email').value.trim(), pw=document.getElementById('reg-password').value, pw2=document.getElementById('reg-password2').value;
+  const errEl=document.getElementById('reg-error'); errEl.classList.remove('show');
+  if (!email||!pw) { errEl.textContent='이메일과 비밀번호를 입력해주세요.'; errEl.classList.add('show'); return; }
+  if (pw.length<6) { errEl.textContent='비밀번호는 6자 이상이어야 합니다.'; errEl.classList.add('show'); return; }
+  if (pw!==pw2) { errEl.textContent='비밀번호가 일치하지 않습니다.'; errEl.classList.add('show'); return; }
+  try {
+    const data = await api('/api/auth/client/register','POST',{inviteCode:pendingInviteCode,email,password:pw,language:userLang});
+    if (data.token) { token=data.token; localStorage.setItem('pip_token',token); localStorage.setItem('pip_lang',data.language||userLang); userLang=data.language||userLang; applyLang(); showScreen('screen-home'); loadHome(); }
+    else { errEl.textContent=data.error||'가입 실패'; errEl.classList.add('show'); }
+  } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
+}
+
+function applyLang() {
+  const l=L[userLang]||L.ko;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('home-greeting',l.greeting); set('lbl-progress',l.progress); set('lbl-sessions',l.sessions);
+  set('lbl-schedule',l.schedule); set('lbl-counsel',l.counsel); set('btn-counsel',l.btnCounsel);
+  set('nav-edu',l.navEdu); set('nav-counsel',l.navCounsel); set('counsel-title',l.counselTitle); set('counsel-label',l.counselLabel);
+}
+function logout() { localStorage.removeItem('pip_token'); localStorage.removeItem('pip_lang'); token=null; goScreen('screen-login'); }
+
+async function loadHome() {
+  applyLang();
+  try { const n=await api('/api/counsel/notification'); const b=document.getElementById('notif-banner'); if(n.hasNotification){b.classList.add('show');document.getElementById('notif-text').textContent=L[userLang]?.notif||'상담 답변이 도착했습니다';}else b.classList.remove('show'); } catch(e){}
+  try {
+    const modules=await api('/api/sessions/modules');
+    const completed=modules.filter(m=>m.completed).length, sessPerWeek=modules.length>0?(modules[0].sessionsPerWeek||3):3, totalModules=24;
+    const pct=totalModules>0?Math.round((completed/totalModules)*100):0;
+    document.getElementById('prog-bar').style.width=pct+'%';
+    document.getElementById('prog-text').textContent=(((completed)%sessPerWeek)+1)+'/'+sessPerWeek+'/'+Math.min(completed+1,totalModules)+'/'+totalModules;
+    document.getElementById('module-list').innerHTML=modules.map(m=>{
+      const mIdx=modules.indexOf(m), mLbl=(mIdx%sessPerWeek+1)+'/'+sessPerWeek+'/'+(mIdx+1)+'/'+totalModules;
+      return '<div class="card" style="cursor:pointer;'+(m.completed?'opacity:0.7':'')+'" onclick="'+(m.completed?'':("startModule('"+m.id+"','"+m.title+"')"))+'">'
+        +'<div class="card-row"><div><div style="font-size:11px;color:var(--sage);letter-spacing:0.05em;margin-bottom:2px">'+mLbl+'</div>'
+        +'<div style="font-size:14px;font-weight:500">'+m.title+'</div></div>'
+        +'<span class="badge '+(m.completed?'green':'amber')+'">'+(m.completed?'완료':'진행')+'</span></div></div>';
+    }).join('');
+  } catch(e){document.getElementById('module-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">모듈 로드 실패</p>';}
+  try {
+    const schedules=await api('/api/schedule/confirmed');
+    if(schedules&&schedules.length>0){
+      const s=schedules[0]; let t=s.confirmed_time||s.requested_time;
+      try{if(t&&t.includes('T'))t=formatSlotForTZ(new Date(t),Intl.DateTimeFormat().resolvedOptions().timeZone,userLang);}catch(e){}
+      document.getElementById('schedule-text').textContent='다음 세션: '+t;
+      document.getElementById('schedule-badge').textContent=s.status==='confirmed'?'확정':'대기 중';
+      document.getElementById('schedule-badge').className='badge '+(s.status==='confirmed'?'green':'amber');
+    } else { document.getElementById('schedule-text').textContent='일정 없음 — 새 세션 요청하기'; document.getElementById('schedule-badge').textContent='→'; document.getElementById('schedule-badge').className='badge gray'; }
+  } catch(e){}
+}
+
+function loadEduList() {
+  api('/api/sessions/modules').then(modules=>{
+    document.getElementById('edu-module-list').innerHTML=modules.map(m=>'<div class="card" style="cursor:pointer;margin-bottom:12px" onclick="startModule(\''+m.id+'\',\''+m.title+'\')"><div class="card-row"><div><div style="font-size:15px;font-weight:500;font-family:\'Cormorant Garamond\',serif">'+m.title+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+(userLang==='en'?'Tap to begin':'탭하여 시작')+'</div></div><span class="badge '+(m.completed?'green':'amber')+'">'+(m.completed?(userLang==='en'?'Done':'완료'):(userLang==='en'?'Start':'시작'))+'</span></div></div>').join('');
+  }).catch(()=>{document.getElementById('edu-module-list').innerHTML='<p style="color:var(--text-muted)">로드 실패</p>';});
+}
+
+let currentModuleId=null, currentQuestionId=null, eduCurrentStep=0, eduTotalSteps=5;
+
+function playClick() {
+  try { const ctx=new(window.AudioContext||window.webkitAudioContext)(),osc=ctx.createOscillator(),gain=ctx.createGain(); osc.connect(gain);gain.connect(ctx.destination); osc.frequency.setValueAtTime(880,ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(440,ctx.currentTime+0.08); gain.gain.setValueAtTime(0.06,ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12); osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.12); } catch(e){}
+}
+
+function startModule(moduleId, title) {
+  currentModuleId=moduleId; eduCurrentStep=0;
+  document.getElementById('edu-module-title').textContent=title;
+  document.getElementById('edu-module-sub').textContent='진행 중...';
+  document.getElementById('edu-bubbles').innerHTML='';
+  document.getElementById('edu-choices').innerHTML='';
+  document.getElementById('edu-prog-bar').style.width='0%';
+  goScreen('screen-edu');
+  setTimeout(()=>{
+    api('/api/sessions/modules/'+moduleId+'/start').then(q=>{
+      if(q.completed){document.getElementById('edu-prog-bar').style.width='100%';addBubbleTyping('이 모듈은 이미 완료되었습니다. 수고하셨습니다! ✅',()=>{document.getElementById('edu-choices').innerHTML='<button onclick="goScreen(\'screen-home\')" style="display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>';});return;}
+      if(q.resuming){addBubbleTyping('이전에 진행하던 부분부터 이어서 시작합니다.',()=>showQuestion(q));}
+      else{showQuestion(q);}
+    }).catch(()=>addBubbleTyping('질문 로드 실패. 다시 시도해 주세요.',null));
+  },300);
+}
+
+function showQuestion(q) {
+  currentQuestionId=q.questionId; eduCurrentStep++;
+  document.getElementById('edu-prog-bar').style.width=Math.min((eduCurrentStep/eduTotalSteps)*100,95)+'%';
+  if(q.type==='text'){addBubbleTyping(q.text,()=>showTextInput());}
+  else{addBubbleTyping(q.text,()=>showChoiceCards(q.choices||[]));}
+}
+
+function showTextInput() {
+  const choicesEl=document.getElementById('edu-choices');
+  choicesEl.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;gap:8px;align-items:flex-end;animation:slideUp 0.3s ease';
+  const ta=document.createElement('textarea');
+  ta.id='edu-text-area';
+  ta.placeholder='여기에 자유롭게 적어주세요...';
+  ta.style.cssText='flex:1;padding:12px 14px;border:1.5px solid var(--warm);border-radius:14px;font-size:14px;font-family:"DM Sans",sans-serif;resize:none;outline:none;line-height:1.6;height:80px;color:var(--text);background:var(--white)';
+  ta.addEventListener('focus',()=>ta.style.borderColor='var(--sage)');
+  ta.addEventListener('blur',()=>ta.style.borderColor='var(--warm)');
+  const btn=document.createElement('button');
+  btn.innerHTML='→';
+  btn.style.cssText='background:var(--sage);color:white;border:none;border-radius:14px;padding:12px 16px;font-size:18px;cursor:pointer;height:80px;flex-shrink:0';
+  btn.onclick=()=>{const val=ta.value.trim();if(!val){ta.style.borderColor='var(--danger)';return;}stopVoiceInput('edu-text-area');submitTextAnswer(val);};
+  wrap.appendChild(ta); wrap.appendChild(btn);
+  choicesEl.appendChild(wrap);
+  // 마이크 버튼
+  const micBtn=document.createElement('button');
+  micBtn.id='mic-edu-text-area';
+  micBtn.innerHTML='🎤 음성 입력';
+  micBtn.style.cssText='width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif;margin-top:8px';
+  micBtn.onclick=()=>startVoiceInput('edu-text-area', userLang==='en'?'en-US':'ko-KR');
+  choicesEl.appendChild(micBtn);
+  setTimeout(()=>ta.focus(),100);
+}
+
+async function submitTextAnswer(value) {
+  document.getElementById('edu-choices').innerHTML='';
+  const bubblesEl=document.getElementById('edu-bubbles');
+  const uw=document.createElement('div'); uw.style.cssText='display:flex;justify-content:flex-end;margin-bottom:4px;animation:fadeIn 0.3s ease';
+  const ub=document.createElement('div'); ub.style.cssText='background:var(--sage);color:white;border-radius:16px 16px 4px 16px;padding:12px 16px;max-width:78%;font-size:14px;line-height:1.55';
+  ub.textContent=value; uw.appendChild(ub); bubblesEl.appendChild(uw); bubblesEl.scrollTop=bubblesEl.scrollHeight;
+  try {
+    const res=await api('/api/sessions/answer','POST',{questionId:currentQuestionId,textValue:value,moduleId:currentModuleId});
+    if(res.completed){document.getElementById('edu-prog-bar').style.width='100%';setTimeout(()=>{addBubbleTyping('수고하셨습니다. 오늘 세션이 완료되었습니다.',()=>{document.getElementById('edu-choices').innerHTML='<button onclick="goScreen(\'screen-home\')" style="display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>';});},600);}
+    else{setTimeout(()=>showQuestion(res.nextQuestion),800);}
+  } catch(e){setTimeout(()=>addBubbleTyping('오류가 발생했습니다. 다시 시도해 주세요.',null),600);}
+}
+
+function addBubbleTyping(text, callback) {
+  const bubblesEl=document.getElementById('edu-bubbles');
+  const wrap=document.createElement('div'); wrap.style.cssText='display:flex;align-items:flex-end;gap:8px;margin-bottom:4px;animation:fadeIn 0.3s ease';
+  const avatar=document.createElement('div'); avatar.style.cssText='width:28px;height:28px;border-radius:50%;background:#EDF4EE;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+  avatar.innerHTML='<div style="width:18px;height:18px;background:var(--sage);border-radius:50%"></div>';
+  const typing=document.createElement('div'); typing.style.cssText='background:#EDF4EE;border-radius:16px 16px 16px 4px;padding:12px 16px;max-width:78%;font-size:14px;color:var(--sage)';
+  typing.innerHTML='<span style="letter-spacing:4px;color:var(--sage-dark)">···</span>';
+  wrap.appendChild(avatar); wrap.appendChild(typing);
+  bubblesEl.appendChild(wrap); bubblesEl.scrollTop=bubblesEl.scrollHeight;
+  setTimeout(()=>{
+    typing.style.cssText='background:#EDF4EE;border-radius:16px 16px 16px 4px;padding:14px 18px;max-width:78%;font-size:15px;line-height:1.7;color:var(--sage-dark);font-family:"Cormorant Garamond",serif;font-weight:400';
+    const textNode=document.createElement('div'); textNode.textContent=text;
+    const speakBtn=document.createElement('button'); speakBtn.innerHTML='🔊'; speakBtn.title='음성으로 듣기';
+    speakBtn.style.cssText='background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0 0 6px;vertical-align:middle;opacity:0.6';
+    speakBtn.onclick=()=>speakText(text, userLang||'ko');
+    typing.innerHTML=''; typing.appendChild(textNode); typing.appendChild(speakBtn);
+    bubblesEl.scrollTop=bubblesEl.scrollHeight;
+    if(callback) setTimeout(callback,300);
+  },700);
+}
+
+function showChoiceCards(choices) {
+  const choicesEl=document.getElementById('edu-choices'); choicesEl.innerHTML='';
+  choices.forEach((c,i)=>{
+    const card=document.createElement('button');
+    card.style.cssText='display:block;width:100%;background:var(--white);border:1.5px solid var(--warm);border-radius:12px;padding:11px 16px;margin-bottom:7px;font-size:14px;font-family:"DM Sans",sans-serif;color:var(--sage-dark);text-align:left;cursor:pointer;line-height:1.5;transition:all 0.15s;animation:slideUp 0.25s ease '+(i*0.06)+'s both';
+    card.textContent=c.label;
+    card.onmouseenter=()=>{card.style.borderColor='var(--sage)';card.style.background='#F4F8F4';card.style.transform='translateY(-1px)';};
+    card.onmouseleave=()=>{card.style.borderColor='var(--warm)';card.style.background='var(--white)';card.style.transform='translateY(0)';};
+    card.onclick=()=>{playClick();submitAnswer(c.value,card,c.label);};
+    choicesEl.appendChild(card);
+  });
+}
+
+async function submitAnswer(value, btn, label) {
+  document.querySelectorAll('#edu-choices button').forEach(b=>{b.disabled=true;b.style.opacity='0.4';});
+  btn.style.opacity='1'; btn.style.borderColor='var(--sage)'; btn.style.background='#EDF4EE';
+  setTimeout(()=>{
+    const bubblesEl=document.getElementById('edu-bubbles');
+    const uw=document.createElement('div'); uw.style.cssText='display:flex;justify-content:flex-end;margin-bottom:4px;animation:fadeIn 0.3s ease';
+    const ub=document.createElement('div'); ub.style.cssText='background:var(--sage);color:white;border-radius:16px 16px 4px 16px;padding:12px 16px;max-width:78%;font-size:14px;line-height:1.55';
+    ub.textContent=label; uw.appendChild(ub); bubblesEl.appendChild(uw); bubblesEl.scrollTop=bubblesEl.scrollHeight;
+    document.getElementById('edu-choices').innerHTML='';
+  },150);
+  try {
+    const res=await api('/api/sessions/answer','POST',{questionId:currentQuestionId,choiceValue:value,choiceLabel:label,moduleId:currentModuleId});
+    if(res.error){setTimeout(()=>addBubbleTyping('저장 중 오류: '+res.error,null),600);return;}
+    if(res.completed){document.getElementById('edu-prog-bar').style.width='100%';setTimeout(()=>{addBubbleTyping('수고하셨습니다. 오늘 세션이 완료되었습니다.',()=>{document.getElementById('edu-choices').innerHTML='<button onclick="goScreen(\'screen-home\')" style="display:block;width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>';});},600);}
+    else if(res.nextQuestion){setTimeout(()=>showQuestion(res.nextQuestion),800);}
+    else{setTimeout(()=>addBubbleTyping('다음 질문을 불러오지 못했습니다.',null),600);}
+  } catch(e){setTimeout(()=>addBubbleTyping('오류가 발생했습니다. 다시 시도해 주세요.',null),600);}
+}
+
+// 시간대 변환
+const BASE_SLOTS_KST=[{day:1,hour:18,minute:0},{day:2,hour:10,minute:0},{day:3,hour:19,minute:0},{day:4,hour:20,minute:0}];
+function getNextSlotDate(dayKST,hourKST,minuteKST){const now=new Date(),KST=9*60*60000,nowKST=new Date(now.getTime()+KST),kstDay=nowKST.getUTCDay(),daysUntil=(dayKST-kstDay+7)%7,candidate=new Date(nowKST);candidate.setUTCDate(candidate.getUTCDate()+daysUntil);candidate.setUTCHours(hourKST,minuteKST,0,0);if(candidate<=nowKST)candidate.setUTCDate(candidate.getUTCDate()+7);return new Date(candidate.getTime()-KST);}
+function formatSlotForTZ(date,tz,lang){const locale=lang==='ko'?'ko-KR':'en-US';return new Intl.DateTimeFormat(locale,{timeZone:tz,weekday:'long',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).format(date);}
+function formatDateForHost(isoString){const date=new Date(isoString),hostTZ=Intl.DateTimeFormat().resolvedOptions().timeZone;return new Intl.DateTimeFormat('ko-KR',{timeZone:hostTZ,weekday:'long',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false,timeZoneName:'short'}).format(date);}
+
+function buildTimeSlots(){
+  const clientTZ=Intl.DateTimeFormat().resolvedOptions().timeZone,lang=userLang||'ko';
+  const tzLabel=document.getElementById('client-tz-label');if(tzLabel)tzLabel.textContent='📍 '+clientTZ+' 기준';
+  const container=document.getElementById('time-slots');if(!container)return;container.innerHTML='';
+  BASE_SLOTS_KST.forEach((slot)=>{
+    const date=getNextSlotDate(slot.day,slot.hour,slot.minute),localStr=formatSlotForTZ(date,clientTZ,lang),isoStr=date.toISOString();
+    const div=document.createElement('div');div.className='time-slot';
+    div.innerHTML='<div><div style="font-size:14px">'+localStr+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">KST: '+formatSlotForTZ(date,'Asia/Seoul','ko')+'</div></div><span style="font-size:12px;color:var(--text-muted)">가능</span>';
+    div.onclick=()=>selectSlot(div,isoStr,localStr);
+    container.appendChild(div);
+  });
+}
+
+async function loadSchedule(){
+  try{const schedules=await api('/api/schedule/confirmed');const el=document.getElementById('confirmed-schedule');if(schedules&&schedules.length>0){el.innerHTML=schedules.map(s=>{let d=s.confirmed_time||s.requested_time;try{if(d&&d.includes('T'))d=formatSlotForTZ(new Date(d),Intl.DateTimeFormat().resolvedOptions().timeZone,userLang);}catch(e){}return'<div class="card"><div class="card-row"><div style="font-size:14px">'+d+'</div><span class="badge '+(s.status==='confirmed'?'green':'amber')+'">'+(s.status==='confirmed'?'확정':'대기 중')+'</span></div></div>';}).join('');}else{el.innerHTML='<p style="font-size:13px;color:var(--text-muted)">확정된 일정 없음</p>';}}catch(e){}
+  buildTimeSlots();
+}
+
+function selectSlot(el,isoVal,displayLabel){document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('selected'));el.classList.add('selected');selectedSlotValue=isoVal;selectedSlotLabel=displayLabel;document.getElementById('request-slot-btn').style.display='block';}
+
+async function requestSlot(){if(!selectedSlotValue)return;const clientTZ=Intl.DateTimeFormat().resolvedOptions().timeZone;try{await api('/api/schedule/request','POST',{requestedTime:selectedSlotValue,clientTimezone:clientTZ,displayTime:selectedSlotLabel});alert('요청이 전송되었습니다.');goScreen('screen-home');}catch(e){}}
+
+async function sendCounsel(){
+  const msg=document.getElementById('counsel-text').value.trim();const errEl=document.getElementById('counsel-error');errEl.classList.remove('show');
+  if(!msg){errEl.textContent='내용을 입력해주세요.';errEl.classList.add('show');return;}
+  try{const res=await api('/api/counsel/send','POST',{message:msg});if(res.success){document.getElementById('counsel-text').value='';goScreen('screen-counsel-sent');}else{errEl.textContent='전송 실패.';errEl.classList.add('show');}}
+  catch(e){errEl.textContent='서버 오류.';errEl.classList.add('show');}
+}
+
+async function loadReply(){
+  document.getElementById('reply-view-section').style.display='block';
+  document.getElementById('reply-confirmed-section').style.display='none';
+  const replyEl = document.getElementById('reply-content');
+  replyEl.textContent = '...';
+
+  // 1단계: 답변 로드
+  let originalReply = '';
+  try {
+    const res = await api('/api/counsel/reply');
+    if (res && res.hasReply) {
+      currentCounselId = res.counselId;
+      originalReply = res.reply || '';
+      replyEl.textContent = originalReply; // 즉시 원문 표시
+    } else {
+      replyEl.textContent = '확인 가능한 답변이 없습니다.';
+      return;
+    }
+  } catch(e) {
+    // api()가 401로 로그인 화면 전환 시 여기 도달
+    if (replyEl.textContent === '...') {
+      replyEl.textContent = '확인 가능한 답변이 없습니다.';
+    }
+    return;
+  }
+
+  // 2단계: 번역 (실패해도 원문 유지)
+  const clientLang = getCurrentDisplayLang() || 'ko';
+  if (originalReply && clientLang !== 'ko') {
+    translateText(originalReply, clientLang, 'auto')
+      .then(translated => {
+        if (translated && translated.trim() && translated !== originalReply) {
+          replyEl.textContent = translated;
+        }
+      })
+      .catch(() => {}); // 번역 실패 시 원문 유지
+  }
+}
+
+async function confirmReply(){
+  if(!currentCounselId){goScreen('screen-home');return;}
+  try{await api('/api/counsel/reply/read','POST',{counselId:currentCounselId});}catch(e){}
+  document.getElementById('reply-view-section').style.display='none';document.getElementById('reply-confirmed-section').style.display='block';
+}
+
+// ===== 호스트 언어 =====
+const LANG_NAMES={'en':'English','zh-CN':'中文（简体）','zh-TW':'中文（繁體）','ja':'日本語','hi':'हिन्दी','es':'Español','fr':'Français','de':'Deutsch','ar':'العربية','pt':'Português','ru':'Русский','vi':'Tiếng Việt','th':'ภาษาไทย','id':'Bahasa Indonesia','ko':'한국어'};
+
+// ★ 현재 표시 언어 감지 (localStorage 기반 - Google Translate 제거됨)
+function getCurrentDisplayLang() {
+  return localStorage.getItem('pip_client_lang_pref') || 'ko';
+}
+
+// 호스트 현재 표시 언어 감지
+function getHostDisplayLang() {
+  return localStorage.getItem('pip_host_lang_pref') || 'ko';
+}
+
+function toggleLangMenu(){document.getElementById('langMenu').classList.toggle('open');}
+function setLang(lang, el) {
+  document.getElementById('langMenu').classList.remove('open');
+  localStorage.setItem('pip_lang_display', LANG_NAMES[lang] || lang);
+  localStorage.setItem('pip_client_lang_pref', lang);
+  const langEl = document.getElementById('langSelected');
+  if (langEl) langEl.textContent = LANG_NAMES[lang] || lang;
+  applyPageTranslation(lang);
+}
+
+// ★ 내장 번역 딕셔너리 (API 호출 없음, 완전 보안)
+const LANDING_TRANSLATIONS = {
+  ko: {
+    quote: '"내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."',
+    desc: 'Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.',
+    notice: '<strong>⚠ 중요 안내</strong><br><br>본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong>',
+    startBtn: '시작하기 →', manual: '📖 사용설명서 보기'
+  },
+  en: {
+    quote: '"Inner peace is not about fixing,<br>but <em style="color:#4A6B4D">discovering</em> what is already there."',
+    desc: "Peace-In Practice™ is the world's first unique methodology for inner education, approaching from the exact opposite direction of conventional <strong style='color:#4A6B4D'>CBT (Cognitive Behavioral Therapy)</strong>.<br><br>Created by professional counselors, this program regularly includes <strong style='color:#4A6B4D'>actual 1:1 counseling</strong> sessions within its curriculum.",
+    notice: "<strong>⚠ Important Notice</strong><br><br>This program operates effectively only under the guidance of a professional counselor. <strong>Access is restricted to authorized participants only.</strong>",
+    startBtn: 'Get Started →', manual: '📖 View Manual'
+  },
+  ja: {
+    quote: '"内なる平和は直すことではなく、<br>すでにあるものを<em style="color:#4A6B4D">発見すること</em>です。"',
+    desc: 'Peace-In Practice™は、従来の<strong style="color:#4A6B4D">CBT（認知行動療法）</strong>と正反対のアプローチで行う、人類初の独自の内面教育メソッドです。<br><br>専門カウンセラーが創案したこのプログラムは、教育課程の中に<strong style="color:#4A6B4D">実際の1:1カウンセリング</strong>が定期的に含まれています。',
+    notice: '<strong>⚠ 重要なお知らせ</strong><br><br>このプログラムは専門カウンセラーの指導のもとでのみ効果的に機能します。<strong>許可された参加者のみアクセス可能です。</strong>',
+    startBtn: '始める →', manual: '📖 マニュアルを見る'
+  },
+  'zh-CN': {
+    quote: '"内心的平和不是修复，<br>而是<em style="color:#4A6B4D">发现</em>已经存在的东西。"',
+    desc: 'Peace-In Practice™是全球首创的内心教育方法论，与传统<strong style="color:#4A6B4D">CBT（认知行为疗法）</strong>方向完全相反。<br><br>由专业咨询师创立的这个项目，在课程中定期包含<strong style="color:#4A6B4D">实际1:1咨询</strong>环节。',
+    notice: '<strong>⚠ 重要通知</strong><br><br>本项目仅在专业咨询师指导下有效运作。<strong>仅限授权参与者访问。</strong>',
+    startBtn: '开始 →', manual: '📖 查看说明书'
+  },
+  es: {
+    quote: '"La paz interior no se trata de arreglar,<br>sino de <em style="color:#4A6B4D">descubrir</em> lo que ya está ahí."',
+    desc: 'Peace-In Practice™ es la primera metodología única del mundo para la educación interior, abordando desde la dirección exactamente opuesta al <strong style="color:#4A6B4D">CBT (Terapia Cognitivo-Conductual)</strong> convencional.<br><br>Este programa, creado por consejeros profesionales, incluye regularmente sesiones de <strong style="color:#4A6B4D">consejería real 1:1</strong> dentro de su currículo.',
+    notice: '<strong>⚠ Aviso Importante</strong><br><br>Este programa funciona eficazmente solo bajo la guía de un consejero profesional. <strong>El acceso está restringido solo a participantes autorizados.</strong>',
+    startBtn: 'Comenzar →', manual: '📖 Ver Manual'
+  },
+  fr: {
+    quote: `"La paix intérieure ne consiste pas à réparer,<br>mais à <em style="color:#4A6B4D">découvrir</em> ce qui est déjà là."`,
+    desc: `Peace-In Practice™ est la première méthodologie unique au monde pour l'éducation intérieure, abordant dans la direction exactement opposée à la <strong style='color:#4A6B4D'>TCC (Thérapie Cognitive-Comportementale)</strong> conventionnelle.<br><br>Ce programme, créé par des conseillers professionnels, inclut régulièrement des séances de <strong style='color:#4A6B4D'>conseil réel 1:1</strong> dans son cursus.`,
+    notice: `<strong>⚠ Avis Important</strong><br><br>Ce programme fonctionne efficacement uniquement sous la direction d'un conseiller professionnel. <strong>L'accès est réservé aux participants autorisés uniquement.</strong>`,
+    startBtn: 'Commencer →', manual: '📖 Voir le Manuel'
+  },
+  de: {
+    quote: '"Innerer Frieden bedeutet nicht zu reparieren,<br>sondern das zu <em style="color:#4A6B4D">entdecken</em>, was bereits da ist."',
+    desc: 'Peace-In Practice™ ist die weltweit erste einzigartige Methodik für innere Bildung, die aus der genau entgegengesetzten Richtung zur konventionellen <strong style="color:#4A6B4D">KVT (Kognitive Verhaltenstherapie)</strong> vorgeht.<br><br>Dieses von professionellen Beratern entwickelte Programm beinhaltet regelmäßig echte <strong style="color:#4A6B4D">1:1-Beratungssitzungen</strong> in seinem Lehrplan.',
+    notice: '<strong>⚠ Wichtiger Hinweis</strong><br><br>Dieses Programm funktioniert effektiv nur unter der Anleitung eines professionellen Beraters. <strong>Zugang ist nur autorisierten Teilnehmern gestattet.</strong>',
+    startBtn: 'Starten →', manual: '📖 Handbuch ansehen'
+  }
+};
+
+function applyPageTranslation(lang) {
+  const lc = lang.split('-')[0];
+  const t = LANDING_TRANSLATIONS[lang] || LANDING_TRANSLATIONS[lc] || LANDING_TRANSLATIONS.en;
+  
+  const quoteEl = document.getElementById('landing-quote');
+  const descEl = document.getElementById('landing-desc');
+  const noticeEl = document.getElementById('landing-notice');
+  const startBtn = document.querySelector('#screen-landing .btn.primary');
+  const manualLink = document.querySelector('#screen-landing a[href="#manual"]') || document.querySelector('#screen-landing .manual-link');
+  
+  if (quoteEl) quoteEl.innerHTML = t.quote;
+  if (descEl) descEl.innerHTML = t.desc;
+  if (noticeEl) noticeEl.innerHTML = t.notice;
+  if (startBtn && t.startBtn) startBtn.textContent = t.startBtn;
+}
+
+function toggleHostLangMenu(){
+  const hm=document.getElementById('hostLangMenu'),lm=document.getElementById('hostLoginLangMenu');
+  const anyOpen=(hm&&hm.classList.contains('open'))||(lm&&lm.classList.contains('open'));
+  if(hm)hm.classList.remove('open');if(lm)lm.classList.remove('open');
+  if(!anyOpen){if(hm)hm.classList.add('open');if(lm)lm.classList.add('open');}
+}
+
+function setHostLang(lang,el){
+  if(document.getElementById('hostLangMenu'))document.getElementById('hostLangMenu').classList.remove('open');
+  if(document.getElementById('hostLoginLangMenu'))document.getElementById('hostLoginLangMenu').classList.remove('open');
+  // Google Translate 제거됨
+  localStorage.setItem('pip_host_lang_pref', lang);
+  localStorage.setItem('pip_host_lang_display',LANG_NAMES[lang]||lang);
+  localStorage.setItem('pip_host_lang_pref',lang);
+  location.reload();
+}
+
+function applyHostLang(){}
+
+window.addEventListener('load',()=>{
+  // Language 버튼 표시 (localStorage 기반)
+  const savedClientLang = localStorage.getItem('pip_client_lang_pref') || 'ko';
+  const el = document.getElementById('langSelected');
+  if (el) el.textContent = LANG_NAMES[savedClientLang] || '한국어';
+  const hostSaved=localStorage.getItem('pip_host_lang_display');
+  const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
+  const hostLoginEl=document.getElementById('hostLoginLangSelected');if(hostSaved&&hostLoginEl)hostLoginEl.textContent=hostSaved;
+  
+  // ★ 브라우저/폰 언어 자동 감지 (pip_client_lang_pref 미설정 시)
+  const isHost = location.hash==='#host'||location.hash==='#/host';
+  if (!isHost && !localStorage.getItem('pip_client_lang_pref')) {
+    const browserLang = (navigator.language || navigator.userLanguage || 'ko').toLowerCase();
+    const lc = browserLang.split('-')[0];
+    const langMap = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
+    let target = langMap[lc];
+    if (lc==='zh') target = (browserLang.includes('tw')||browserLang.includes('hk'))?'zh-TW':'zh-CN';
+    const finalLang = target || 'ko';
+    localStorage.setItem('pip_client_lang_pref', finalLang);
+    if (el) el.textContent = LANG_NAMES[finalLang] || '한국어';
+    if (finalLang !== 'ko') applyPageTranslation(finalLang);
+  }
+  
+  // Google Translate 제거됨 - DeepL 백엔드 사용
+  const savedLang = localStorage.getItem('pip_client_lang_pref');
+  if (savedLang && savedLang !== 'ko' && !isHost) applyPageTranslation(savedLang);
+});
+
+document.addEventListener('click',(e)=>{
+  if(!e.target.closest('.lang-selector-wrap')){
+    const m=document.getElementById('langMenu');if(m)m.classList.remove('open');
+    const hm=document.getElementById('hostLangMenu');if(hm)hm.classList.remove('open');
+    const lm=document.getElementById('hostLoginLangMenu');if(lm)lm.classList.remove('open');
+  }
+  // Google Translate 툴팁 클릭 시 제거
+  const tooltip = document.querySelector('.goog-te-tooltip');
+  if (tooltip) tooltip.style.display = 'none';
+});
+
+// Google Translate 툴팁 주기적 숨기기
+setInterval(() => {
+  const tt = document.querySelector('.goog-te-tooltip');
+  if (tt && tt.style.display !== 'none') tt.style.display = 'none';
+}, 500);
+
+// ===== 호스트 =====
+async function hostLogin(){
+  const pw=document.getElementById('host-pw').value;document.getElementById('host-error').classList.remove('show');
+  try{const data=await api('/api/auth/host/login','POST',{password:pw});if(data.token){token=data.token;localStorage.setItem('pip_token',token);localStorage.setItem('pip_role','host');applyHostLang();goScreen('screen-host');}else{document.getElementById('host-error').classList.add('show');}}
+  catch(e){document.getElementById('host-error').classList.add('show');}
+}
+function hostLogout(){localStorage.removeItem('pip_token');localStorage.removeItem('pip_role');token=null;goScreen('screen-host-login');}
+
+async function loadHostDashboard(){
+  loadGroups();
+  try{const clients=await api('/api/host/clients');document.getElementById('stat-clients').textContent=clients.length;document.getElementById('stat-pending').textContent=clients.filter(c=>c.hasPending).length;document.getElementById('client-list').innerHTML=clients.map(c=>{const dn=c.email||c.name||'내담자',ini=dn.substring(0,2).toUpperCase();return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar">'+ini+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+dn+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">'+(c.hasPending?'💬 상담 대기 중':'미답변 없음')+' · 주'+(c.session_frequency||2)+'회</div><div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 '+(c.invite_code||'-')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join('');}
+  catch(e){document.getElementById('client-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">로드 실패</p>';}
+  try{const modules=await api('/api/host/modules');document.getElementById('host-module-list').innerHTML=modules.length>0?modules.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1;cursor:pointer" onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')"><div style="font-size:14px;font-weight:500">'+m.title+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">클릭하여 질문 편집</div></div><button onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';}
+  catch(e){}
+  loadHostSchedule();
+}
+
+async function openClientDetail(clientId){currentDetailClientId=clientId;goScreen('screen-client-detail');showDetailTab('profile',document.getElementById('dtab-profile'));await loadClientDetail();}
+
+async function loadClientDetail(){
+  try{
+    const data=await api('/api/host/clients/'+currentDetailClientId);const c=data.client;
+    document.getElementById('detail-client-name').textContent=c.name+(c.nickname?' · '+c.nickname:'');
+    document.getElementById('detail-client-sub').textContent=(c.language==='ko'?'한국어':'English')+' · 주'+(c.session_frequency||2)+'회';
+    document.getElementById('dp-name').value=c.name||'';document.getElementById('dp-nickname').value=c.nickname||'';
+    document.getElementById('dp-age').value=c.age||'';document.getElementById('dp-email').value=c.email||'';
+    document.getElementById('dp-language').value=c.language||'ko';
+    currentClientLang=c.language||'ko';
+    document.getElementById('dp-invite-code').textContent=c.invite_code||'-';
+    document.getElementById('dp-frequency').value=c.session_frequency||2;
+    document.getElementById('dp-startdate').value=c.program_start_date||'';
+    document.getElementById('dp-characteristics').value=c.characteristics||'';
+    document.getElementById('dp-memo').value=c.memo||'';
+    const assigned=data.modules||[];
+    document.getElementById('detail-module-list').innerHTML=assigned.length>0?assigned.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1"><div style="font-size:14px;font-weight:500">'+(m.modules?.title||'모듈')+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+(m.completed?'✅ 완료':(m.is_active?'🟢 진행 중':'⏸ 대기'))+'</div></div><div style="display:flex;gap:6px;align-items:center"><button onclick="openModuleEditor(\''+m.module_id+'\',\''+((m.modules?.title||'모듈').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button><button onclick="toggleModule(\''+m.module_id+'\','+!m.is_active+')" style="background:'+(m.is_active?'#FDF3E7':'#EDF4EE')+';color:'+(m.is_active?'#8B5E2A':'var(--sage-dark)')+';border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">'+(m.is_active?'비활성화':'활성화')+'</button><button onclick="removeModule(\''+m.module_id+'\')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button></div></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
+    const answersBtn=document.getElementById('detail-answers-btn');if(answersBtn)answersBtn.style.display='block';
+    allModules=await api('/api/host/modules');
+    const assignedIds=assigned.map(m=>m.module_id);
+    document.getElementById('detail-all-modules').innerHTML=allModules.filter(m=>!assignedIds.includes(m.id)).map(m=>'<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule(\''+m.id+'\')"><div class="card-row"><div style="font-size:14px">'+m.title+'</div><span style="color:var(--sage);font-size:12px">+ 배정</span></div></div>').join('')||'<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
+    const counsels=data.counseling||[];
+    _counselList=counsels;
+    document.getElementById('detail-counsel-list').innerHTML=counsels.length>0?counsels.map((c,ci)=>{
+      const dateStr=c.sent_at?new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      const statusColor=c.status==='replied'?'var(--sage-dark)':'var(--danger)';
+      const statusLabel=c.status==='replied'?'답변완료':'미답변';
+      const preview=(c.message||'').substring(0,80)+((c.message||'').length>80?'...':'');
+      const replyHtml=c.reply?'<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 '+(c.reply||'').substring(0,60)+((c.reply||'').length>60?'...':'')+'</div>':'';
+      const replyBtn=!c.reply?'<button onclick="openDetailReplyByIdx('+ci+')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>':'';
+      return '<div class="card" style="margin-bottom:8px;" id="counsel-card-'+c.id+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+        +'<div style="font-size:11px;color:var(--text-muted)">'+dateStr+'</div>'
+        +'<span style="font-size:11px;color:'+statusColor+'">● '+statusLabel+'</span></div>'
+        +'<p style="font-size:13px;line-height:1.6;color:var(--text);cursor:pointer" id="counsel-preview-'+c.id+'" onclick="openDetailReplyByIdx('+ci+')">'+preview+'</p>'
+        +replyHtml+replyBtn+'</div>';
+    }).join(''):'<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
+    // 상담 메시지 자동 번역
+    translateCounselList(counsels);
+    const schedules=data.schedules||[];
+    document.getElementById('detail-schedule-list').innerHTML=schedules.length>0?schedules.map(s=>{let t=s.confirmed_time||s.requested_time||'시간 미정';try{if(t.includes('T'))t=formatDateForHost(t);}catch(e){}const cb=s.status!=='confirmed'?'<button onclick="confirmSchedule(\''+s.id+'\',\''+(s.confirmed_time||s.requested_time)+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:8px;width:100%">✓ 확정하기</button>':'';return'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="font-size:14px">'+t+'</div><span class="badge '+(s.status==='confirmed'?'green':'amber')+'">'+(s.status==='confirmed'?'확정':'대기')+'</span></div>'+cb+'</div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
+  }catch(e){console.error(e);}
+}
+
+// 인덱스로 상담 열기
+function openDetailReplyByIdx(idx){const c=_counselList[idx];if(!c)return;openDetailReply(c.id,c.message||'',c.reply||'',c.sent_at||'',c.status||'');}
+
+// 상담 자동 번역
+async function translateCounselList(counsels){
+  const hostLang=getHostDisplayLang();
+  for(let i=0;i<counsels.length;i++){
+    const c=counsels[i];if(!c.message)continue;
+    const translated=await translateText(c.message,hostLang,'auto');
+    if(!translated||translated===c.message)continue;
+    const msgEl=document.getElementById('counsel-preview-'+c.id);
+    if(msgEl){
+      const preview=translated.substring(0,80)+(translated.length>80?'...':'');
+      msgEl.innerHTML=preview+translateBadge();
+      const tMsg=translated,origMsg=c.message;
+      msgEl.onclick=()=>openDetailReply(c.id,origMsg,c.reply||'',c.sent_at||'',c.status||'',tMsg);
+    }
+    const card=document.getElementById('counsel-card-'+c.id);
+    if(card){const btn=card.querySelector('button');if(btn&&btn.textContent==='답변 작성'){const tMsg=translated,origMsg=c.message;btn.onclick=()=>openDetailReply(c.id,origMsg,c.reply||'',c.sent_at||'',c.status||'',tMsg);}}
+  }
+}
+
+function showOriginalMsg(){const el=document.getElementById('detail-counsel-msg');if(el)el.textContent=_originalCounselMsg;}
+
+function openDetailReply(counselId,message,reply,sentAt,status,translatedMsg){
+  currentDetailCounselId=counselId;
+  _originalCounselMsg=message;
+  const displayMsg=translatedMsg||message;
+  const el=document.getElementById('detail-counsel-msg');
+  el.textContent=displayMsg;
+  if(translatedMsg&&translatedMsg!==message){
+    el.innerHTML=displayMsg+translateBadge()+'<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="showOriginalMsg()">원문 보기 ▾</div>';
+  }
+  document.getElementById('detail-reply-date').textContent=sentAt?new Date(sentAt).toLocaleDateString('ko-KR'):'';
+  document.getElementById('detail-reply-text').value='';
+  if(reply){document.getElementById('detail-reply-existing').style.display='block';document.getElementById('detail-reply-prev').textContent=reply;}
+  else{document.getElementById('detail-reply-existing').style.display='none';}
+  document.getElementById('detail-reply-success').classList.remove('show');
+  goScreen('screen-detail-reply');
+}
+
+function showDetailTab(tab,btn){
+  document.querySelectorAll('#screen-client-detail .host-tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
+  ['profile','modules','counsel','schedule'].forEach(t=>{const el=document.getElementById('detail-tab-'+t);if(el)el.style.display=t===tab?'block':'none';});
+  const saveBtn=document.getElementById('detail-save-btn');if(saveBtn)saveBtn.style.display=tab==='profile'?'block':'none';
+}
+
+async function saveClientProfile(){
+  const data={name:document.getElementById('dp-name').value,nickname:document.getElementById('dp-nickname').value,age:parseInt(document.getElementById('dp-age').value)||null,email:document.getElementById('dp-email').value,language:document.getElementById('dp-language').value,session_frequency:parseInt(document.getElementById('dp-frequency').value)||2,program_start_date:document.getElementById('dp-startdate').value||null,characteristics:document.getElementById('dp-characteristics').value,memo:document.getElementById('dp-memo').value};
+  try{await api('/api/host/clients/'+currentDetailClientId,'PUT',data);const suc=document.getElementById('profile-save-success');suc.classList.add('show');setTimeout(()=>suc.classList.remove('show'),2000);document.getElementById('detail-client-name').textContent=data.name+(data.nickname?' · '+data.nickname:'');}
+  catch(e){alert('저장 실패');}
+}
+
+async function assignModule(moduleId){try{await api('/api/host/clients/'+currentDetailClientId+'/modules/assign','POST',{moduleId,orderNum:1});await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('배정 실패');}}
+
+async function loadClientAnswers(){
+  const listEl=document.getElementById('detail-answers-list'),btn=document.getElementById('detail-answers-btn');
+  if(listEl.style.display==='block'){listEl.style.display='none';btn.textContent='📋 내담자 교육 답변 확인';return;}
+  listEl.style.display='block';btn.textContent='📋 답변 숨기기';listEl.innerHTML='<div class="loading">로딩 중...</div>';
+  try{
+    const answers=await api('/api/host/clients/'+currentDetailClientId+'/answers');
+    if(!answers||answers.length===0){listEl.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0">아직 답변이 없습니다.</p>';return;}
+    listEl.innerHTML=answers.map((a,ai)=>{
+      const answerDisplay=a.questions?.type==='text'?(a.text_value||'(입력 없음)'):(a.choice_label?a.choice_label:(a.choice_value||'-'));
+      const dateStr=a.answered_at?new Date(a.answered_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      return'<div class="card" style="margin-bottom:8px;padding:12px 14px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+dateStr+' · <span style="color:'+(a.questions?.type==='text'?'#8B5E2A':'var(--sage-dark)')+'>'+(a.questions?.type==='text'?'주관식':'객관식')+'</span></div><p style="font-size:13px;color:var(--text-muted);margin-bottom:4px" id="ans-q-'+ai+'">'+(a.questions?.text||'질문')+'</p><p style="font-size:14px;color:var(--text);font-weight:500" id="ans-a-'+ai+'">'+answerDisplay+'</p></div>';
+    }).join('');
+    // 주관식 답변 자동 번역
+    const hostLang=getHostDisplayLang();
+    answers.forEach(async(a,ai)=>{
+      if(a.questions?.text){const tq=await translateText(a.questions.text,hostLang,'auto');const qEl=document.getElementById('ans-q-'+ai);if(qEl&&tq!==a.questions.text)qEl.innerHTML=tq+translateBadge();}
+      if(a.questions?.type==='text'&&a.text_value){const ta=await translateText(a.text_value,hostLang,'auto');const aEl=document.getElementById('ans-a-'+ai);if(aEl&&ta!==a.text_value)aEl.innerHTML=ta+translateBadge();}
+    });
+  }catch(e){listEl.innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
+}
+
+async function toggleModule(moduleId,isActive){try{await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId+'/toggle','PUT',{is_active:isActive});await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('변경 실패');}}
+async function removeModule(moduleId){if(!confirm('이 모듈을 제거할까요?'))return;try{await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId,'DELETE');await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('제거 실패');}}
+
+let currentEditorModuleId=null,editorQuestions=[];
+async function openModuleEditor(moduleId,title){
+  currentEditorModuleId=moduleId;document.getElementById('editor-module-title').textContent=title+' — 질문 편집';
+  document.getElementById('editor-save-success').classList.remove('show');document.getElementById('question-list').innerHTML='<div class="loading">질문 로딩 중...</div>';
+  goScreen('screen-module-editor');
+  try{const questions=await api('/api/host/modules/'+moduleId+'/questions');editorQuestions=questions.map(q=>({id:q.id,text:q.text||'',type:q.type||'choice',order_num:q.order_num||1,choices:(()=>{try{return typeof q.choices==='string'?JSON.parse(q.choices):(q.choices||[]);}catch(e){return [];}})()}));renderQuestionList();}
+  catch(e){document.getElementById('question-list').innerHTML='<p style="color:var(--danger)">질문 로드 실패</p>';}
+}
+
+function renderQuestionList(){
+  if(editorQuestions.length===0){document.getElementById('question-list').innerHTML='<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px">아직 질문이 없습니다.<br>위의 버튼으로 추가하세요.</p>';return;}
+  document.getElementById('question-list').innerHTML=editorQuestions.map((q,i)=>'<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;padding:3px 8px;border-radius:12px;background:'+(q.type==='choice'?'#EDF4EE':'#FDF8F0')+';color:'+(q.type==='choice'?'var(--sage-dark)':'#8B5E2A')+'">'+(q.type==='choice'?'객관식':'주관식')+'</span><div style="display:flex;gap:6px">'+(i>0?'<button onclick="moveQuestion('+i+',-1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↑</button>':'')+(i<editorQuestions.length-1?'<button onclick="moveQuestion('+i+',1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↓</button>':'')+'<button onclick="deleteQuestion('+i+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px 4px">✕</button></div></div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">질문 '+(i+1)+'</div><textarea id="q-text-'+i+'" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:\'DM Sans\',sans-serif;resize:vertical;min-height:70px;outline:none;line-height:1.6">'+q.text+'</textarea>'+(q.type==='choice'?'<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 (한 줄에 하나)</div><textarea id="q-choices-'+i+'" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">'+(q.choices||[]).map(c=>c.label||c).join('\n')+'</textarea></div>':'<div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">💬 내담자가 직접 텍스트로 입력합니다</div>')+'</div>').join('');
+}
+
+async function createGlobalModule(){
+  const title=document.getElementById('new-module-title').value.trim();if(!title){document.getElementById('new-module-title').style.borderColor='var(--danger)';return;}
+  try{const res=await api('/api/host/modules','POST',{title,order_num:1});if(res.success||res.moduleId){document.getElementById('new-module-title').value='';document.getElementById('module-create-success').classList.add('show');setTimeout(()=>document.getElementById('module-create-success').classList.remove('show'),2000);loadHostDashboard();}}
+  catch(e){alert('생성 실패');}
+}
+
+function addQuestion(type){editorQuestions.push({text:'',type,order_num:editorQuestions.length+1,choices:type==='choice'?[{label:'선택지 1',value:'1'},{label:'선택지 2',value:'2'},{label:'선택지 3',value:'3'}]:[]});renderQuestionList();}
+function deleteQuestion(idx){if(!confirm('이 질문을 삭제할까요?'))return;editorQuestions.splice(idx,1);renderQuestionList();}
+function moveQuestion(idx,dir){const ni=idx+dir;if(ni<0||ni>=editorQuestions.length)return;[editorQuestions[idx],editorQuestions[ni]]=[editorQuestions[ni],editorQuestions[idx]];renderQuestionList();}
+
+async function saveAllQuestions(){
+  editorQuestions.forEach((q,i)=>{const te=document.getElementById('q-text-'+i);if(te)q.text=te.value.trim();if(q.type==='choice'){const ce=document.getElementById('q-choices-'+i);if(ce){const lines=ce.value.split('\n').filter(l=>l.trim());q.choices=lines.map((l,j)=>({label:l.trim(),value:String(j+1)}));}}q.order_num=i+1;});
+  try{await api('/api/host/modules/'+currentEditorModuleId+'/questions','POST',{questions:editorQuestions});const suc=document.getElementById('editor-save-success');suc.classList.add('show');setTimeout(()=>suc.classList.remove('show'),2000);const updated=await api('/api/host/modules/'+currentEditorModuleId+'/questions');editorQuestions=updated.map(q=>({id:q.id,text:q.text||'',type:q.type||'choice',order_num:q.order_num||1,choices:(()=>{try{return typeof q.choices==='string'?JSON.parse(q.choices):(q.choices||[]);}catch(e){return[];}})()}));renderQuestionList();}
+  catch(e){alert('저장 실패');}
+}
+
+function openDetailReply(counselId,message,reply,sentAt,status,translatedMsg){
+  currentDetailCounselId=counselId;_originalCounselMsg=message;
+  const displayMsg=translatedMsg||message;
+  const el=document.getElementById('detail-counsel-msg');
+  el.textContent=displayMsg;
+  if(translatedMsg&&translatedMsg!==message){el.innerHTML=displayMsg+translateBadge()+'<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="showOriginalMsg()">원문 보기 ▾</div>';}
+  document.getElementById('detail-reply-date').textContent=sentAt?new Date(sentAt).toLocaleDateString('ko-KR'):'';
+  document.getElementById('detail-reply-text').value='';
+  if(reply){document.getElementById('detail-reply-existing').style.display='block';document.getElementById('detail-reply-prev').textContent=reply;}
+  else{document.getElementById('detail-reply-existing').style.display='none';}
+  document.getElementById('detail-reply-success').classList.remove('show');
+  goScreen('screen-detail-reply');
+}
+
+async function sendDetailReply(){
+  const reply=document.getElementById('detail-reply-text').value.trim();if(!reply||!currentDetailCounselId)return;
+  try{const res=await api('/api/host/counsel/'+currentDetailCounselId+'/reply','POST',{reply});if(res.success){document.getElementById('detail-reply-success').classList.add('show');document.getElementById('detail-reply-text').value='';setTimeout(async()=>{await loadClientDetail();goScreen('screen-client-detail');showDetailTab('counsel',document.getElementById('dtab-counsel'));},1500);}}
+  catch(e){alert('전송 실패');}
+}
+
+function getClientDisplay(client){return{name:client?.email||client?.name||'내담자',group:client?.group_name||(client?.groups&&client.groups.name)||null};}
+
+async function loadHostSchedule(){
+  try{
+    document.getElementById('host-confirmed-schedule').innerHTML='<div class="loading">로딩 중...</div>';
+    const [pending,allClients]=await Promise.all([api('/api/schedule/host/pending'),api('/api/host/clients')]);
+    const clientMap={};allClients.forEach(c=>{clientMap[c.id]=c;});
+    const detailResults=await Promise.all(allClients.map(c=>api('/api/host/clients/'+c.id).then(d=>({client:c,schedules:d.schedules||[]})).catch(()=>({client:c,schedules:[]}))));
+    const allConfirmed=[];detailResults.forEach(({client,schedules})=>{schedules.filter(s=>s.status==='confirmed').forEach(s=>{allConfirmed.push({...s,_client:client});});});
+    allConfirmed.sort((a,b)=>(a.confirmed_time||a.requested_time||'').localeCompare(b.confirmed_time||b.requested_time||''));
+    document.getElementById('host-confirmed-schedule').innerHTML=allConfirmed.length>0?allConfirmed.map(s=>{const {name,group}=getClientDisplay(s._client);let t=s.confirmed_time||s.requested_time;try{if(t&&t.includes('T'))t=formatDateForHost(t);}catch(e){}return'<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:500;color:var(--text)">'+name+'</div>'+(group?'<div style="font-size:11px;color:var(--sage-dark);margin-top:1px">📂 '+group+'</div>':'<div style="font-size:11px;color:var(--text-muted);margin-top:1px">그룹 미지정</div>')+'<div style="font-size:12px;color:var(--text-muted);margin-top:4px">🕐 '+t+'</div></div><span class="badge green">확정</span></div></div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">확정된 세션 없음</p>';
+    document.getElementById('host-pending-schedule').innerHTML=pending.length>0?pending.map(s=>{const clientId=s.client_id||s.clients?.id,fullClient=clientMap[clientId]||s.clients||{},{name,group}=getClientDisplay(fullClient);let t=s.requested_time;try{if(t&&t.includes('T'))t=formatDateForHost(t);}catch(e){}return'<div class="card"><div style="margin-bottom:6px"><div style="font-size:14px;font-weight:500">'+name+'</div>'+(group?'<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">📂 '+group+'</div>':'')+'</div><div style="font-size:13px;color:var(--text);margin-bottom:6px">🕐 '+t+'</div>'+(s.clientTimezone?'<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">📍 '+s.clientTimezone+'</div>':'')+'<button class="btn primary" style="padding:8px" onclick="confirmSchedule(\''+s.id+'\',\''+s.requested_time+'\')">확정</button></div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">대기 중인 요청 없음</p>';
+  }catch(e){document.getElementById('host-confirmed-schedule').innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
+}
+
+async function confirmSchedule(id,time){
+  try{await api('/api/schedule/host/'+id+'/confirm','POST',{confirmedTime:time});alert('확정되었습니다.');loadHostSchedule();if(currentDetailClientId){await loadClientDetail();showDetailTab('schedule',document.getElementById('dtab-schedule'));}}
+  catch(e){alert('확정 실패');}
+}
+
+let currentClientId=null;
+async function loadHostReply(){
+  if(!currentClientId)return;
+  try{const counsels=await api('/api/host/counsel/'+currentClientId);if(counsels&&counsels.length>0){currentHostCounselId=counsels[0].id;document.getElementById('host-counsel-text').textContent=counsels[0].message;}else{document.getElementById('host-counsel-text').textContent='미답변 상담 없음';}}
+  catch(e){}
+}
+
+async function sendHostReply(){
+  const reply=document.getElementById('host-reply-text').value.trim();if(!reply||!currentHostCounselId)return;
+  try{const res=await api('/api/host/counsel/'+currentHostCounselId+'/reply','POST',{reply});if(res.success){document.getElementById('reply-success').classList.add('show');document.getElementById('host-reply-text').value='';setTimeout(()=>goScreen('screen-host'),1500);}}
+  catch(e){}
+}
+
+async function addClient(){
+  const name=document.getElementById('new-client-name').value.trim()||'내담자',lang=document.getElementById('new-client-lang').value,groupId=currentAddGroupId||null;
+  try{const res=await api('/api/host/clients/add','POST',{name,language:lang,group_id:groupId});if(res.inviteCode){document.getElementById('new-invite-code').textContent=res.inviteCode;document.getElementById('new-invite-result').style.display='block';currentAddGroupId=null;}}
+  catch(e){alert('추가 실패');}
+}
+
+async function loadGroups(){
+  try{
+    const [groups,clients]=await Promise.all([api('/api/host/groups'),api('/api/host/clients')]);
+    if(groups.length===0){document.getElementById('group-list').innerHTML='<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';return;}
+    document.getElementById('group-list').innerHTML=groups.map(g=>{
+      const gc=clients.filter(c=>c.group_id===g.id);
+      const ch=gc.length>0?gc.map(c=>{const dn=c.email||c.name||'내담자';return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar" style="width:34px;height:34px;font-size:10px">'+dn.substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:12px;font-weight:500">'+dn+'</div><div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+' · '+(c.hasPending?'💬 상담대기':'미답변없음')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join(''):'<p style="font-size:12px;color:var(--text-muted);padding:8px 0">내담자 없음</p>';
+      return'<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-size:15px;font-weight:500">'+g.name+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+(g.description||'')+'</div><div style="display:flex;gap:8px;margin-top:4px"><span style="font-size:11px;background:#EDF4EE;color:var(--sage-dark);padding:2px 8px;border-radius:10px">주 '+(g.session_frequency||3)+'회</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">'+(g.contract_months||6)+'개월</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">'+(g.total_modules||24)+'모듈</span></div></div><button onclick="addClientToGroup(\''+g.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">+ 내담자</button></div><div style="border-top:1px solid var(--warm);padding-top:8px">'+ch+'</div></div>';
+    }).join('');
+    const ungrouped=clients.filter(c=>!c.group_id);
+    if(ungrouped.length>0){document.getElementById('group-list').innerHTML+='<div class="card" style="margin-bottom:12px;border-style:dashed"><div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">📌 미배정 내담자</div>'+ungrouped.map(c=>'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar" style="width:34px;height:34px;font-size:11px">'+(c.name||'?').substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+c.name+'</div><div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+'</div></div></div>').join('')+'</div>';}
+  }catch(e){document.getElementById('group-list').innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
+}
+
+function addClientToGroup(groupId){currentAddGroupId=groupId;goScreen('screen-host-add');}
+let currentAddGroupId=null;
+
+async function createGroup(){
+  const name=document.getElementById('new-group-name').value.trim();if(!name){document.getElementById('new-group-name').style.borderColor='var(--danger)';return;}
+  const desc=document.getElementById('new-group-desc').value.trim(),freq=parseInt(document.getElementById('new-group-freq').value)||3,months=parseInt(document.getElementById('new-group-months').value)||6,modules=parseInt(document.getElementById('new-group-modules').value)||24;
+  try{const res=await api('/api/host/groups','POST',{name,description:desc,session_frequency:freq,contract_months:months,total_modules:modules});if(res.success){document.getElementById('new-group-name').value='';document.getElementById('new-group-desc').value='';document.getElementById('group-create-success').classList.add('show');setTimeout(()=>document.getElementById('group-create-success').classList.remove('show'),2000);loadGroups();}}
+  catch(e){alert('생성 실패');}
+}
+
+async function loadHostSettings(){
+  try{const s=await api('/api/host/settings');if(s){document.getElementById('landing-text').value=s.landing_text||'';document.getElementById('company-name').value=s.company_name||'';document.getElementById('program-name').value=s.program_name||'';}}catch(e){}
+  setTimeout(()=>buildLangVoiceSettings(), 400);
+}
+async function saveSettings(){const data={landing_text:document.getElementById('landing-text').value,company_name:document.getElementById('company-name').value,program_name:document.getElementById('program-name').value};try{await api('/api/host/settings','PUT',data);document.getElementById('settings-success').classList.add('show');setTimeout(()=>document.getElementById('settings-success').classList.remove('show'),2000);}catch(e){alert('저장 실패');}}
+
+function showHostTab(tab,btn){
+  document.querySelectorAll('.host-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  ['groups','clients','edu','schedule','settings'].forEach(t=>{const el=document.getElementById('host-tab-'+t);if(el)el.style.display=t===tab?'block':'none';});
+  if(tab==='settings')loadHostSettings();if(tab==='schedule')loadHostSchedule();if(tab==='groups')loadGroups();
+}
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}
+
+function initApp(){
+  try{
+    const hash=window.location.hash,isHost=hash==='#host'||hash==='#/host';
+    const savedRole=localStorage.getItem('pip_role'),savedToken=localStorage.getItem('pip_token');
+    token=savedToken||null;
+    if(isHost){
+      if(savedToken&&savedRole==='host'){showScreen('screen-host');loadHostDashboard();}
+      else{localStorage.removeItem('pip_token');localStorage.removeItem('pip_role');token=null;showScreen('screen-host-login');}
+    }else{
+      if(savedToken&&savedRole!=='host'){try{applyLang();}catch(e){}showScreen('screen-home');loadHome();}
+      else{showScreen('screen-landing');}
+    }
+  }catch(e){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-landing').classList.add('active');}
+}
+
+window.onload = function() {
+  initApp();
+};
+</script>
+</body>
+</html>
   --sage: #7C9A7E; --sage-light: #B8CEBC; --sage-dark: #4A6B4D;
   --cream: #F5F0E8; --warm: #E8DFD0; --text: #2C2C2A;
   --text-muted: #7A7872; --white: #FDFCFA; --danger: #A0522D;
