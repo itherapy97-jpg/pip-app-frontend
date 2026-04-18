@@ -969,39 +969,58 @@ function _updateMicBtn(targetId, on) {
 // ===== 번역 딕셔너리 (외부 API 없음, 완전 보안) =====
 const LANDING_TR = {
   ko: {quote:'"내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."', desc:'Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.', notice:'<strong>⚠ 중요 안내</strong><br><br>본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong>'},
-  en: {quote:'"Inner peace is not about fixing,<br>but <em style="color:#4A6B4D">discovering</em> what is already there."', desc:"Peace-In Practice™ is the world's first unique methodology for inner education, approaching from the exact opposite direction of conventional <strong style='color:#4A6B4D'>CBT</strong>.<br><br>This program regularly includes <strong style='color:#4A6B4D'>actual 1:1 counseling</strong> sessions.", notice:"<strong>⚠ Important Notice</strong><br><br>This program operates effectively only under the guidance of a professional counselor. <strong>Access is restricted to authorized participants only.</strong>"},
+  en: {quote:'"Inner peace is not about fixing,<br>but <em style="color:#4A6B4D">discovering</em> what is already there."', desc:"Peace-In Practice™ is the world's first unique methodology for inner education, the exact opposite of conventional <strong style='color:#4A6B4D'>CBT</strong>.<br><br>This program regularly includes <strong style='color:#4A6B4D'>actual 1:1 counseling</strong> sessions.", notice:"<strong>⚠ Important Notice</strong><br><br>This program operates effectively only under the guidance of a professional counselor. <strong>Access is restricted to authorized participants only.</strong>"},
   ja: {quote:'"内なる平和は直すことではなく、<br>すでにあるものを<em style="color:#4A6B4D">発見すること</em>です。"', desc:'Peace-In Practice™は、従来の<strong style="color:#4A6B4D">CBT</strong>と正反対のアプローチで行う、人類初の独自の内面教育メソッドです。<br><br>専門カウンセラーが創案したこのプログラムは、<strong style="color:#4A6B4D">実際の1:1カウンセリング</strong>が定期的に含まれています。', notice:'<strong>⚠ 重要なお知らせ</strong><br><br>このプログラムは専門カウンセラーの指導のもとでのみ効果的に機能します。<strong>許可された参加者のみアクセス可能です。</strong>'},
-  es: {quote:'"La paz interior no se trata de arreglar,<br>sino de <em style="color:#4A6B4D">descubrir</em> lo que ya está ahí."', desc:"Peace-In Practice™ es la primera metodología única del mundo para la educación interior, opuesta al <strong style='color:#4A6B4D'>CBT</strong>.<br><br>Este programa incluye regularmente sesiones de <strong style='color:#4A6B4D'>consejería real 1:1</strong>.", notice:"<strong>⚠ Aviso Importante</strong><br><br>Este programa funciona eficazmente solo bajo la guía de un consejero profesional. <strong>Acceso restringido a participantes autorizados.</strong>"},
+  zh: {quote:'"内心的平和不是修复，<br>而是<em style="color:#4A6B4D">发现</em>已经存在的东西。"', desc:'Peace-In Practice™是全球首创的内心教育方法论，与传统<strong style="color:#4A6B4D">CBT（认知行为疗法）</strong>方向完全相反。<br><br>由专业咨询师创立的这个项目，在课程中定期包含<strong style="color:#4A6B4D">实际1:1咨询</strong>环节。', notice:'<strong>⚠ 重要通知</strong><br><br>本项目仅在专业咨询师指导下有效运作。<strong>仅限授权参与者访问。</strong>'},
+  es: {quote:'"La paz interior no se trata de arreglar,<br>sino de <em style="color:#4A6B4D">descubrir</em> lo que ya está ahí."', desc:"Peace-In Practice™ es la primera metodología única del mundo para la educación interior. <strong style='color:#4A6B4D'>CBT</strong> contraria.<br><br>Este programa incluye regularmente sesiones de <strong style='color:#4A6B4D'>consejería real 1:1</strong>.", notice:"<strong>⚠ Aviso Importante</strong><br><br>Este programa funciona eficazmente solo bajo la guía de un consejero profesional. <strong>Acceso restringido a participantes autorizados.</strong>"},
   fr: {quote:`"La paix intérieure ne consiste pas à réparer,<br>mais à <em style="color:#4A6B4D">découvrir</em> ce qui est déjà là."`, desc:`Peace-In Practice™ est la première méthodologie unique au monde pour l'éducation intérieure. <strong style='color:#4A6B4D'>TCC</strong> inverse.<br><br>Ce programme inclut des séances de <strong style='color:#4A6B4D'>conseil réel 1:1</strong>.`, notice:`<strong>⚠ Avis Important</strong><br><br>Ce programme fonctionne uniquement sous la direction d'un conseiller professionnel. <strong>Accès réservé aux participants autorisés.</strong>`},
-  de: {quote:'"Innerer Frieden bedeutet nicht zu reparieren,<br>sondern das zu <em style="color:#4A6B4D">entdecken</em>, was bereits da ist."', desc:"Peace-In Practice™ ist die weltweit erste Methodik für innere Bildung, entgegen der <strong style='color:#4A6B4D'>KVT</strong>.<br><br>Dieses Programm beinhaltet regelmäßig echte <strong style='color:#4A6B4D'>1:1-Beratungssitzungen</strong>.", notice:"<strong>⚠ Wichtiger Hinweis</strong><br><br>Dieses Programm funktioniert effektiv nur unter Anleitung eines professionellen Beraters. <strong>Zugang nur für autorisierte Teilnehmer.</strong>"}
+  de: {quote:'"Innerer Frieden bedeutet nicht zu reparieren,<br>sondern das zu <em style="color:#4A6B4D">entdecken</em>, was bereits da ist."', desc:"Peace-In Practice™ ist die weltweit erste Methodik für innere Bildung. <strong style='color:#4A6B4D'>KVT</strong> entgegengesetzt.<br><br>Dieses Programm beinhaltet regelmäßig echte <strong style='color:#4A6B4D'>1:1-Beratungssitzungen</strong>.", notice:"<strong>⚠ Wichtiger Hinweis</strong><br><br>Dieses Programm funktioniert effektiv nur unter Anleitung eines professionellen Beraters. <strong>Zugang nur für autorisierte Teilnehmer.</strong>"}
 };
 
 const UI_TR = {
-  ko:{startBtn:'시작하기 →',loginBtn:'로그인',homeGreeting:'안녕하세요',navEdu:'교육',navCounsel:'상담',counselBtn:'상담 내용 작성하기',replyTitle:'상담가 답변 확인',replyBtn:'확인했습니다',listenBtn:'🔊 듣기'},
-  en:{startBtn:'Get Started →',loginBtn:'Login',homeGreeting:'Hello',navEdu:'Education',navCounsel:'Counseling',counselBtn:'Write Counseling',replyTitle:"Counselor's Answer",replyBtn:'I have confirmed',listenBtn:'🔊 Listen'},
-  ja:{startBtn:'始める →',loginBtn:'ログイン',homeGreeting:'こんにちは',navEdu:'教育',navCounsel:'相談',counselBtn:'相談内容を書く',replyTitle:'カウンセラーの返答確認',replyBtn:'確認しました',listenBtn:'🔊 聴く'},
-  es:{startBtn:'Comenzar →',loginBtn:'Iniciar sesión',homeGreeting:'Hola',navEdu:'Educación',navCounsel:'Consejería',counselBtn:'Escribir consejería',replyTitle:'Respuesta del consejero',replyBtn:'He confirmado',listenBtn:'🔊 Escuchar'},
-  fr:{startBtn:'Commencer →',loginBtn:'Se connecter',homeGreeting:'Bonjour',navEdu:'Éducation',navCounsel:'Conseil',counselBtn:'Écrire un conseil',replyTitle:'Réponse du conseiller',replyBtn:"J'ai confirmé",listenBtn:'🔊 Écouter'},
-  de:{startBtn:'Starten →',loginBtn:'Anmelden',homeGreeting:'Hallo',navEdu:'Bildung',navCounsel:'Beratung',counselBtn:'Beratung schreiben',replyTitle:'Antwort des Beraters',replyBtn:'Ich habe bestätigt',listenBtn:'🔊 Hören'}
+  ko:{startBtn:'시작하기 →',loginBtn:'로그인',homeGreeting:'안녕하세요',navEdu:'교육',navCounsel:'상담',counselBtn:'상담 내용 작성하기',replyTitle:'상담가 답변 확인',replyBtn:'확인했습니다',listenBtn:'🔊 듣기',hostLogin:'호스트 로그인'},
+  en:{startBtn:'Get Started →',loginBtn:'Login',homeGreeting:'Hello',navEdu:'Education',navCounsel:'Counseling',counselBtn:'Write Counseling',replyTitle:"Counselor's Answer",replyBtn:'I have confirmed',listenBtn:'🔊 Listen',hostLogin:'Host Login'},
+  ja:{startBtn:'始める →',loginBtn:'ログイン',homeGreeting:'こんにちは',navEdu:'教育',navCounsel:'相談',counselBtn:'相談内容を書く',replyTitle:'カウンセラーの返答確認',replyBtn:'確認しました',listenBtn:'🔊 聴く',hostLogin:'ホストログイン'},
+  zh:{startBtn:'开始 →',loginBtn:'登录',homeGreeting:'你好',navEdu:'教育',navCounsel:'咨询',counselBtn:'写咨询内容',replyTitle:'咨询师的回答确认',replyBtn:'我已确认',listenBtn:'🔊 听',hostLogin:'主机登录'},
+  es:{startBtn:'Comenzar →',loginBtn:'Iniciar sesión',homeGreeting:'Hola',navEdu:'Educación',navCounsel:'Consejería',counselBtn:'Escribir consejería',replyTitle:'Respuesta del consejero',replyBtn:'He confirmado',listenBtn:'🔊 Escuchar',hostLogin:'Inicio de host'},
+  fr:{startBtn:'Commencer →',loginBtn:'Se connecter',homeGreeting:'Bonjour',navEdu:'Éducation',navCounsel:'Conseil',counselBtn:'Écrire un conseil',replyTitle:'Réponse du conseiller',replyBtn:"J'ai confirmé",listenBtn:'🔊 Écouter',hostLogin:'Connexion hôte'},
+  de:{startBtn:'Starten →',loginBtn:'Anmelden',homeGreeting:'Hallo',navEdu:'Bildung',navCounsel:'Beratung',counselBtn:'Beratung schreiben',replyTitle:'Antwort des Beraters',replyBtn:'Ich habe bestätigt',listenBtn:'🔊 Hören',hostLogin:'Host-Anmeldung'}
 };
 
 function applyPageTranslation(lang) {
   const lc=(lang||'ko').split('-')[0];
-  const t=LANDING_TR[lang]||LANDING_TR[lc]||LANDING_TR.en;
+  // zh-CN, zh-TW 모두 zh로 처리
+  const key = lc === 'zh' ? 'zh' : (LANDING_TR[lang] ? lang : (LANDING_TR[lc] ? lc : 'en'));
+  const t = LANDING_TR[key] || LANDING_TR.en;
   const q=document.getElementById('landing-quote'); if(q) q.innerHTML=t.quote;
   const d=document.getElementById('landing-desc'); if(d) d.innerHTML=t.desc;
   const n=document.getElementById('landing-notice'); if(n) n.innerHTML=t.notice;
 }
 
 function applyFullTranslation(lang) {
+  if (!lang || lang === 'ko') return;
   applyPageTranslation(lang);
   const lc=(lang||'ko').split('-')[0];
-  const t=UI_TR[lang]||UI_TR[lc]||UI_TR.en;
+  const key = lc==='zh' ? 'zh' : (UI_TR[lang] ? lang : (UI_TR[lc] ? lc : 'en'));
+  const t = UI_TR[key] || UI_TR.en;
   const s=(id,txt)=>{const e=document.getElementById(id);if(e&&txt)e.textContent=txt;};
-  s('home-greeting',t.homeGreeting); s('nav-edu',t.navEdu); s('nav-counsel',t.navCounsel);
-  s('btn-counsel',t.counselBtn); s('reply-page-title',t.replyTitle); s('reply-confirm-btn',t.replyBtn);
-  const startBtn=document.querySelector('#screen-landing .btn.primary'); if(startBtn) startBtn.textContent=t.startBtn;
-  const listenBtn=document.querySelector('#screen-reply .notranslate'); if(listenBtn) listenBtn.textContent=t.listenBtn;
+  // 공통 UI
+  s('home-greeting',t.homeGreeting);
+  s('nav-edu',t.navEdu);
+  s('nav-counsel',t.navCounsel);
+  s('btn-counsel',t.counselBtn);
+  s('reply-page-title',t.replyTitle);
+  s('reply-confirm-btn',t.replyBtn);
+  // 랜딩 시작 버튼
+  const startBtn=document.querySelector('#screen-landing .btn.primary');
+  if(startBtn) startBtn.textContent=t.startBtn;
+  // 듣기 버튼
+  const listenBtn=document.querySelector('#screen-reply .notranslate');
+  if(listenBtn) listenBtn.textContent=t.listenBtn;
+  // 호스트 로그인 제목
+  const hostLoginTitle=document.querySelector('#screen-host-login .pip-title');
+  if(hostLoginTitle) hostLoginTitle.textContent=t.hostLogin||'Host Login';
+  console.log('[PIP] applyFullTranslation 완료:', lang, key);
 }
 
 // ===== 화면 전환 =====
@@ -1678,6 +1697,7 @@ window.addEventListener('load', () => {
   const hlEl=document.getElementById('hostLoginLangSelected'); if(hostSaved&&hlEl) hlEl.textContent=hostSaved;
 
   const isHost = location.hash==='#host'||location.hash==='#/host';
+  // 첫 방문: 브라우저 언어 자동 감지
   if (!isHost && !localStorage.getItem('pip_client_lang_pref')) {
     const bl=(navigator.language||'ko').toLowerCase(), lc=bl.split('-')[0];
     const lm={'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
@@ -1685,17 +1705,21 @@ window.addEventListener('load', () => {
     const fl=t||'ko';
     localStorage.setItem('pip_client_lang_pref', fl);
     if(el) el.textContent=LANG_NAMES[fl]||'한국어';
-    if(fl!=='ko') applyFullTranslation(fl);
-  } else if (savedLang!=='ko' && !isHost) {
-    applyFullTranslation(savedLang);
-  }
-  if (isHost) {
-    const hl=localStorage.getItem('pip_host_lang_pref')||'ko';
-    if(hl!=='ko') applyFullTranslation(hl);
+    // 언어 버튼 업데이트만 (번역은 window.onload에서)
   }
 });
 
-window.onload = initApp;
+window.onload = function() {
+  initApp(); // DOM 보여주기
+  // DOM 준비 완료 후 번역 적용
+  const isHost2 = location.hash==='#host'||location.hash==='#/host';
+  const savedLang2 = isHost2
+    ? (localStorage.getItem('pip_host_lang_pref')||'ko')
+    : (localStorage.getItem('pip_client_lang_pref')||'ko');
+  if (savedLang2 !== 'ko') {
+    applyFullTranslation(savedLang2);
+  }
+};
 
 </script>
 </body>
