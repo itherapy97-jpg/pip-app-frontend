@@ -1612,8 +1612,11 @@ function applyFullTranslation(lang){
   const csb=document.querySelector('#screen-counsel .btn.primary');if(csb)csb.textContent=KO_TRANSLATIONS[key]?.['암호화하여 전송하기']||'Send Encrypted';
   const mic=document.getElementById('mic-counsel-text');if(mic)mic.textContent=KO_TRANSLATIONS[key]?.['🎤 음성 입력']||'🎤 Voice Input';
   // (화면 데이터 새로고침은 setLang에서만)
-  // DeepL로 DB 데이터 번역 (6초 후, rate limit 방지)
-  setTimeout(()=>translateDataElements(lang),6000);
+  // 즉시 번역 실행 (applyPageTranslation 이후)
+  setTimeout(()=>{try{translateDOM(lang);}catch(e){}},50);
+  setTimeout(()=>{try{translateDOM(lang);}catch(e){}},300);
+  // DeepL로 DB 데이터 번역 (8초 후, rate limit 방지)
+  setTimeout(()=>translateDataElements(lang),8000);
 }
 
 
@@ -1779,17 +1782,41 @@ async function registerClient() {
 }
 
 function applyLang() {
-  const l=L[userLang]||L.ko;
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  set('home-greeting',l.greeting); set('lbl-progress',l.progress); set('lbl-sessions',l.sessions);
-  set('lbl-schedule',l.schedule); set('lbl-counsel',l.counsel); set('btn-counsel',l.btnCounsel);
-  set('nav-edu',l.navEdu); set('nav-counsel',l.navCounsel); set('counsel-title',l.counselTitle); set('counsel-label',l.counselLabel);
+  // displayLang 기준으로 번역 (userLang=백엔드 언어 무시)
+  const displayLang = getCurrentDisplayLang();
+  const lc = (displayLang||'ko').split('-')[0];
+  const uiKey = UI_TR[displayLang]?displayLang:(UI_TR[lc]?lc:'en');
+  const t = UI_TR[uiKey] || UI_TR.en;
+  const koMap = KO_TRANSLATIONS[uiKey] || {};
+  const set=(id,v)=>{const e=document.getElementById(id);if(e&&v)e.textContent=v;};
+  // UI_TR 기반 직접 번역
+  set('home-greeting', t.homeGreeting);
+  set('nav-edu', t.navEdu);
+  set('nav-counsel', t.navCounsel);
+  set('btn-counsel', t.counselBtn);
+  // KO_TRANSLATIONS 기반 번역
+  set('lbl-progress', koMap['이번 주 진행률'] || (displayLang==='ko'?'이번 주 진행률':'Progress This Week'));
+  set('lbl-sessions', koMap['교육 세션'] || (displayLang==='ko'?'교육 세션':'Education Sessions'));
+  set('lbl-schedule', koMap['세션 시간 약속'] || (displayLang==='ko'?'세션 시간 약속':'Session Schedule'));
+  set('lbl-counsel', koMap['개인 상담'] || (displayLang==='ko'?'개인 상담':'Personal Counseling'));
+  set('counsel-title', koMap['개인 상담 신청'] || (displayLang==='ko'?'개인 상담 신청':'Personal Counseling'));
+  set('counsel-label', koMap['지금 마음속에 있는 것을 자유롭게 적어주세요'] || (displayLang==='ko'?'지금 마음속에 있는 것을 자유롭게 적어주세요':"Write freely what's on your mind"));
 }
 function logout() { localStorage.removeItem('pip_token'); localStorage.removeItem('pip_lang'); token=null; goScreen('screen-login'); }
 
 async function loadHome() {
   applyLang();
-  try { const n=await api('/api/counsel/notification'); const b=document.getElementById('notif-banner'); if(n.hasNotification){b.classList.add('show');document.getElementById('notif-text').textContent=L[userLang]?.notif||'상담 답변이 도착했습니다';}else b.classList.remove('show'); } catch(e){}
+  // 선택 언어로 번역 적용
+  const cl=localStorage.getItem('pip_client_lang_pref')||'ko';
+  if(cl!=='ko'&&typeof applyFullTranslation==='function'){
+    setTimeout(()=>{try{translateDOM(cl);}catch(e){}},100);
+  }
+  try { const n=await api('/api/counsel/notification'); const b=document.getElementById('notif-banner'); if(n.hasNotification){b.classList.add('show');document.getElementById('notif-text').textContent=(()=>{
+  const dl=getCurrentDisplayLang();const lc=(dl||'ko').split('-')[0];
+  const k=UI_TR[dl]?dl:(UI_TR[lc]?lc:'en');
+  const msgs={ko:'상담 답변이 도착했습니다',en:'A counseling reply has arrived',ja:'カウンセリングの返答が届きました',zh:'咨询回复已到达',es:'Ha llegado una respuesta de consejería',fr:'Une réponse de conseil est arrivée',de:'Eine Beratungsantwort ist eingetroffen'};
+  return msgs[lc]||msgs.en;
+})();}else b.classList.remove('show'); } catch(e){}
   try {
     const modules=await api('/api/sessions/modules');
     const completed=modules.filter(m=>m.completed).length, sessPerWeek=modules.length>0?(modules[0].sessionsPerWeek||3):3, totalModules=24;
@@ -1948,12 +1975,11 @@ async function submitAnswer(value, btn, label) {
 // 시간대 변환
 const BASE_SLOTS_KST=[{day:1,hour:18,minute:0},{day:2,hour:10,minute:0},{day:3,hour:19,minute:0},{day:4,hour:20,minute:0}];
 function getNextSlotDate(dayKST,hourKST,minuteKST){const now=new Date(),KST=9*60*60000,nowKST=new Date(now.getTime()+KST),kstDay=nowKST.getUTCDay(),daysUntil=(dayKST-kstDay+7)%7,candidate=new Date(nowKST);candidate.setUTCDate(candidate.getUTCDate()+daysUntil);candidate.setUTCHours(hourKST,minuteKST,0,0);if(candidate<=nowKST)candidate.setUTCDate(candidate.getUTCDate()+7);return new Date(candidate.getTime()-KST);}
-function formatSlotForTZ(date,tz,lang){const locale=lang==='ko'?'ko-KR':'en-US';return new Intl.DateTimeFormat(locale,{timeZone:tz,weekday:'long',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).format(date);}
-function formatDateForHost(isoString){
-  const date=new Date(isoString),hostTZ=Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const hl=localStorage.getItem('pip_host_lang_pref')||'ko';
-  const locale=hl==='ko'?'ko-KR':hl==='ja'?'ja-JP':hl.startsWith('zh')?'zh-CN':'en-US';
-  return new Intl.DateTimeFormat(locale,{timeZone:hostTZ,weekday:'long',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:hl!=='ko',timeZoneName:'short'}).format(date);
+function formatSlotForTZ(date,tz,lang){
+  const dl=getCurrentDisplayLang()||lang||'ko';
+  const lc=dl.split('-')[0];
+  const locale=lc==='ko'?'ko-KR':lc==='ja'?'ja-JP':lc==='zh'?'zh-CN':'en-US';
+  return new Intl.DateTimeFormat(locale,{timeZone:tz,weekday:'long',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:lc!=='ko'&&lc!=='zh'}).format(date);
 }
 
 function buildTimeSlots(){
@@ -2412,8 +2438,7 @@ function goScreen(id){
     ?(localStorage.getItem('pip_host_lang_pref')||'ko')
     :(localStorage.getItem('pip_client_lang_pref')||'ko');
   if(activeLang!=='ko'){
-    if(!_pollInterval)startAutoTranslation(activeLang);
-    else{try{translateDOM(activeLang);}catch(e){}}
+    startAutoTranslation(activeLang); // 화면 전환마다 재시작
   }
 }
 
