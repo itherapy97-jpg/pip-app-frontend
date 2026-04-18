@@ -1055,94 +1055,87 @@ function buildClientVoiceList(lang) {
   const list = document.getElementById('cv-voice-list');
   if (!list) return;
   const voices = speechSynthesis.getVoices();
-  const lc = (lang||'ko').split('-')[0];
-  // 해당 언어 목소리 먼저, 나머지도 참고용으로 표시
-  const byLang = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
-  // 한국어/영어는 영어권 전체(en-US, en-GB, en-AU...) + 한국어 전체 포함
-  const otherVoices = voices.filter(v => !v.lang.toLowerCase().startsWith(lc));
+  const lc = (lang||'ko').split('-')[0].toLowerCase();
+  
+  // 해당 언어 목소리만 필터 (언어 코드 + 언어명 매칭 강화)
+  const langNames = {
+    ko: ['korean', 'ko-', 'hangul', '한국'],
+    en: ['english', 'en-us', 'en-gb', 'en-au', 'en-ca', 'en-in', 'en-'],
+    ja: ['japanese', 'ja-', 'nihon'],
+    zh: ['chinese', 'zh-', 'mandarin', 'cantonese'],
+    es: ['spanish', 'es-'],
+    fr: ['french', 'fr-'],
+    de: ['german', 'de-'],
+    ar: ['arabic', 'ar-'],
+    pt: ['portuguese', 'pt-'],
+    ru: ['russian', 'ru-']
+  };
+  const keywords = langNames[lc] || [lc+'-', lc+'_'];
+  
+  const byLang = voices.filter(v => {
+    const vl = v.lang.toLowerCase();
+    const vn = v.name.toLowerCase();
+    return vl.startsWith(lc) || keywords.some(k => vl.includes(k) || vn.includes(k));
+  });
+  
   const persona = getClientPersona(currentDetailClientId) || {voices:{}};
   const selectedName = (persona.voices||{})[lc] || '';
 
   list.innerHTML = '';
   
-  // 해당 언어 목소리
-  if (byLang.length) {
+  if (!byLang.length) {
+    list.innerHTML = '<div style="padding:14px;text-align:center">'
+      + '<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">이 언어의 목소리가 기기에 없습니다.</div>'
+      + '<div style="font-size:11px;color:var(--sage-dark);line-height:1.6">'
+      + (lc === 'ko' ? '한국어 목소리 추가: Windows 설정 → 시간 및 언어 → 언어 및 지역 → 한국어 → 음성 합성기 추가' : '기기 설정에서 이 언어팩을 설치해 주세요.')
+      + '</div></div>';
+    return;
+  }
+  
+  // 성별 추측으로 여성/남성 분류
+  const femaleVoices = byLang.filter(v => /female|woman|fiona|victoria|karen|samantha|heami|yuna|sora|seon-hi|alice|jenny|nova|shimmer|혜미|hyun-soo/i.test(v.name));
+  const maleVoices = byLang.filter(v => /male|man|daniel|thomas|alex|fred|oliver|echo|onyx|ryan|minjun|민준|seojun|서준|david|mark/i.test(v.name));
+  const otherVoices = byLang.filter(v => !femaleVoices.includes(v) && !maleVoices.includes(v));
+  
+  const renderGroup = (label, group) => {
+    if (!group.length) return;
     const header = document.createElement('div');
-    header.style.cssText = 'font-size:10px;color:var(--sage-dark);letter-spacing:0.08em;text-transform:uppercase;padding:4px 6px 6px;font-weight:600';
-    header.textContent = '── 이 언어 목소리 ──';
+    header.style.cssText = 'font-size:10px;color:var(--sage-dark);letter-spacing:0.08em;padding:6px 6px 4px;font-weight:600';
+    header.textContent = '── ' + label + ' ──';
     list.appendChild(header);
-  } else {
-    const noVoice = document.createElement('div');
-    noVoice.style.cssText = 'font-size:12px;color:var(--text-muted);padding:8px 6px;text-align:center';
-    noVoice.textContent = '⚠️ 이 언어 목소리 없음 (기기 설정에서 추가 가능)';
-    list.appendChild(noVoice);
-  }
+    group.forEach(v => renderVoiceItem(v, selectedName, lc, list));
+  };
+  
+  renderGroup('👩 여성', femaleVoices);
+  renderGroup('👨 남성', maleVoices);
+  if (otherVoices.length) renderGroup('🔊 기타', otherVoices);
+}
 
-  const allToShow = byLang.length ? byLang : voices;
-  
-  allToShow.forEach(v => {
-    const g = guessGender(v.name);
-    const q = /neural|premium|enhanced|wavenet|natural/i.test(v.name) ? '⭐' : (v.localService ? '💾' : '🌐');
-    const isSelected = v.name === selectedName;
-    const item = document.createElement('div');
-    item.className = 'cv-voice-item';
-    item.dataset.vname = v.name;
-    item.dataset.vlang = lc;
-    item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:3px;border-radius:8px;cursor:pointer;'
-      + 'border:1.5px solid '+(isSelected?'var(--sage)':'var(--warm)')+';background:'+(isSelected?'#EDF4EE':'var(--white)');
-    item.onclick = function() { selectClientVoice(this.dataset.vlang, this.dataset.vname, this); };
-    const nameEl = document.createElement('div');
-    nameEl.style.cssText = 'font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-    nameEl.textContent = g+q+' '+v.name;
-    if (isSelected) {
-      const mark = document.createElement('span');
-      mark.style.cssText = 'color:var(--sage-dark);font-size:10px;margin-left:4px';
-      mark.textContent = ' ✓ 선택됨';
-      nameEl.appendChild(mark);
-    }
-    const playBtn = document.createElement('button');
-    playBtn.textContent = '▶ 듣기';
-    playBtn.style.cssText = 'background:var(--sage);border:none;border-radius:6px;color:white;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px';
-    playBtn.onclick = function(e) { e.stopPropagation(); testClientVoice(item.dataset.vname, item.dataset.vlang); };
-    item.appendChild(nameEl);
-    item.appendChild(playBtn);
-    list.appendChild(item);
-  });
-  
-  // 다른 언어 목소리도 참고용으로 표시 (한국어/영어는 선택 폭 넓히기)
-  if (byLang.length && otherVoices.length > 0) {
-    const sep = document.createElement('div');
-    sep.style.cssText = 'font-size:10px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;padding:10px 6px 6px;';
-    sep.textContent = '── 기타 언어 목소리 (참고) ──';
-    list.appendChild(sep);
-    otherVoices.forEach(v => {
-      const g = guessGender(v.name);
-      const q = /neural|premium|enhanced|wavenet|natural/i.test(v.name) ? '⭐' : (v.localService ? '💾' : '🌐');
-      const isSelected = v.name === selectedName;
-      const item2 = document.createElement('div');
-      item2.className = 'cv-voice-item';
-      item2.dataset.vname = v.name;
-      item2.dataset.vlang = lc;
-      item2.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:7px 10px;margin-bottom:3px;border-radius:8px;cursor:pointer;opacity:0.75;'
-        + 'border:1.5px solid '+(isSelected?'var(--sage)':'#e0dbd3')+';background:'+(isSelected?'#EDF4EE':'#faf9f7');
-      item2.onclick = function() { selectClientVoice(this.dataset.vlang, this.dataset.vname, this); };
-      const nameEl2 = document.createElement('div');
-      nameEl2.style.cssText = 'font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)';
-      nameEl2.textContent = g+q+' '+v.name+' ('+v.lang+')';
-      if (isSelected) {
-        const mark2 = document.createElement('span');
-        mark2.style.cssText = 'color:var(--sage-dark);font-size:10px;margin-left:4px';
-        mark2.textContent = ' ✓';
-        nameEl2.appendChild(mark2);
-      }
-      const playBtn2 = document.createElement('button');
-      playBtn2.textContent = '▶';
-      playBtn2.style.cssText = 'background:#EDF4EE;border:none;border-radius:6px;color:var(--sage-dark);padding:4px 7px;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:6px';
-      playBtn2.onclick = function(e) { e.stopPropagation(); testClientVoice(item2.dataset.vname, lc); };
-      item2.appendChild(nameEl2); item2.appendChild(playBtn2);
-      list.appendChild(item2);
-    });
+function renderVoiceItem(v, selectedName, lc, list) {
+  const q = /neural|premium|enhanced|wavenet|natural/i.test(v.name) ? '⭐' : (v.localService ? '💾' : '🌐');
+  const isSelected = v.name === selectedName;
+  const item = document.createElement('div');
+  item.className = 'cv-voice-item';
+  item.dataset.vname = v.name;
+  item.dataset.vlang = lc;
+  item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:3px;border-radius:8px;cursor:pointer;'
+    + 'border:1.5px solid '+(isSelected?'var(--sage)':'var(--warm)')+';background:'+(isSelected?'#EDF4EE':'var(--white)');
+  item.onclick = function() { selectClientVoice(this.dataset.vlang, this.dataset.vname, this); };
+  const nameEl = document.createElement('div');
+  nameEl.style.cssText = 'font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  nameEl.textContent = q+' '+v.name;
+  if (isSelected) {
+    const mark = document.createElement('span');
+    mark.style.cssText = 'color:var(--sage-dark);font-size:10px;margin-left:4px';
+    mark.textContent = ' ✓ 선택됨';
+    nameEl.appendChild(mark);
   }
+  const playBtn = document.createElement('button');
+  playBtn.textContent = '▶ 듣기';
+  playBtn.style.cssText = 'background:var(--sage);border:none;border-radius:6px;color:white;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px';
+  playBtn.onclick = function(e) { e.stopPropagation(); testClientVoice(item.dataset.vname, item.dataset.vlang); };
+  item.appendChild(nameEl); item.appendChild(playBtn);
+  list.appendChild(item);
 }
 
 // 목소리 미리 듣기
