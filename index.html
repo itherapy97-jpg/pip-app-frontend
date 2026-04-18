@@ -1613,6 +1613,24 @@ async function confirmReply(){
 // ===== 호스트 언어 =====
 const LANG_NAMES={'en':'English','zh-CN':'中文（简体）','zh-TW':'中文（繁體）','ja':'日本語','hi':'हिन्दी','es':'Español','fr':'Français','de':'Deutsch','ar':'العربية','pt':'Português','ru':'Русский','vi':'Tiếng Việt','th':'ภาษาไทย','id':'Bahasa Indonesia','ko':'한국어'};
 
+// ★ 현재 표시 언어 감지 (googtrans 쿠키 기반)
+function getCurrentDisplayLang() {
+  try {
+    const c = document.cookie.split(';').find(x => x.trim().startsWith('googtrans='));
+    if (c) {
+      const val = c.trim().replace('googtrans=','');
+      const parts = val.split('/');
+      return parts[2] || 'ko';
+    }
+  } catch(e) {}
+  return localStorage.getItem('pip_client_lang_pref') || 'ko';
+}
+
+// 호스트 현재 표시 언어 감지
+function getHostDisplayLang() {
+  return localStorage.getItem('pip_host_lang_pref') || 'ko';
+}
+
 function toggleLangMenu(){document.getElementById('langMenu').classList.toggle('open');}
 function setLang(lang, el) {
   document.getElementById('langMenu').classList.remove('open');
