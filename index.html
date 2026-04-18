@@ -498,7 +498,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 </div>
 
 <div class="screen" id="screen-reply">
-  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 홈으로</button><div class="top-bar-title"><h2>상담가 답변 확인</h2></div></div>
+  <div class="top-bar"><button class="back-btn" onclick="goScreen('screen-home')">← 홈으로</button><div class="top-bar-title"><h2 id="reply-page-title">상담가 답변 확인</h2></div></div>
   <div class="content">
     <div id="reply-view-section">
       <div class="notice" style="margin-bottom:16px"><p>📌 답변을 확인하면 화면에서 사라집니다.</p></div>
@@ -821,28 +821,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <!-- DeepL 기반 번역 사용 (보안) -->
 
 <script>
-// Google Translate 제거됨 - 딕셔너리 기반 번역 사용
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const API = 'https://pip-app-backend-production.up.railway.app';
 let token = localStorage.getItem('pip_token');
@@ -860,8 +838,7 @@ const L = {
   en: { greeting:'Welcome', progress:"This week's progress", sessions:'Education Sessions', schedule:'Session Schedule', counsel:'Personal Counseling', btnCounsel:'Write a counseling message', navEdu:'Learn', navCounsel:'Counsel', counselTitle:'Personal Counseling Request', counselLabel:"Freely write what's on your mind right now", notif:'Your counseling reply has arrived' }
 };
 
-// ===== 백엔드 번역 (Railway 경유) =====
-// api() 래퍼 대신 직접 fetch 사용 (401시 로그인 리다이렉트 방지)
+// ===== 백엔드 번역 (직접 fetch - 401 리다이렉트 방지) =====
 async function translateText(text, targetLang, sourceLang) {
   if (!text || !text.trim()) return text;
   if (!sourceLang) sourceLang = 'auto';
@@ -870,11 +847,8 @@ async function translateText(text, targetLang, sourceLang) {
   try {
     const res = await fetch(API + '/api/translate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + tk
-      },
-      body: JSON.stringify({ text, targetLang, sourceLang })
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+tk},
+      body: JSON.stringify({text, targetLang, sourceLang})
     });
     if (!res.ok) return text;
     const data = await res.json();
@@ -883,7 +857,7 @@ async function translateText(text, targetLang, sourceLang) {
 }
 
 function getHostDisplayLang() {
-  // Google Translate 제거됨
+  // localStorage 기반 언어 감지
   if (c) { const p = c.split('=')[1].split('/'); return p[2] || 'ko'; }
   return 'ko';
 }
@@ -909,6 +883,32 @@ function getBestVoice(langCode) {
   const normal = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
   return normal[0] || voices[0] || null;
 }
+
+function pipSpeak() {
+  const el = document.getElementById('reply-content');
+  if (!el) return;
+  const text = (el.innerText || el.textContent || '').trim();
+  if (!text) return;
+  speakWithPersona(text, getCurrentDisplayLang(), localStorage.getItem('pip_client_id'));
+}
+
+function speakWithPersona(text, lang, clientId) {
+  if (!text || !text.trim() || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const targetLang = lang || getCurrentDisplayLang() || 'ko';
+  const lc = targetLang.split('-')[0];
+  const persona = clientId ? getClientPersona(clientId) : null;
+  const savedVoice = (persona && persona.voices && persona.voices[lc]) || localStorage.getItem('pip_voice_for_'+lc) || null;
+  const utter = new SpeechSynthesisUtterance(text.trim());
+  utter.lang = targetLang; utter.rate = 0.92; utter.pitch = 1.0;
+  if (savedVoice) {
+    const v = speechSynthesis.getVoices().find(vv => vv.name === savedVoice);
+    if (v) utter.voice = v;
+  }
+  utter.onerror = e => console.error('[TTS]', e.error);
+  try { speechSynthesis.speak(utter); } catch(e) {}
+}
+
 function speakText(text, lang) {
   if (!text || !window.speechSynthesis) return;
   speechSynthesis.cancel();
@@ -919,12 +919,8 @@ function speakText(text, lang) {
   speechSynthesis.speak(utter);
 }
 function stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); }
-// ★ TTS 목소리 미리 로드 (페이지 시작 시)
-if (window.speechSynthesis) {
-  speechSynthesis.getVoices(); // 초기 로드 트리거
-  speechSynthesis.onvoiceschanged = () => {
-    speechSynthesis.getVoices(); // 목소리 로드 완료 시 캐시
-  };
+if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
 }
 
 // ===== STT (장문 음성 입력) =====
@@ -969,293 +965,43 @@ function _updateMicBtn(targetId, on) {
   btn.style.color = on ? 'white' : 'var(--sage-dark)';
 }
 
-// ===== 언어별 목소리 시스템 =====
-const TONE_PRESETS = {
-  auto:  {rate:0,     pitch:0},
-  calm:  {rate:-0.12, pitch:-0.15},
-  bright:{rate:+0.10, pitch:+0.15},
-  warm:  {rate:-0.05, pitch:+0.05}
+
+// ===== 번역 딕셔너리 (외부 API 없음, 완전 보안) =====
+const LANDING_TR = {
+  ko: {quote:'"내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."', desc:'Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.', notice:'<strong>⚠ 중요 안내</strong><br><br>본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong>'},
+  en: {quote:'"Inner peace is not about fixing,<br>but <em style="color:#4A6B4D">discovering</em> what is already there."', desc:"Peace-In Practice™ is the world's first unique methodology for inner education, approaching from the exact opposite direction of conventional <strong style='color:#4A6B4D'>CBT</strong>.<br><br>This program regularly includes <strong style='color:#4A6B4D'>actual 1:1 counseling</strong> sessions.", notice:"<strong>⚠ Important Notice</strong><br><br>This program operates effectively only under the guidance of a professional counselor. <strong>Access is restricted to authorized participants only.</strong>"},
+  ja: {quote:'"内なる平和は直すことではなく、<br>すでにあるものを<em style="color:#4A6B4D">発見すること</em>です。"', desc:'Peace-In Practice™は、従来の<strong style="color:#4A6B4D">CBT</strong>と正反対のアプローチで行う、人類初の独自の内面教育メソッドです。<br><br>専門カウンセラーが創案したこのプログラムは、<strong style="color:#4A6B4D">実際の1:1カウンセリング</strong>が定期的に含まれています。', notice:'<strong>⚠ 重要なお知らせ</strong><br><br>このプログラムは専門カウンセラーの指導のもとでのみ効果的に機能します。<strong>許可された参加者のみアクセス可能です。</strong>'},
+  es: {quote:'"La paz interior no se trata de arreglar,<br>sino de <em style="color:#4A6B4D">descubrir</em> lo que ya está ahí."', desc:"Peace-In Practice™ es la primera metodología única del mundo para la educación interior, opuesta al <strong style='color:#4A6B4D'>CBT</strong>.<br><br>Este programa incluye regularmente sesiones de <strong style='color:#4A6B4D'>consejería real 1:1</strong>.", notice:"<strong>⚠ Aviso Importante</strong><br><br>Este programa funciona eficazmente solo bajo la guía de un consejero profesional. <strong>Acceso restringido a participantes autorizados.</strong>"},
+  fr: {quote:`"La paix intérieure ne consiste pas à réparer,<br>mais à <em style="color:#4A6B4D">découvrir</em> ce qui est déjà là."`, desc:`Peace-In Practice™ est la première méthodologie unique au monde pour l'éducation intérieure. <strong style='color:#4A6B4D'>TCC</strong> inverse.<br><br>Ce programme inclut des séances de <strong style='color:#4A6B4D'>conseil réel 1:1</strong>.`, notice:`<strong>⚠ Avis Important</strong><br><br>Ce programme fonctionne uniquement sous la direction d'un conseiller professionnel. <strong>Accès réservé aux participants autorisés.</strong>`},
+  de: {quote:'"Innerer Frieden bedeutet nicht zu reparieren,<br>sondern das zu <em style="color:#4A6B4D">entdecken</em>, was bereits da ist."', desc:"Peace-In Practice™ ist die weltweit erste Methodik für innere Bildung, entgegen der <strong style='color:#4A6B4D'>KVT</strong>.<br><br>Dieses Programm beinhaltet regelmäßig echte <strong style='color:#4A6B4D'>1:1-Beratungssitzungen</strong>.", notice:"<strong>⚠ Wichtiger Hinweis</strong><br><br>Dieses Programm funktioniert effektiv nur unter Anleitung eines professionellen Beraters. <strong>Zugang nur für autorisierte Teilnehmer.</strong>"}
 };
 
-function getVoiceForLang(langCode) {
-  const lc = (langCode||'ko').split('-')[0];
-  const saved = localStorage.getItem('pip_voice_for_' + lc);
-  const voices = speechSynthesis.getVoices();
-  if (saved) { const f=voices.find(v=>v.name===saved); if(f) return f; }
-  return null;
+const UI_TR = {
+  ko:{startBtn:'시작하기 →',loginBtn:'로그인',homeGreeting:'안녕하세요',navEdu:'교육',navCounsel:'상담',counselBtn:'상담 내용 작성하기',replyTitle:'상담가 답변 확인',replyBtn:'확인했습니다',listenBtn:'🔊 듣기'},
+  en:{startBtn:'Get Started →',loginBtn:'Login',homeGreeting:'Hello',navEdu:'Education',navCounsel:'Counseling',counselBtn:'Write Counseling',replyTitle:"Counselor's Answer",replyBtn:'I have confirmed',listenBtn:'🔊 Listen'},
+  ja:{startBtn:'始める →',loginBtn:'ログイン',homeGreeting:'こんにちは',navEdu:'教育',navCounsel:'相談',counselBtn:'相談内容を書く',replyTitle:'カウンセラーの返答確認',replyBtn:'確認しました',listenBtn:'🔊 聴く'},
+  es:{startBtn:'Comenzar →',loginBtn:'Iniciar sesión',homeGreeting:'Hola',navEdu:'Educación',navCounsel:'Consejería',counselBtn:'Escribir consejería',replyTitle:'Respuesta del consejero',replyBtn:'He confirmado',listenBtn:'🔊 Escuchar'},
+  fr:{startBtn:'Commencer →',loginBtn:'Se connecter',homeGreeting:'Bonjour',navEdu:'Éducation',navCounsel:'Conseil',counselBtn:'Écrire un conseil',replyTitle:'Réponse du conseiller',replyBtn:"J'ai confirmé",listenBtn:'🔊 Écouter'},
+  de:{startBtn:'Starten →',loginBtn:'Anmelden',homeGreeting:'Hallo',navEdu:'Bildung',navCounsel:'Beratung',counselBtn:'Beratung schreiben',replyTitle:'Antwort des Beraters',replyBtn:'Ich habe bestätigt',listenBtn:'🔊 Hören'}
+};
+
+function applyPageTranslation(lang) {
+  const lc=(lang||'ko').split('-')[0];
+  const t=LANDING_TR[lang]||LANDING_TR[lc]||LANDING_TR.en;
+  const q=document.getElementById('landing-quote'); if(q) q.innerHTML=t.quote;
+  const d=document.getElementById('landing-desc'); if(d) d.innerHTML=t.desc;
+  const n=document.getElementById('landing-notice'); if(n) n.innerHTML=t.notice;
 }
 
-function guessGender(name) {
-  if (/female|woman|fiona|victoria|karen|samantha|yuna|sora|seon-hi|alice|jenny|nova|shimmer/i.test(name)) return '👩';
-  if (/male|man|daniel|thomas|alex|fred|oliver|echo|onyx/i.test(name)) return '👨';
-  return '🔊';
-}
-
-function buildLangVoiceSettings() {
-  const container = document.getElementById('lang-voice-settings');
-  if (!container) return;
-  const voices = speechSynthesis.getVoices();
-  const langs = [{code:'ko',label:'🇰🇷 한국어'},{code:'en',label:'🇺🇸 English'},{code:'ja',label:'🇯🇵 日本語'},{code:'zh',label:'🇨🇳 中文'},{code:'es',label:'🇪🇸 Español'},{code:'fr',label:'🇫🇷 Français'},{code:'de',label:'🇩🇪 Deutsch'},{code:'ar',label:'🇸🇦 العربية'}];
-  container.innerHTML = '';
-  langs.forEach(lang => {
-    const byLang = voices.filter(v => v.lang.toLowerCase().startsWith(lang.code));
-    if (!byLang.length) return;
-    const savedName = localStorage.getItem('pip_voice_for_' + lang.code)||'';
-    const row = document.createElement('div'); row.style.marginBottom='10px';
-    const label = document.createElement('div'); label.style.cssText='font-size:12px;color:var(--text-muted);margin-bottom:4px;display:flex;justify-content:space-between';
-    label.innerHTML = lang.label + '<button onclick="testSpeakLang(\''+lang.code+'\''+')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--sage-dark)">▶</button>';
-    const sel = document.createElement('select'); sel.id='voice-for-'+lang.code;
-    sel.style.cssText='width:100%;padding:9px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none';
-    sel.innerHTML='<option value="">🔀 자동 (기기 최고음질)</option>';
-    byLang.forEach(v => {
-      const opt=document.createElement('option'); opt.value=v.name;
-      const g=guessGender(v.name); const q=/neural|premium|enhanced|wavenet|natural/i.test(v.name)?'⭐':(v.localService?'💾':'🌐');
-      opt.textContent=g+q+' '+v.name; if(v.name===savedName) opt.selected=true; sel.appendChild(opt);
-    });
-    sel.onchange=()=>{ if(sel.value) localStorage.setItem('pip_voice_for_'+lang.code, sel.value); else localStorage.removeItem('pip_voice_for_'+lang.code); };
-    row.appendChild(label); row.appendChild(sel); container.appendChild(row);
-  });
-  if(!container.children.length) container.innerHTML='<div style="font-size:12px;color:var(--text-muted)">기기에 설치된 목소리가 없습니다.</div>';
-}
-
-function testSpeakLang(lang) {
-  const useLang = lang || getHostDisplayLang()||'ko';
-  const tests={ko:'안녕하세요. 상담을 시작하겠습니다.',en:'Hello. How are you feeling today?',ja:'こんにちは。今日はどんな気分ですか?',zh:'你好，今天感觉怎么样？',es:'Hola. ¿Cómo te sientes hoy?',fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"};
-  const sel=document.getElementById('voice-for-'+useLang);
-  speechSynthesis.cancel();
-  const utter=new SpeechSynthesisUtterance(tests[useLang]||tests.en);
-  if(sel?.value){const v=speechSynthesis.getVoices().find(vv=>vv.name===sel.value);if(v)utter.voice=v;}
-  else utter.voice=getBestVoice(useLang);
-  utter.lang=useLang; speechSynthesis.speak(utter);
-}
-
-// ===== 내담자별 언어별 목소리 페르소나 시스템 =====
-function getClientPersona(clientId) {
-  if(!clientId) return null;
-  try{return JSON.parse(localStorage.getItem('pip_persona_'+clientId)||'null');}catch(e){return null;}
-}
-function saveClientPersona(clientId, persona) {
-  if(!clientId) return;
-  localStorage.setItem('pip_persona_'+clientId, JSON.stringify(persona));
-}
-
-// 내담자용 목소리 탭 전환
-let _cvCurrentLang = 'ko';
-function showClientVoiceLang(lang, btn) {
-  _cvCurrentLang = lang;
-  // 탭 버튼 스타일 초기화
-  document.querySelectorAll('.cv-lang-btn').forEach(b => {
-    b.style.borderColor = 'var(--warm)';
-    b.style.background = 'var(--white)';
-    b.style.color = 'var(--text)';
-  });
-  if (btn) {
-    btn.style.borderColor = 'var(--sage)';
-    btn.style.background = '#EDF4EE';
-    btn.style.color = 'var(--sage-dark)';
-  }
-  buildClientVoiceList(lang);
-}
-
-// 언어에 맞는 목소리 목록 표시
-function buildClientVoiceList(lang) {
-  const list = document.getElementById('cv-voice-list');
-  if (!list) return;
-  const voices = speechSynthesis.getVoices();
-  const lc = (lang||'ko').split('-')[0].toLowerCase();
-  
-  // 해당 언어 목소리만 필터 (언어 코드 + 언어명 매칭 강화)
-  const langNames = {
-    ko: ['korean', 'ko-', 'hangul', '한국'],
-    en: ['english', 'en-us', 'en-gb', 'en-au', 'en-ca', 'en-in', 'en-'],
-    ja: ['japanese', 'ja-', 'nihon'],
-    zh: ['chinese', 'zh-', 'mandarin', 'cantonese'],
-    es: ['spanish', 'es-'],
-    fr: ['french', 'fr-'],
-    de: ['german', 'de-'],
-    ar: ['arabic', 'ar-'],
-    pt: ['portuguese', 'pt-'],
-    ru: ['russian', 'ru-']
-  };
-  const keywords = langNames[lc] || [lc+'-', lc+'_'];
-  
-  const byLang = voices.filter(v => {
-    const vl = v.lang.toLowerCase();
-    const vn = v.name.toLowerCase();
-    return vl.startsWith(lc) || keywords.some(k => vl.includes(k) || vn.includes(k));
-  });
-  
-  const persona = getClientPersona(currentDetailClientId) || {voices:{}};
-  const selectedName = (persona.voices||{})[lc] || '';
-
-  list.innerHTML = '';
-  
-  if (!byLang.length) {
-    list.innerHTML = '<div style="padding:14px">'
-      + '<div style="font-size:13px;color:var(--danger);margin-bottom:8px">⚠️ 이 언어의 목소리가 기기에 없습니다.</div>'
-      + (lc === 'ko' ? '<div style="font-size:11px;color:var(--sage-dark);line-height:1.7;background:#EDF4EE;padding:10px;border-radius:8px">'
-        + '<b>한국어 남성/여성 목소리 추가 방법 (Windows):</b><br>'
-        + '1. Windows 설정 → 시간 및 언어 → 언어 및 지역<br>'
-        + '2. 한국어 → 언어 옵션 → 음성 합성기<br>'
-        + '3. Microsoft <b>Minjun</b> (남성) / <b>Jimin</b> (여성) 추가<br>'
-        + '4. 브라우저 재시작 후 목록에 나타납니다'
-        + '</div>' : '<div style="font-size:11px;color:var(--text-muted)">기기 설정에서 이 언어팩을 설치해 주세요.</div>')
-      + '</div>';
-    return;
-  }
-  
-  // 성별 추측으로 여성/남성 분류
-  const femaleVoices = byLang.filter(v => /female|woman|fiona|victoria|karen|samantha|heami|yuna|sora|seon-hi|alice|jenny|nova|shimmer|혜미|hyun-soo/i.test(v.name));
-  const maleVoices = byLang.filter(v => /male|man|daniel|thomas|alex|fred|oliver|echo|onyx|ryan|minjun|민준|seojun|서준|david|mark/i.test(v.name));
-  const otherVoices = byLang.filter(v => !femaleVoices.includes(v) && !maleVoices.includes(v));
-  
-  const renderGroup = (label, group) => {
-    if (!group.length) return;
-    const header = document.createElement('div');
-    header.style.cssText = 'font-size:10px;color:var(--sage-dark);letter-spacing:0.08em;padding:6px 6px 4px;font-weight:600';
-    header.textContent = '── ' + label + ' ──';
-    list.appendChild(header);
-    group.forEach(v => renderVoiceItem(v, selectedName, lc, list));
-  };
-  
-  renderGroup('👩 여성', femaleVoices);
-  renderGroup('👨 남성', maleVoices);
-  if (otherVoices.length) renderGroup('🔊 기타', otherVoices);
-  
-  // 한국어인데 남성 목소리 없을 때 설치 안내
-  if (lc === 'ko' && maleVoices.length === 0) {
-    const guide = document.createElement('div');
-    guide.style.cssText = 'margin-top:8px;padding:10px;background:#FDF8F0;border-radius:8px;font-size:11px;color:#8B5E2A;line-height:1.6;border:1px solid #e8d5b0';
-    guide.innerHTML = '👨 <b>한국어 남성 목소리 없음</b><br>'
-      + 'Windows 설정 → 시간 및 언어 → 한국어 → 음성 합성기<br>'
-      + '→ Microsoft <b>Minjun</b>(남성) 또는 <b>Seojun</b>(남성) 추가<br>'
-      + '→ 브라우저 재시작 후 자동으로 목록에 표시됩니다';
-    list.appendChild(guide);
-  }
-}
-
-function renderVoiceItem(v, selectedName, lc, list) {
-  const q = /neural|premium|enhanced|wavenet|natural/i.test(v.name) ? '⭐' : (v.localService ? '💾' : '🌐');
-  const isSelected = v.name === selectedName;
-  const item = document.createElement('div');
-  item.className = 'cv-voice-item';
-  item.dataset.vname = v.name;
-  item.dataset.vlang = lc;
-  item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:3px;border-radius:8px;cursor:pointer;'
-    + 'border:1.5px solid '+(isSelected?'var(--sage)':'var(--warm)')+';background:'+(isSelected?'#EDF4EE':'var(--white)');
-  item.onclick = function() { selectClientVoice(this.dataset.vlang, this.dataset.vname, this); };
-  const nameEl = document.createElement('div');
-  nameEl.style.cssText = 'font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-  nameEl.textContent = q+' '+v.name;
-  if (isSelected) {
-    const mark = document.createElement('span');
-    mark.style.cssText = 'color:var(--sage-dark);font-size:10px;margin-left:4px';
-    mark.textContent = ' ✓ 선택됨';
-    nameEl.appendChild(mark);
-  }
-  const playBtn = document.createElement('button');
-  playBtn.textContent = '▶ 듣기';
-  playBtn.style.cssText = 'background:var(--sage);border:none;border-radius:6px;color:white;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px';
-  playBtn.onclick = function(e) { e.stopPropagation(); testClientVoice(item.dataset.vname, item.dataset.vlang); };
-  item.appendChild(nameEl); item.appendChild(playBtn);
-  list.appendChild(item);
-}
-
-// 목소리 미리 듣기
-function testClientVoice(voiceName, lang) {
-  const tests = {ko:'안녕하세요. 오늘 어떻게 지내셨나요?',en:'Hello. How are you feeling today?',ja:'こんにちは。今日はどんな気分ですか？',zh:'你好，今天感觉怎么样？',es:'Hola. ¿Cómo te sientes hoy?',fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"};
-  if (!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(tests[lang] || tests.en);
-  const v = speechSynthesis.getVoices().find(vv => vv.name === voiceName);
-  if (v) utter.voice = v;
-  utter.lang = lang;
-  utter.rate = 0.92;
-  try { speechSynthesis.speak(utter); } catch(e) {}
-}
-
-// 목소리 선택 저장
-function selectClientVoice(lang, voiceName, el) {
-  if (!currentDetailClientId) return;
-  const persona = getClientPersona(currentDetailClientId) || {voices:{}};
-  if (!persona.voices) persona.voices = {};
-  persona.voices[lang] = voiceName;
-  saveClientPersona(currentDetailClientId, persona);
-  // UI 즉시 갱신
-  buildClientVoiceList(lang);
-}
-
-// 프로필 탭 열릴 때 목소리 UI 초기화
-function loadPersonaUI(clientId) {
-  _cvCurrentLang = 'ko';
-  // 한국어 탭 기본 활성화
-  document.querySelectorAll('.cv-lang-btn').forEach(b => {
-    b.style.borderColor = 'var(--warm)';
-    b.style.background = 'var(--white)';
-    b.style.color = 'var(--text)';
-  });
-  const koBtn = document.getElementById('cv-lang-ko');
-  if (koBtn) { koBtn.style.borderColor='var(--sage)'; koBtn.style.background='#EDF4EE'; koBtn.style.color='var(--sage-dark)'; }
-  // 목소리 목록 로드 (getVoices 준비 대기)
-  setTimeout(() => buildClientVoiceList('ko'), 350);
-}
-
-// TTS 재생 - 내담자별 언어별 설정 목소리 사용
-// ★ 답변 화면 전용 TTS 함수 (notranslate 버튼에서 직접 호출)
-function pipSpeak() {
-  const el = document.getElementById('reply-content');
-  if (!el) { console.log('[PIP] reply-content 없음'); return; }
-  const text = el.innerText || el.textContent || '';
-  console.log('[PIP] pipSpeak 호출, text 길이:', text.length, '내용:', text.substring(0,50));
-  if (!text.trim()) { console.log('[PIP] text 비어있음'); return; }
-  const lang = getCurrentDisplayLang() || 'ko';
-  const clientId = localStorage.getItem('pip_client_id');
-  console.log('[PIP] lang:', lang, 'clientId:', clientId);
-  speakWithPersona(text.trim(), lang, clientId);
-}
-
-// ★ speakWithPersona - 반드시 사용자 클릭 이벤트에서 직접 호출
-// Chrome 보안정책: setTimeout/onvoiceschanged 내부 호출 시 차단됨
-function speakWithPersona(text, lang, clientId) {
-  if (!text || !text.trim()) { console.log('[PIP TTS] 텍스트 없음'); return; }
-  if (!window.speechSynthesis) { alert('이 브라우저는 음성을 지원하지 않습니다. (speechSynthesis 없음)'); return; }
-  
-  speechSynthesis.cancel();
-  
-  const targetLang = lang || getCurrentDisplayLang() || 'ko';
-  const lc = targetLang.split('-')[0];
-  const persona = clientId ? getClientPersona(clientId) : null;
-  const savedVoiceName = (persona?.voices||{})[lc] || localStorage.getItem('pip_voice_for_'+lc) || null;
-  const allVoices = speechSynthesis.getVoices();
-  
-  console.log('[PIP TTS] ▶ 재생 시작');
-  console.log('  - 텍스트:', text.substring(0,30));
-  console.log('  - 언어:', targetLang);
-  console.log('  - clientId:', clientId);
-  console.log('  - 저장 목소리:', savedVoiceName);
-  console.log('  - 기기 목소리 수:', allVoices.length);
-  
-  const utter = new SpeechSynthesisUtterance(text.trim());
-  utter.lang = targetLang;
-  utter.rate = 0.92;
-  utter.pitch = 1.0;
-  
-  if (savedVoiceName) {
-    const v = allVoices.find(vv => vv.name === savedVoiceName);
-    if (v) { utter.voice = v; console.log('  - 목소리 적용:', v.name); }
-    else { console.log('  - 저장 목소리 없음, 기본 사용'); }
-  }
-  
-  utter.onerror = (e) => console.error('[PIP TTS] ✗ 오류:', e.error);
-  utter.onstart = () => console.log('[PIP TTS] ✓ 재생 시작됨');
-  utter.onend = () => console.log('[PIP TTS] ✓ 재생 완료');
-  
-  try {
-    speechSynthesis.speak(utter);
-    console.log('[PIP TTS] speak() 호출됨, pending:', speechSynthesis.pending, 'speaking:', speechSynthesis.speaking);
-  } catch(e) {
-    console.error('[PIP TTS] speak() 예외:', e);
-  }
+function applyFullTranslation(lang) {
+  applyPageTranslation(lang);
+  const lc=(lang||'ko').split('-')[0];
+  const t=UI_TR[lang]||UI_TR[lc]||UI_TR.en;
+  const s=(id,txt)=>{const e=document.getElementById(id);if(e&&txt)e.textContent=txt;};
+  s('home-greeting',t.homeGreeting); s('nav-edu',t.navEdu); s('nav-counsel',t.navCounsel);
+  s('btn-counsel',t.counselBtn); s('reply-page-title',t.replyTitle); s('reply-confirm-btn',t.replyBtn);
+  const startBtn=document.querySelector('#screen-landing .btn.primary'); if(startBtn) startBtn.textContent=t.startBtn;
+  const listenBtn=document.querySelector('#screen-reply .notranslate'); if(listenBtn) listenBtn.textContent=t.listenBtn;
 }
 
 // ===== 화면 전환 =====
@@ -1302,12 +1048,10 @@ function switchLoginTab(tab) {
 
 function extractClientId(jwtToken) {
   try {
-    const p = jwtToken.split('.')[1];
-    const d = p + '='.repeat((4-p.length%4)%4);
-    const obj = JSON.parse(atob(d));
-    // 백엔드 JWT 필드 모두 시도
-    const id = obj.clientId || obj.id || obj.userId || obj.client_id || obj.sub || null;
-    console.log('[PIP] JWT payload:', JSON.stringify(obj), '→ clientId:', id);
+    const p=jwtToken.split('.')[1], d=p+'='.repeat((4-p.length%4)%4);
+    const obj=JSON.parse(atob(d));
+    const id=obj.clientId||obj.id||obj.userId||obj.sub||null;
+    console.log('[PIP] JWT→clientId:', id);
     return id;
   } catch(e) { return null; }
 }
@@ -1318,8 +1062,12 @@ async function clientEmailLogin() {
   if (!email||!password) { errEl.textContent='이메일과 비밀번호를 입력해주세요.'; errEl.classList.add('show'); return; }
   try {
     const data = await api('/api/auth/client/login','POST',{email,password});
-    if (data.token) { token=data.token; localStorage.setItem('pip_token',token); const cid=extractClientId(token); if(cid) localStorage.setItem('pip_client_id',cid); localStorage.setItem('pip_lang',data.language||userLang); userLang=data.language||userLang; applyLang(); showScreen('screen-home'); loadHome(); }
-    else { errEl.textContent=data.error||'로그인 실패'; errEl.classList.add('show'); }
+    if (data.token) {
+      token=data.token; localStorage.setItem('pip_token',token);
+      const cid=extractClientId(token); if(cid) localStorage.setItem('pip_client_id',cid);
+      localStorage.setItem('pip_lang',data.language||userLang); userLang=data.language||userLang;
+      applyLang(); showScreen('screen-home'); loadHome();
+    } else { errEl.textContent=data.error||'로그인 실패'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
 }
 
@@ -1556,37 +1304,21 @@ async function loadReply(){
   document.getElementById('reply-confirmed-section').style.display='none';
   const replyEl = document.getElementById('reply-content');
   replyEl.textContent = '...';
-
-  // 1단계: 답변 로드
-  let originalReply = '';
   try {
     const res = await api('/api/counsel/reply');
     if (res && res.hasReply) {
       currentCounselId = res.counselId;
-      originalReply = res.reply || '';
-      replyEl.textContent = originalReply; // 즉시 원문 표시
+      const orig = res.reply || '';
+      replyEl.textContent = orig;
+      const lang = getCurrentDisplayLang();
+      if (lang !== 'ko') {
+        translateText(orig, lang, 'auto').then(t => { if(t&&t!==orig) replyEl.textContent=t; }).catch(()=>{});
+      }
     } else {
       replyEl.textContent = '확인 가능한 답변이 없습니다.';
-      return;
     }
   } catch(e) {
-    // api()가 401로 로그인 화면 전환 시 여기 도달
-    if (replyEl.textContent === '...') {
-      replyEl.textContent = '확인 가능한 답변이 없습니다.';
-    }
-    return;
-  }
-
-  // 2단계: 번역 (실패해도 원문 유지)
-  const clientLang = getCurrentDisplayLang() || 'ko';
-  if (originalReply && clientLang !== 'ko') {
-    translateText(originalReply, clientLang, 'auto')
-      .then(translated => {
-        if (translated && translated.trim() && translated !== originalReply) {
-          replyEl.textContent = translated;
-        }
-      })
-      .catch(() => {}); // 번역 실패 시 원문 유지
+    if (replyEl.textContent==='...') replyEl.textContent='확인 가능한 답변이 없습니다.';
   }
 }
 
@@ -1599,7 +1331,6 @@ async function confirmReply(){
 // ===== 호스트 언어 =====
 const LANG_NAMES={'en':'English','zh-CN':'中文（简体）','zh-TW':'中文（繁體）','ja':'日本語','hi':'हिन्दी','es':'Español','fr':'Français','de':'Deutsch','ar':'العربية','pt':'Português','ru':'Русский','vi':'Tiếng Việt','th':'ภาษาไทย','id':'Bahasa Indonesia','ko':'한국어'};
 
-// ★ 현재 표시 언어 감지 (localStorage 기반)
 function getCurrentDisplayLang() {
   return localStorage.getItem('pip_client_lang_pref') || 'ko';
 }
@@ -1607,246 +1338,13 @@ function getCurrentDisplayLang() {
 
 
 
-
-// 호스트 현재 표시 언어 감지
-
-
-
-
 function toggleLangMenu(){document.getElementById('langMenu').classList.toggle('open');}
 function setLang(lang, el) {
   document.getElementById('langMenu').classList.remove('open');
-  localStorage.setItem('pip_lang_display', LANG_NAMES[lang] || lang);
+  localStorage.setItem('pip_lang_display', LANG_NAMES[lang]||lang);
   localStorage.setItem('pip_client_lang_pref', lang);
-  const langEl = document.getElementById('langSelected');
-  if (langEl) langEl.textContent = LANG_NAMES[lang] || lang;
-  // 전체 페이지 번역 적용 (딕셔너리 기반)
+  const langEl=document.getElementById('langSelected'); if(langEl) langEl.textContent=LANG_NAMES[lang]||lang;
   applyFullTranslation(lang);
-}
-
-// ★ 내장 번역 딕셔너리 (API 호출 없음, 완전 보안)
-const LANDING_TRANSLATIONS = {
-  ko: {
-    quote: '"내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."',
-    desc: 'Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.',
-    notice: '<strong>⚠ 중요 안내</strong><br><br>본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong>',
-    startBtn: '시작하기 →', manual: '📖 사용설명서 보기'
-  },
-  en: {
-    quote: '"Inner peace is not about fixing,<br>but <em style="color:#4A6B4D">discovering</em> what is already there."',
-    desc: "Peace-In Practice™ is the world's first unique methodology for inner education, approaching from the exact opposite direction of conventional <strong style='color:#4A6B4D'>CBT (Cognitive Behavioral Therapy)</strong>.<br><br>Created by professional counselors, this program regularly includes <strong style='color:#4A6B4D'>actual 1:1 counseling</strong> sessions within its curriculum.",
-    notice: "<strong>⚠ Important Notice</strong><br><br>This program operates effectively only under the guidance of a professional counselor. <strong>Access is restricted to authorized participants only.</strong>",
-    startBtn: 'Get Started →', manual: '📖 View Manual'
-  },
-  ja: {
-    quote: '"内なる平和は直すことではなく、<br>すでにあるものを<em style="color:#4A6B4D">発見すること</em>です。"',
-    desc: 'Peace-In Practice™は、従来の<strong style="color:#4A6B4D">CBT（認知行動療法）</strong>と正反対のアプローチで行う、人類初の独自の内面教育メソッドです。<br><br>専門カウンセラーが創案したこのプログラムは、教育課程の中に<strong style="color:#4A6B4D">実際の1:1カウンセリング</strong>が定期的に含まれています。',
-    notice: '<strong>⚠ 重要なお知らせ</strong><br><br>このプログラムは専門カウンセラーの指導のもとでのみ効果的に機能します。<strong>許可された参加者のみアクセス可能です。</strong>',
-    startBtn: '始める →', manual: '📖 マニュアルを見る'
-  },
-  'zh-CN': {
-    quote: '"内心的平和不是修复，<br>而是<em style="color:#4A6B4D">发现</em>已经存在的东西。"',
-    desc: 'Peace-In Practice™是全球首创的内心教育方法论，与传统<strong style="color:#4A6B4D">CBT（认知行为疗法）</strong>方向完全相反。<br><br>由专业咨询师创立的这个项目，在课程中定期包含<strong style="color:#4A6B4D">实际1:1咨询</strong>环节。',
-    notice: '<strong>⚠ 重要通知</strong><br><br>本项目仅在专业咨询师指导下有效运作。<strong>仅限授权参与者访问。</strong>',
-    startBtn: '开始 →', manual: '📖 查看说明书'
-  },
-  es: {
-    quote: '"La paz interior no se trata de arreglar,<br>sino de <em style="color:#4A6B4D">descubrir</em> lo que ya está ahí."',
-    desc: 'Peace-In Practice™ es la primera metodología única del mundo para la educación interior, abordando desde la dirección exactamente opuesta al <strong style="color:#4A6B4D">CBT (Terapia Cognitivo-Conductual)</strong> convencional.<br><br>Este programa, creado por consejeros profesionales, incluye regularmente sesiones de <strong style="color:#4A6B4D">consejería real 1:1</strong> dentro de su currículo.',
-    notice: '<strong>⚠ Aviso Importante</strong><br><br>Este programa funciona eficazmente solo bajo la guía de un consejero profesional. <strong>El acceso está restringido solo a participantes autorizados.</strong>',
-    startBtn: 'Comenzar →', manual: '📖 Ver Manual'
-  },
-  fr: {
-    quote: `"La paix intérieure ne consiste pas à réparer,<br>mais à <em style="color:#4A6B4D">découvrir</em> ce qui est déjà là."`,
-    desc: `Peace-In Practice™ est la première méthodologie unique au monde pour l'éducation intérieure, abordant dans la direction exactement opposée à la <strong style='color:#4A6B4D'>TCC (Thérapie Cognitive-Comportementale)</strong> conventionnelle.<br><br>Ce programme, créé par des conseillers professionnels, inclut régulièrement des séances de <strong style='color:#4A6B4D'>conseil réel 1:1</strong> dans son cursus.`,
-    notice: `<strong>⚠ Avis Important</strong><br><br>Ce programme fonctionne efficacement uniquement sous la direction d'un conseiller professionnel. <strong>L'accès est réservé aux participants autorisés uniquement.</strong>`,
-    startBtn: 'Commencer →', manual: '📖 Voir le Manuel'
-  },
-  de: {
-    quote: '"Innerer Frieden bedeutet nicht zu reparieren,<br>sondern das zu <em style="color:#4A6B4D">entdecken</em>, was bereits da ist."',
-    desc: 'Peace-In Practice™ ist die weltweit erste einzigartige Methodik für innere Bildung, die aus der genau entgegengesetzten Richtung zur konventionellen <strong style="color:#4A6B4D">KVT (Kognitive Verhaltenstherapie)</strong> vorgeht.<br><br>Dieses von professionellen Beratern entwickelte Programm beinhaltet regelmäßig echte <strong style="color:#4A6B4D">1:1-Beratungssitzungen</strong> in seinem Lehrplan.',
-    notice: '<strong>⚠ Wichtiger Hinweis</strong><br><br>Dieses Programm funktioniert effektiv nur unter der Anleitung eines professionellen Beraters. <strong>Zugang ist nur autorisierten Teilnehmern gestattet.</strong>',
-    startBtn: 'Starten →', manual: '📖 Handbuch ansehen'
-  }
-};
-
-// ★ 전체 UI 번역 딕셔너리 (Google Translate 없이 완전 보안)
-const UI_TRANSLATIONS = {
-  ko: {
-    startBtn:'시작하기 →', manualLink:'📖 사용설명서 보기',
-    loginTitle:'로그인', loginBack:'← 뒤로',
-    emailTab:'이메일 로그인', inviteTab:'초대코드 (첫 방문)',
-    emailLabel:'이메일', pwLabel:'비밀번호', loginBtn:'로그인',
-    regTitle:'회원가입', regEmail:'이메일', regPw:'비밀번호', regPw2:'비밀번호 확인', regBtn:'가입하기',
-    homeGreeting:'안녕하세요', homeProgress:'이번 주 진행률', homeSessions:'교육 세션',
-    homeSchedule:'세션 시간 약속', homeCounsel:'개인 상담', homeCounselBtn:'상담 내용 작성하기',
-    navEdu:'교육', navCounsel:'상담',
-    counselTitle:'상담 작성', counselLabel:'상담 내용을 자유롭게 작성해 주세요.',
-    replyTitle:'상담가 답변 확인', replyNotice:'📌 답변을 확인하면 화면에서 사라집니다.',
-    replyLabel:'상담가 답변', replyBtn:'확인했습니다', replyListen:'🔊 듣기',
-    noReply:'확인 가능한 답변이 없습니다.',
-    notifText:'상담 답변이 도착했습니다', notifLink:'확인하기 →',
-    sentTitle:'전송 완료', sentMsg:'상담 내용이 전송되었습니다.',
-    scheduleTitle:'세션 일정',
-  },
-  en: {
-    startBtn:"Get Started →", manualLink:"📖 View Manual",
-    loginTitle:"Login", loginBack:"← Back",
-    emailTab:"Email Login", inviteTab:"Invite Code (First Visit)",
-    emailLabel:"Email", pwLabel:"Password", loginBtn:"Login",
-    regTitle:"Sign Up", regEmail:"Email", regPw:"Password", regPw2:"Confirm Password", regBtn:"Sign Up",
-    homeGreeting:"Hello", homeProgress:"This Week's Progress", homeSessions:"Education Sessions",
-    homeSchedule:"Session Schedule", homeCounsel:"Personal Counseling", homeCounselBtn:"Write Counseling",
-    navEdu:"Education", navCounsel:"Counseling",
-    counselTitle:"Write Counseling", counselLabel:"Please write freely about your counseling.",
-    replyTitle:"Counselor's Answer", replyNotice:"📌 The answer will disappear once confirmed.",
-    replyLabel:"Counselor's Answer", replyBtn:"I have confirmed", replyListen:"🔊 Listen",
-    noReply:"No answer available.",
-    notifText:"A counseling reply has arrived", notifLink:"Check →",
-    sentTitle:"Sent", sentMsg:"Your counseling has been sent.",
-    scheduleTitle:"Session Schedule",
-  },
-  ja: {
-    startBtn:'始める →', manualLink:'📖 マニュアルを見る',
-    loginTitle:'ログイン', loginBack:'← 戻る',
-    emailTab:'メールログイン', inviteTab:'招待コード（初回）',
-    emailLabel:'メール', pwLabel:'パスワード', loginBtn:'ログイン',
-    regTitle:'会員登録', regEmail:'メール', regPw:'パスワード', regPw2:'パスワード確認', regBtn:'登録',
-    homeGreeting:'こんにちは', homeProgress:'今週の進捗', homeSessions:'教育セッション',
-    homeSchedule:'セッションスケジュール', homeCounsel:'個人カウンセリング', homeCounselBtn:'相談内容を書く',
-    navEdu:'教育', navCounsel:'相談',
-    counselTitle:'相談を書く', counselLabel:'自由に相談内容を書いてください。',
-    replyTitle:'カウンセラーの返答確認', replyNotice:'📌 確認すると画面から消えます。',
-    replyLabel:'カウンセラーの返答', replyBtn:'確認しました', replyListen:'🔊 聴く',
-    noReply:'確認できる回答がありません。',
-    notifText:'カウンセリングの返答が届きました', notifLink:'確認 →',
-    sentTitle:'送信完了', sentMsg:'相談内容が送信されました。',
-    scheduleTitle:'セッションスケジュール',
-  },
-  es: {
-    startBtn:'Comenzar →', manualLink:'📖 Ver Manual',
-    loginTitle:'Iniciar sesión', loginBack:'← Volver',
-    emailTab:'Correo electrónico', inviteTab:'Código de invitación',
-    emailLabel:'Correo', pwLabel:'Contraseña', loginBtn:'Iniciar sesión',
-    regTitle:'Registrarse', regEmail:'Correo', regPw:'Contraseña', regPw2:'Confirmar contraseña', regBtn:'Registrarse',
-    homeGreeting:'Hola', homeProgress:'Progreso de esta semana', homeSessions:'Sesiones de educación',
-    homeSchedule:'Horario de sesión', homeCounsel:'Consejería personal', homeCounselBtn:'Escribir consejería',
-    navEdu:'Educación', navCounsel:'Consejería',
-    counselTitle:'Escribir consejería', counselLabel:'Escriba libremente sobre su consejería.',
-    replyTitle:'Respuesta del consejero', replyNotice:'📌 La respuesta desaparecerá una vez confirmada.',
-    replyLabel:'Respuesta del consejero', replyBtn:'He confirmado', replyListen:'🔊 Escuchar',
-    noReply:'No hay respuesta disponible.',
-    notifText:'Ha llegado una respuesta de consejería', notifLink:'Ver →',
-    sentTitle:'Enviado', sentMsg:'Su consejería ha sido enviada.',
-    scheduleTitle:'Horario de sesión',
-  },
-  fr: {
-    startBtn:'Commencer →', manualLink:'📖 Voir le Manuel',
-    loginTitle:'Connexion', loginBack:'← Retour',
-    emailTab:'Email', inviteTab:"Code d'invitation",
-    emailLabel:'Email', pwLabel:'Mot de passe', loginBtn:'Se connecter',
-    regTitle:"S'inscrire", regEmail:'Email', regPw:'Mot de passe', regPw2:'Confirmer', regBtn:"S'inscrire",
-    homeGreeting:'Bonjour', homeProgress:'Progrès cette semaine', homeSessions:"Sessions d'éducation",
-    homeSchedule:'Planning de session', homeCounsel:'Conseil personnel', homeCounselBtn:'Écrire un conseil',
-    navEdu:'Éducation', navCounsel:'Conseil',
-    counselTitle:'Écrire un conseil', counselLabel:'Écrivez librement votre conseil.',
-    replyTitle:'Réponse du conseiller', replyNotice:'📌 La réponse disparaîtra une fois confirmée.',
-    replyLabel:'Réponse du conseiller', replyBtn:"J'ai confirmé", replyListen:'🔊 Écouter',
-    noReply:'Aucune réponse disponible.',
-    notifText:'Une réponse de conseil est arrivée', notifLink:'Voir →',
-    sentTitle:'Envoyé', sentMsg:'Votre conseil a été envoyé.',
-    scheduleTitle:'Planning de session',
-  },
-  de: {
-    startBtn:'Starten →', manualLink:'📖 Handbuch ansehen',
-    loginTitle:'Anmelden', loginBack:'← Zurück',
-    emailTab:'E-Mail', inviteTab:'Einladungscode',
-    emailLabel:'E-Mail', pwLabel:'Passwort', loginBtn:'Anmelden',
-    regTitle:'Registrieren', regEmail:'E-Mail', regPw:'Passwort', regPw2:'Bestätigen', regBtn:'Registrieren',
-    homeGreeting:'Hallo', homeProgress:'Fortschritt diese Woche', homeSessions:'Bildungssitzungen',
-    homeSchedule:'Sitzungsplan', homeCounsel:'Persönliche Beratung', homeCounselBtn:'Beratung schreiben',
-    navEdu:'Bildung', navCounsel:'Beratung',
-    counselTitle:'Beratung schreiben', counselLabel:'Schreiben Sie frei über Ihre Beratung.',
-    replyTitle:'Antwort des Beraters', replyNotice:'📌 Die Antwort verschwindet nach Bestätigung.',
-    replyLabel:'Antwort des Beraters', replyBtn:'Ich habe bestätigt', replyListen:'🔊 Hören',
-    noReply:'Keine Antwort verfügbar.',
-    notifText:'Eine Beratungsantwort ist eingetroffen', notifLink:'Ansehen →',
-    sentTitle:'Gesendet', sentMsg:'Ihre Beratung wurde gesendet.',
-    scheduleTitle:'Sitzungsplan',
-  }
-};
-
-// 전체 화면 UI 번역 적용
-function applyFullTranslation(lang) {
-  const lc = (lang||'ko').split('-')[0];
-  const t = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS[lc] || UI_TRANSLATIONS.en;
-  const ko = UI_TRANSLATIONS.ko;
-  
-  // 랜딩 페이지 번역
-  applyPageTranslation(lang);
-  
-  // 헬퍼: ID로 텍스트 설정
-  const setText = (id, text) => { const el=document.getElementById(id); if(el&&text) el.textContent=text; };
-  const setHTML = (id, html) => { const el=document.getElementById(id); if(el&&html) el.innerHTML=html; };
-  const setPlaceholder = (id, text) => { const el=document.getElementById(id); if(el&&text) el.placeholder=text; };
-  
-  // 로그인 화면
-  setText('login-back-text', t.loginBack);
-  setText('tab-email-btn', t.emailTab);
-  setText('tab-invite-btn', t.inviteTab);
-  setPlaceholder('login-email', t.emailLabel);
-  setPlaceholder('login-password', t.pwLabel);
-  const loginBtn = document.querySelector('#screen-login .btn.primary');
-  if (loginBtn) loginBtn.textContent = t.loginBtn;
-  
-  // 홈 화면
-  setText('home-greeting', t.homeGreeting);
-  setText('lbl-progress', t.homeProgress);
-  setText('lbl-sessions', t.homeSessions);
-  setText('lbl-schedule', t.homeSchedule);
-  setText('lbl-counsel', t.homeCounsel);
-  setText('btn-counsel', t.homeCounselBtn);
-  setText('nav-edu', t.navEdu);
-  setText('nav-counsel', t.navCounsel);
-  
-  // 알림 배너
-  setText('notif-text', t.notifText);
-  const notifLink = document.querySelector('.notif-link');
-  if (notifLink) notifLink.textContent = t.notifLink;
-  
-  // 상담 화면
-  setText('counsel-title', t.counselTitle);
-  setText('counsel-label', t.counselLabel);
-  
-  // 답변 확인 화면
-  setText('reply-page-title', t.replyTitle);
-  const replyNoticeEl = document.querySelector('#screen-reply .notice p');
-  if (replyNoticeEl) replyNoticeEl.innerHTML = t.replyNotice;
-  setText('reply-label-text', t.replyLabel);
-  const replyConfirmBtn = document.getElementById('reply-confirm-btn');
-  if (replyConfirmBtn) replyConfirmBtn.textContent = t.replyBtn;
-  const listenBtn = document.querySelector('#screen-reply .notranslate');
-  if (listenBtn) listenBtn.textContent = t.replyListen;
-  
-  // 전송 완료 화면
-  setText('sent-title', t.sentTitle);
-  setText('sent-msg', t.sentMsg);
-}
-
-function applyPageTranslation(lang) {
-  const lc = lang.split('-')[0];
-  const t = LANDING_TRANSLATIONS[lang] || LANDING_TRANSLATIONS[lc] || LANDING_TRANSLATIONS.en;
-  
-  const quoteEl = document.getElementById('landing-quote');
-  const descEl = document.getElementById('landing-desc');
-  const noticeEl = document.getElementById('landing-notice');
-  const startBtn = document.querySelector('#screen-landing .btn.primary');
-  const manualLink = document.querySelector('#screen-landing a[href="#manual"]') || document.querySelector('#screen-landing .manual-link');
-  
-  if (quoteEl) quoteEl.innerHTML = t.quote;
-  if (descEl) descEl.innerHTML = t.desc;
-  if (noticeEl) noticeEl.innerHTML = t.notice;
-  if (startBtn && t.startBtn) startBtn.textContent = t.startBtn;
 }
 
 function toggleHostLangMenu(){
@@ -1856,57 +1354,27 @@ function toggleHostLangMenu(){
   if(!anyOpen){if(hm)hm.classList.add('open');if(lm)lm.classList.add('open');}
 }
 
-function setHostLang(lang,el){
+function setHostLang(lang, el) {
   if(document.getElementById('hostLangMenu'))document.getElementById('hostLangMenu').classList.remove('open');
   if(document.getElementById('hostLoginLangMenu'))document.getElementById('hostLoginLangMenu').classList.remove('open');
-  localStorage.setItem('pip_host_lang_pref',lang);
-  localStorage.setItem('pip_host_lang_display',LANG_NAMES[lang]||lang);
-  const hostEl=document.getElementById('hostLangSelected');if(hostEl)hostEl.textContent=LANG_NAMES[lang]||lang;
-  const hostLoginEl=document.getElementById('hostLoginLangSelected');if(hostLoginEl)hostLoginEl.textContent=LANG_NAMES[lang]||lang;
+  localStorage.setItem('pip_host_lang_display', LANG_NAMES[lang]||lang);
+  localStorage.setItem('pip_host_lang_pref', lang);
+  const hEl=document.getElementById('hostLangSelected'); if(hEl) hEl.textContent=LANG_NAMES[lang]||lang;
+  const hlEl=document.getElementById('hostLoginLangSelected'); if(hlEl) hlEl.textContent=LANG_NAMES[lang]||lang;
   applyFullTranslation(lang);
 }
 
-function applyHostLang(){} // Google Translate 제거됨
+function applyHostLang(){
+  const pref=localStorage.getItem('pip_host_lang_pref')||'ko';
+  // Google Translate 없음
+  localStorage.setItem('pip_host_lang_pref', pref);
+}
 
-
-
-
-
-
-  // Language 버튼 표시 (localStorage 기반)
-  const savedClientLang = localStorage.getItem('pip_client_lang_pref') || 'ko';
-  const el = document.getElementById('langSelected');
-  if (el) el.textContent = LANG_NAMES[savedClientLang] || '한국어';
-  const hostSaved=localStorage.getItem('pip_host_lang_display');
-  const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
+window.addEventListener('load',()=>{
+  const saved=localStorage.getItem('pip_lang_display');const el=document.getElementById('langSelected');if(saved&&el)el.textContent=saved;
+  const hostSaved=localStorage.getItem('pip_host_lang_display');const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
   const hostLoginEl=document.getElementById('hostLoginLangSelected');if(hostSaved&&hostLoginEl)hostLoginEl.textContent=hostSaved;
-  
-  // ★ 브라우저/폰 언어 자동 감지 (pip_client_lang_pref 미설정 시)
-  const isHost = location.hash==='#host'||location.hash==='#/host';
-  if (!isHost && !localStorage.getItem('pip_client_lang_pref')) {
-    const browserLang = (navigator.language || navigator.userLanguage || 'ko').toLowerCase();
-    const lc = browserLang.split('-')[0];
-    const langMap = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
-    let target = langMap[lc];
-    if (lc==='zh') target = (browserLang.includes('tw')||browserLang.includes('hk'))?'zh-TW':'zh-CN';
-    const finalLang = target || 'ko';
-    localStorage.setItem('pip_client_lang_pref', finalLang);
-    if (el) el.textContent = LANG_NAMES[finalLang] || '한국어';
-    if (finalLang !== 'ko') applyFullTranslation(finalLang);
-  }
-  
-  // Google Translate 제거됨 - DeepL 백엔드 사용
-  const savedLang = localStorage.getItem('pip_client_lang_pref');
-  if (savedLang && savedLang !== 'ko' && !isHost) applyFullTranslation(savedLang);
-
-
-
-
-
-
-
-
-
+});
 
 document.addEventListener('click',(e)=>{
   if(!e.target.closest('.lang-selector-wrap')){
@@ -1914,12 +1382,7 @@ document.addEventListener('click',(e)=>{
     const hm=document.getElementById('hostLangMenu');if(hm)hm.classList.remove('open');
     const lm=document.getElementById('hostLoginLangMenu');if(lm)lm.classList.remove('open');
   }
-  // Google Translate 툴팁 클릭 시 제거
-  const tooltip = document.querySelector('.goog-te-tooltip');
-  if (tooltip) tooltip.style.display = 'none';
 });
-
-
 
 // ===== 호스트 =====
 async function hostLogin(){
@@ -2175,10 +1638,7 @@ async function createGroup(){
   catch(e){alert('생성 실패');}
 }
 
-async function loadHostSettings(){
-  try{const s=await api('/api/host/settings');if(s){document.getElementById('landing-text').value=s.landing_text||'';document.getElementById('company-name').value=s.company_name||'';document.getElementById('program-name').value=s.program_name||'';}}catch(e){}
-  setTimeout(()=>buildLangVoiceSettings(), 400);
-}
+async function loadHostSettings(){try{const s=await api('/api/host/settings');if(s){document.getElementById('landing-text').value=s.landing_text||'';document.getElementById('company-name').value=s.company_name||'';document.getElementById('program-name').value=s.program_name||'';}}catch(e){}}
 async function saveSettings(){const data={landing_text:document.getElementById('landing-text').value,company_name:document.getElementById('company-name').value,program_name:document.getElementById('program-name').value};try{await api('/api/host/settings','PUT',data);document.getElementById('settings-success').classList.add('show');setTimeout(()=>document.getElementById('settings-success').classList.remove('show'),2000);}catch(e){alert('저장 실패');}}
 
 function showHostTab(tab,btn){
@@ -2204,341 +1664,39 @@ function initApp(){
   }catch(e){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-landing').classList.add('active');}
 }
 
-window.onload = function() {
-  initApp();
-};
-</script>
-</body>
-</htmlwindow.addEventListener('load', () => {
-  // Language 버튼 표시
-  const savedClientLang = localStorage.getItem('pip_client_lang_pref') || 'ko';
+if (window.speechSynthesis) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+window.addEventListener('load', () => {
+  const savedLang = localStorage.getItem('pip_client_lang_pref') || 'ko';
   const el = document.getElementById('langSelected');
-  if (el) el.textContent = LANG_NAMES[savedClientLang] || '한국어';
+  if (el) el.textContent = LANG_NAMES[savedLang] || '한국어';
   const hostSaved = localStorage.getItem('pip_host_lang_display');
-  const hostEl = document.getElementById('hostLangSelected'); if(hostSaved&&hostEl) hostEl.textContent=hostSaved;
-  const hostLoginEl = document.getElementById('hostLoginLangSelected'); if(hostSaved&&hostLoginEl) hostLoginEl.textContent=hostSaved;
-  
-  // ★ 브라우저/폰 언어 자동 감지
+  const hEl=document.getElementById('hostLangSelected'); if(hostSaved&&hEl) hEl.textContent=hostSaved;
+  const hlEl=document.getElementById('hostLoginLangSelected'); if(hostSaved&&hlEl) hlEl.textContent=hostSaved;
+
   const isHost = location.hash==='#host'||location.hash==='#/host';
   if (!isHost && !localStorage.getItem('pip_client_lang_pref')) {
-    const browserLang = (navigator.language || navigator.userLanguage || 'ko').toLowerCase();
-    const lc = browserLang.split('-')[0];
-    const langMap = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
-    let target = langMap[lc];
-    if (lc==='zh') target = (browserLang.includes('tw')||browserLang.includes('hk'))?'zh-TW':'zh-CN';
-    const finalLang = target || 'ko';
-    localStorage.setItem('pip_client_lang_pref', finalLang);
-    if (el) el.textContent = LANG_NAMES[finalLang] || '한국어';
-    if (finalLang !== 'ko') applyFullTranslation(finalLang);
-  } else if (savedClientLang !== 'ko' && !isHost) {
-    applyFullTranslation(savedClientLang);
+    const bl=(navigator.language||'ko').toLowerCase(), lc=bl.split('-')[0];
+    const lm={'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
+    let t=lm[lc]; if(lc==='zh') t=(bl.includes('tw')||bl.includes('hk'))?'zh-TW':'zh-CN';
+    const fl=t||'ko';
+    localStorage.setItem('pip_client_lang_pref', fl);
+    if(el) el.textContent=LANG_NAMES[fl]||'한국어';
+    if(fl!=='ko') applyFullTranslation(fl);
+  } else if (savedLang!=='ko' && !isHost) {
+    applyFullTranslation(savedLang);
   }
-  // 호스트 언어 적용
-  if (isHost && hostSaved && hostSaved !== '한국어') {
-    const hostLang = localStorage.getItem('pip_host_lang_pref') || 'ko';
-    if (hostLang !== 'ko') applyFullTranslation(hostLang);
+  if (isHost) {
+    const hl=localStorage.getItem('pip_host_lang_pref')||'ko';
+    if(hl!=='ko') applyFullTranslation(hl);
   }
 });
 
-document.addEventListener('click',(e)=>{
-  if(!e.target.closest('.lang-selector-wrap')){
-    const m=document.getElementById('langMenu');if(m)m.classList.remove('open');
-    const hm=document.getElementById('hostLangMenu');if(hm)hm.classList.remove('open');
-    const lm=document.getElementById('hostLoginLangMenu');if(lm)lm.classList.remove('open');
-  }
-  // Google Translate 툴팁 클릭 시 제거
-  const tooltip = document.querySelector('.goog-te-tooltip');
-  if (tooltip) tooltip.style.display = 'none';
-});
+window.onload = initApp;
 
-
-
-// ===== 호스트 =====
-async function hostLogin(){
-  const pw=document.getElementById('host-pw').value;document.getElementById('host-error').classList.remove('show');
-  try{const data=await api('/api/auth/host/login','POST',{password:pw});if(data.token){token=data.token;localStorage.setItem('pip_token',token);localStorage.setItem('pip_role','host');applyHostLang();goScreen('screen-host');}else{document.getElementById('host-error').classList.add('show');}}
-  catch(e){document.getElementById('host-error').classList.add('show');}
-}
-function hostLogout(){localStorage.removeItem('pip_token');localStorage.removeItem('pip_role');token=null;goScreen('screen-host-login');}
-
-async function loadHostDashboard(){
-  loadGroups();
-  try{const clients=await api('/api/host/clients');document.getElementById('stat-clients').textContent=clients.length;document.getElementById('stat-pending').textContent=clients.filter(c=>c.hasPending).length;document.getElementById('client-list').innerHTML=clients.map(c=>{const dn=c.email||c.name||'내담자',ini=dn.substring(0,2).toUpperCase();return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar">'+ini+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+dn+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">'+(c.hasPending?'💬 상담 대기 중':'미답변 없음')+' · 주'+(c.session_frequency||2)+'회</div><div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 '+(c.invite_code||'-')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join('');}
-  catch(e){document.getElementById('client-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">로드 실패</p>';}
-  try{const modules=await api('/api/host/modules');document.getElementById('host-module-list').innerHTML=modules.length>0?modules.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1;cursor:pointer" onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')"><div style="font-size:14px;font-weight:500">'+m.title+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">클릭하여 질문 편집</div></div><button onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';}
-  catch(e){}
-  loadHostSchedule();
-}
-
-async function openClientDetail(clientId){currentDetailClientId=clientId;goScreen('screen-client-detail');showDetailTab('profile',document.getElementById('dtab-profile'));await loadClientDetail();}
-
-async function loadClientDetail(){
-  try{
-    const data=await api('/api/host/clients/'+currentDetailClientId);const c=data.client;
-    document.getElementById('detail-client-name').textContent=c.name+(c.nickname?' · '+c.nickname:'');
-    document.getElementById('detail-client-sub').textContent=(c.language==='ko'?'한국어':'English')+' · 주'+(c.session_frequency||2)+'회';
-    document.getElementById('dp-name').value=c.name||'';document.getElementById('dp-nickname').value=c.nickname||'';
-    document.getElementById('dp-age').value=c.age||'';document.getElementById('dp-email').value=c.email||'';
-    document.getElementById('dp-language').value=c.language||'ko';
-    currentClientLang=c.language||'ko';
-    document.getElementById('dp-invite-code').textContent=c.invite_code||'-';
-    document.getElementById('dp-frequency').value=c.session_frequency||2;
-    document.getElementById('dp-startdate').value=c.program_start_date||'';
-    document.getElementById('dp-characteristics').value=c.characteristics||'';
-    document.getElementById('dp-memo').value=c.memo||'';
-    const assigned=data.modules||[];
-    document.getElementById('detail-module-list').innerHTML=assigned.length>0?assigned.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1"><div style="font-size:14px;font-weight:500">'+(m.modules?.title||'모듈')+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+(m.completed?'✅ 완료':(m.is_active?'🟢 진행 중':'⏸ 대기'))+'</div></div><div style="display:flex;gap:6px;align-items:center"><button onclick="openModuleEditor(\''+m.module_id+'\',\''+((m.modules?.title||'모듈').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button><button onclick="toggleModule(\''+m.module_id+'\','+!m.is_active+')" style="background:'+(m.is_active?'#FDF3E7':'#EDF4EE')+';color:'+(m.is_active?'#8B5E2A':'var(--sage-dark)')+';border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">'+(m.is_active?'비활성화':'활성화')+'</button><button onclick="removeModule(\''+m.module_id+'\')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button></div></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
-    const answersBtn=document.getElementById('detail-answers-btn');if(answersBtn)answersBtn.style.display='block';
-    allModules=await api('/api/host/modules');
-    const assignedIds=assigned.map(m=>m.module_id);
-    document.getElementById('detail-all-modules').innerHTML=allModules.filter(m=>!assignedIds.includes(m.id)).map(m=>'<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule(\''+m.id+'\')"><div class="card-row"><div style="font-size:14px">'+m.title+'</div><span style="color:var(--sage);font-size:12px">+ 배정</span></div></div>').join('')||'<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
-    const counsels=data.counseling||[];
-    _counselList=counsels;
-    document.getElementById('detail-counsel-list').innerHTML=counsels.length>0?counsels.map((c,ci)=>{
-      const dateStr=c.sent_at?new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-      const statusColor=c.status==='replied'?'var(--sage-dark)':'var(--danger)';
-      const statusLabel=c.status==='replied'?'답변완료':'미답변';
-      const preview=(c.message||'').substring(0,80)+((c.message||'').length>80?'...':'');
-      const replyHtml=c.reply?'<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 '+(c.reply||'').substring(0,60)+((c.reply||'').length>60?'...':'')+'</div>':'';
-      const replyBtn=!c.reply?'<button onclick="openDetailReplyByIdx('+ci+')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>':'';
-      return '<div class="card" style="margin-bottom:8px;" id="counsel-card-'+c.id+'">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-        +'<div style="font-size:11px;color:var(--text-muted)">'+dateStr+'</div>'
-        +'<span style="font-size:11px;color:'+statusColor+'">● '+statusLabel+'</span></div>'
-        +'<p style="font-size:13px;line-height:1.6;color:var(--text);cursor:pointer" id="counsel-preview-'+c.id+'" onclick="openDetailReplyByIdx('+ci+')">'+preview+'</p>'
-        +replyHtml+replyBtn+'</div>';
-    }).join(''):'<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
-    // 상담 메시지 자동 번역
-    translateCounselList(counsels);
-    const schedules=data.schedules||[];
-    document.getElementById('detail-schedule-list').innerHTML=schedules.length>0?schedules.map(s=>{let t=s.confirmed_time||s.requested_time||'시간 미정';try{if(t.includes('T'))t=formatDateForHost(t);}catch(e){}const cb=s.status!=='confirmed'?'<button onclick="confirmSchedule(\''+s.id+'\',\''+(s.confirmed_time||s.requested_time)+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:8px;width:100%">✓ 확정하기</button>':'';return'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="font-size:14px">'+t+'</div><span class="badge '+(s.status==='confirmed'?'green':'amber')+'">'+(s.status==='confirmed'?'확정':'대기')+'</span></div>'+cb+'</div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
-  }catch(e){console.error(e);}
-}
-
-// 인덱스로 상담 열기
-function openDetailReplyByIdx(idx){const c=_counselList[idx];if(!c)return;openDetailReply(c.id,c.message||'',c.reply||'',c.sent_at||'',c.status||'');}
-
-// 상담 자동 번역
-async function translateCounselList(counsels){
-  const hostLang=getHostDisplayLang();
-  for(let i=0;i<counsels.length;i++){
-    const c=counsels[i];if(!c.message)continue;
-    const translated=await translateText(c.message,hostLang,'auto');
-    if(!translated||translated===c.message)continue;
-    const msgEl=document.getElementById('counsel-preview-'+c.id);
-    if(msgEl){
-      const preview=translated.substring(0,80)+(translated.length>80?'...':'');
-      msgEl.innerHTML=preview+translateBadge();
-      const tMsg=translated,origMsg=c.message;
-      msgEl.onclick=()=>openDetailReply(c.id,origMsg,c.reply||'',c.sent_at||'',c.status||'',tMsg);
-    }
-    const card=document.getElementById('counsel-card-'+c.id);
-    if(card){const btn=card.querySelector('button');if(btn&&btn.textContent==='답변 작성'){const tMsg=translated,origMsg=c.message;btn.onclick=()=>openDetailReply(c.id,origMsg,c.reply||'',c.sent_at||'',c.status||'',tMsg);}}
-  }
-}
-
-function showOriginalMsg(){const el=document.getElementById('detail-counsel-msg');if(el)el.textContent=_originalCounselMsg;}
-
-function openDetailReply(counselId,message,reply,sentAt,status,translatedMsg){
-  currentDetailCounselId=counselId;
-  _originalCounselMsg=message;
-  const displayMsg=translatedMsg||message;
-  const el=document.getElementById('detail-counsel-msg');
-  el.textContent=displayMsg;
-  if(translatedMsg&&translatedMsg!==message){
-    el.innerHTML=displayMsg+translateBadge()+'<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="showOriginalMsg()">원문 보기 ▾</div>';
-  }
-  document.getElementById('detail-reply-date').textContent=sentAt?new Date(sentAt).toLocaleDateString('ko-KR'):'';
-  document.getElementById('detail-reply-text').value='';
-  if(reply){document.getElementById('detail-reply-existing').style.display='block';document.getElementById('detail-reply-prev').textContent=reply;}
-  else{document.getElementById('detail-reply-existing').style.display='none';}
-  document.getElementById('detail-reply-success').classList.remove('show');
-  goScreen('screen-detail-reply');
-}
-
-function showDetailTab(tab,btn){
-  document.querySelectorAll('#screen-client-detail .host-tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
-  ['profile','modules','counsel','schedule'].forEach(t=>{const el=document.getElementById('detail-tab-'+t);if(el)el.style.display=t===tab?'block':'none';});
-  const saveBtn=document.getElementById('detail-save-btn');if(saveBtn)saveBtn.style.display=tab==='profile'?'block':'none';
-}
-
-async function saveClientProfile(){
-  const data={name:document.getElementById('dp-name').value,nickname:document.getElementById('dp-nickname').value,age:parseInt(document.getElementById('dp-age').value)||null,email:document.getElementById('dp-email').value,language:document.getElementById('dp-language').value,session_frequency:parseInt(document.getElementById('dp-frequency').value)||2,program_start_date:document.getElementById('dp-startdate').value||null,characteristics:document.getElementById('dp-characteristics').value,memo:document.getElementById('dp-memo').value};
-  try{await api('/api/host/clients/'+currentDetailClientId,'PUT',data);const suc=document.getElementById('profile-save-success');suc.classList.add('show');setTimeout(()=>suc.classList.remove('show'),2000);document.getElementById('detail-client-name').textContent=data.name+(data.nickname?' · '+data.nickname:'');}
-  catch(e){alert('저장 실패');}
-}
-
-async function assignModule(moduleId){try{await api('/api/host/clients/'+currentDetailClientId+'/modules/assign','POST',{moduleId,orderNum:1});await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('배정 실패');}}
-
-async function loadClientAnswers(){
-  const listEl=document.getElementById('detail-answers-list'),btn=document.getElementById('detail-answers-btn');
-  if(listEl.style.display==='block'){listEl.style.display='none';btn.textContent='📋 내담자 교육 답변 확인';return;}
-  listEl.style.display='block';btn.textContent='📋 답변 숨기기';listEl.innerHTML='<div class="loading">로딩 중...</div>';
-  try{
-    const answers=await api('/api/host/clients/'+currentDetailClientId+'/answers');
-    if(!answers||answers.length===0){listEl.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0">아직 답변이 없습니다.</p>';return;}
-    listEl.innerHTML=answers.map((a,ai)=>{
-      const answerDisplay=a.questions?.type==='text'?(a.text_value||'(입력 없음)'):(a.choice_label?a.choice_label:(a.choice_value||'-'));
-      const dateStr=a.answered_at?new Date(a.answered_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-      return'<div class="card" style="margin-bottom:8px;padding:12px 14px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+dateStr+' · <span style="color:'+(a.questions?.type==='text'?'#8B5E2A':'var(--sage-dark)')+'>'+(a.questions?.type==='text'?'주관식':'객관식')+'</span></div><p style="font-size:13px;color:var(--text-muted);margin-bottom:4px" id="ans-q-'+ai+'">'+(a.questions?.text||'질문')+'</p><p style="font-size:14px;color:var(--text);font-weight:500" id="ans-a-'+ai+'">'+answerDisplay+'</p></div>';
-    }).join('');
-    // 주관식 답변 자동 번역
-    const hostLang=getHostDisplayLang();
-    answers.forEach(async(a,ai)=>{
-      if(a.questions?.text){const tq=await translateText(a.questions.text,hostLang,'auto');const qEl=document.getElementById('ans-q-'+ai);if(qEl&&tq!==a.questions.text)qEl.innerHTML=tq+translateBadge();}
-      if(a.questions?.type==='text'&&a.text_value){const ta=await translateText(a.text_value,hostLang,'auto');const aEl=document.getElementById('ans-a-'+ai);if(aEl&&ta!==a.text_value)aEl.innerHTML=ta+translateBadge();}
-    });
-  }catch(e){listEl.innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
-}
-
-async function toggleModule(moduleId,isActive){try{await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId+'/toggle','PUT',{is_active:isActive});await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('변경 실패');}}
-async function removeModule(moduleId){if(!confirm('이 모듈을 제거할까요?'))return;try{await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId,'DELETE');await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('제거 실패');}}
-
-let currentEditorModuleId=null,editorQuestions=[];
-async function openModuleEditor(moduleId,title){
-  currentEditorModuleId=moduleId;document.getElementById('editor-module-title').textContent=title+' — 질문 편집';
-  document.getElementById('editor-save-success').classList.remove('show');document.getElementById('question-list').innerHTML='<div class="loading">질문 로딩 중...</div>';
-  goScreen('screen-module-editor');
-  try{const questions=await api('/api/host/modules/'+moduleId+'/questions');editorQuestions=questions.map(q=>({id:q.id,text:q.text||'',type:q.type||'choice',order_num:q.order_num||1,choices:(()=>{try{return typeof q.choices==='string'?JSON.parse(q.choices):(q.choices||[]);}catch(e){return [];}})()}));renderQuestionList();}
-  catch(e){document.getElementById('question-list').innerHTML='<p style="color:var(--danger)">질문 로드 실패</p>';}
-}
-
-function renderQuestionList(){
-  if(editorQuestions.length===0){document.getElementById('question-list').innerHTML='<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px">아직 질문이 없습니다.<br>위의 버튼으로 추가하세요.</p>';return;}
-  document.getElementById('question-list').innerHTML=editorQuestions.map((q,i)=>'<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;padding:3px 8px;border-radius:12px;background:'+(q.type==='choice'?'#EDF4EE':'#FDF8F0')+';color:'+(q.type==='choice'?'var(--sage-dark)':'#8B5E2A')+'">'+(q.type==='choice'?'객관식':'주관식')+'</span><div style="display:flex;gap:6px">'+(i>0?'<button onclick="moveQuestion('+i+',-1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↑</button>':'')+(i<editorQuestions.length-1?'<button onclick="moveQuestion('+i+',1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↓</button>':'')+'<button onclick="deleteQuestion('+i+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px 4px">✕</button></div></div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">질문 '+(i+1)+'</div><textarea id="q-text-'+i+'" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:\'DM Sans\',sans-serif;resize:vertical;min-height:70px;outline:none;line-height:1.6">'+q.text+'</textarea>'+(q.type==='choice'?'<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 (한 줄에 하나)</div><textarea id="q-choices-'+i+'" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">'+(q.choices||[]).map(c=>c.label||c).join('\n')+'</textarea></div>':'<div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">💬 내담자가 직접 텍스트로 입력합니다</div>')+'</div>').join('');
-}
-
-async function createGlobalModule(){
-  const title=document.getElementById('new-module-title').value.trim();if(!title){document.getElementById('new-module-title').style.borderColor='var(--danger)';return;}
-  try{const res=await api('/api/host/modules','POST',{title,order_num:1});if(res.success||res.moduleId){document.getElementById('new-module-title').value='';document.getElementById('module-create-success').classList.add('show');setTimeout(()=>document.getElementById('module-create-success').classList.remove('show'),2000);loadHostDashboard();}}
-  catch(e){alert('생성 실패');}
-}
-
-function addQuestion(type){editorQuestions.push({text:'',type,order_num:editorQuestions.length+1,choices:type==='choice'?[{label:'선택지 1',value:'1'},{label:'선택지 2',value:'2'},{label:'선택지 3',value:'3'}]:[]});renderQuestionList();}
-function deleteQuestion(idx){if(!confirm('이 질문을 삭제할까요?'))return;editorQuestions.splice(idx,1);renderQuestionList();}
-function moveQuestion(idx,dir){const ni=idx+dir;if(ni<0||ni>=editorQuestions.length)return;[editorQuestions[idx],editorQuestions[ni]]=[editorQuestions[ni],editorQuestions[idx]];renderQuestionList();}
-
-async function saveAllQuestions(){
-  editorQuestions.forEach((q,i)=>{const te=document.getElementById('q-text-'+i);if(te)q.text=te.value.trim();if(q.type==='choice'){const ce=document.getElementById('q-choices-'+i);if(ce){const lines=ce.value.split('\n').filter(l=>l.trim());q.choices=lines.map((l,j)=>({label:l.trim(),value:String(j+1)}));}}q.order_num=i+1;});
-  try{await api('/api/host/modules/'+currentEditorModuleId+'/questions','POST',{questions:editorQuestions});const suc=document.getElementById('editor-save-success');suc.classList.add('show');setTimeout(()=>suc.classList.remove('show'),2000);const updated=await api('/api/host/modules/'+currentEditorModuleId+'/questions');editorQuestions=updated.map(q=>({id:q.id,text:q.text||'',type:q.type||'choice',order_num:q.order_num||1,choices:(()=>{try{return typeof q.choices==='string'?JSON.parse(q.choices):(q.choices||[]);}catch(e){return[];}})()}));renderQuestionList();}
-  catch(e){alert('저장 실패');}
-}
-
-function openDetailReply(counselId,message,reply,sentAt,status,translatedMsg){
-  currentDetailCounselId=counselId;_originalCounselMsg=message;
-  const displayMsg=translatedMsg||message;
-  const el=document.getElementById('detail-counsel-msg');
-  el.textContent=displayMsg;
-  if(translatedMsg&&translatedMsg!==message){el.innerHTML=displayMsg+translateBadge()+'<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="showOriginalMsg()">원문 보기 ▾</div>';}
-  document.getElementById('detail-reply-date').textContent=sentAt?new Date(sentAt).toLocaleDateString('ko-KR'):'';
-  document.getElementById('detail-reply-text').value='';
-  if(reply){document.getElementById('detail-reply-existing').style.display='block';document.getElementById('detail-reply-prev').textContent=reply;}
-  else{document.getElementById('detail-reply-existing').style.display='none';}
-  document.getElementById('detail-reply-success').classList.remove('show');
-  goScreen('screen-detail-reply');
-}
-
-async function sendDetailReply(){
-  const reply=document.getElementById('detail-reply-text').value.trim();if(!reply||!currentDetailCounselId)return;
-  try{const res=await api('/api/host/counsel/'+currentDetailCounselId+'/reply','POST',{reply});if(res.success){document.getElementById('detail-reply-success').classList.add('show');document.getElementById('detail-reply-text').value='';setTimeout(async()=>{await loadClientDetail();goScreen('screen-client-detail');showDetailTab('counsel',document.getElementById('dtab-counsel'));},1500);}}
-  catch(e){alert('전송 실패');}
-}
-
-function getClientDisplay(client){return{name:client?.email||client?.name||'내담자',group:client?.group_name||(client?.groups&&client.groups.name)||null};}
-
-async function loadHostSchedule(){
-  try{
-    document.getElementById('host-confirmed-schedule').innerHTML='<div class="loading">로딩 중...</div>';
-    const [pending,allClients]=await Promise.all([api('/api/schedule/host/pending'),api('/api/host/clients')]);
-    const clientMap={};allClients.forEach(c=>{clientMap[c.id]=c;});
-    const detailResults=await Promise.all(allClients.map(c=>api('/api/host/clients/'+c.id).then(d=>({client:c,schedules:d.schedules||[]})).catch(()=>({client:c,schedules:[]}))));
-    const allConfirmed=[];detailResults.forEach(({client,schedules})=>{schedules.filter(s=>s.status==='confirmed').forEach(s=>{allConfirmed.push({...s,_client:client});});});
-    allConfirmed.sort((a,b)=>(a.confirmed_time||a.requested_time||'').localeCompare(b.confirmed_time||b.requested_time||''));
-    document.getElementById('host-confirmed-schedule').innerHTML=allConfirmed.length>0?allConfirmed.map(s=>{const {name,group}=getClientDisplay(s._client);let t=s.confirmed_time||s.requested_time;try{if(t&&t.includes('T'))t=formatDateForHost(t);}catch(e){}return'<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:500;color:var(--text)">'+name+'</div>'+(group?'<div style="font-size:11px;color:var(--sage-dark);margin-top:1px">📂 '+group+'</div>':'<div style="font-size:11px;color:var(--text-muted);margin-top:1px">그룹 미지정</div>')+'<div style="font-size:12px;color:var(--text-muted);margin-top:4px">🕐 '+t+'</div></div><span class="badge green">확정</span></div></div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">확정된 세션 없음</p>';
-    document.getElementById('host-pending-schedule').innerHTML=pending.length>0?pending.map(s=>{const clientId=s.client_id||s.clients?.id,fullClient=clientMap[clientId]||s.clients||{},{name,group}=getClientDisplay(fullClient);let t=s.requested_time;try{if(t&&t.includes('T'))t=formatDateForHost(t);}catch(e){}return'<div class="card"><div style="margin-bottom:6px"><div style="font-size:14px;font-weight:500">'+name+'</div>'+(group?'<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">📂 '+group+'</div>':'')+'</div><div style="font-size:13px;color:var(--text);margin-bottom:6px">🕐 '+t+'</div>'+(s.clientTimezone?'<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">📍 '+s.clientTimezone+'</div>':'')+'<button class="btn primary" style="padding:8px" onclick="confirmSchedule(\''+s.id+'\',\''+s.requested_time+'\')">확정</button></div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">대기 중인 요청 없음</p>';
-  }catch(e){document.getElementById('host-confirmed-schedule').innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
-}
-
-async function confirmSchedule(id,time){
-  try{await api('/api/schedule/host/'+id+'/confirm','POST',{confirmedTime:time});alert('확정되었습니다.');loadHostSchedule();if(currentDetailClientId){await loadClientDetail();showDetailTab('schedule',document.getElementById('dtab-schedule'));}}
-  catch(e){alert('확정 실패');}
-}
-
-let currentClientId=null;
-async function loadHostReply(){
-  if(!currentClientId)return;
-  try{const counsels=await api('/api/host/counsel/'+currentClientId);if(counsels&&counsels.length>0){currentHostCounselId=counsels[0].id;document.getElementById('host-counsel-text').textContent=counsels[0].message;}else{document.getElementById('host-counsel-text').textContent='미답변 상담 없음';}}
-  catch(e){}
-}
-
-async function sendHostReply(){
-  const reply=document.getElementById('host-reply-text').value.trim();if(!reply||!currentHostCounselId)return;
-  try{const res=await api('/api/host/counsel/'+currentHostCounselId+'/reply','POST',{reply});if(res.success){document.getElementById('reply-success').classList.add('show');document.getElementById('host-reply-text').value='';setTimeout(()=>goScreen('screen-host'),1500);}}
-  catch(e){}
-}
-
-async function addClient(){
-  const name=document.getElementById('new-client-name').value.trim()||'내담자',lang=document.getElementById('new-client-lang').value,groupId=currentAddGroupId||null;
-  try{const res=await api('/api/host/clients/add','POST',{name,language:lang,group_id:groupId});if(res.inviteCode){document.getElementById('new-invite-code').textContent=res.inviteCode;document.getElementById('new-invite-result').style.display='block';currentAddGroupId=null;}}
-  catch(e){alert('추가 실패');}
-}
-
-async function loadGroups(){
-  try{
-    const [groups,clients]=await Promise.all([api('/api/host/groups'),api('/api/host/clients')]);
-    if(groups.length===0){document.getElementById('group-list').innerHTML='<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';return;}
-    document.getElementById('group-list').innerHTML=groups.map(g=>{
-      const gc=clients.filter(c=>c.group_id===g.id);
-      const ch=gc.length>0?gc.map(c=>{const dn=c.email||c.name||'내담자';return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar" style="width:34px;height:34px;font-size:10px">'+dn.substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:12px;font-weight:500">'+dn+'</div><div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+' · '+(c.hasPending?'💬 상담대기':'미답변없음')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join(''):'<p style="font-size:12px;color:var(--text-muted);padding:8px 0">내담자 없음</p>';
-      return'<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-size:15px;font-weight:500">'+g.name+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+(g.description||'')+'</div><div style="display:flex;gap:8px;margin-top:4px"><span style="font-size:11px;background:#EDF4EE;color:var(--sage-dark);padding:2px 8px;border-radius:10px">주 '+(g.session_frequency||3)+'회</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">'+(g.contract_months||6)+'개월</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">'+(g.total_modules||24)+'모듈</span></div></div><button onclick="addClientToGroup(\''+g.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">+ 내담자</button></div><div style="border-top:1px solid var(--warm);padding-top:8px">'+ch+'</div></div>';
-    }).join('');
-    const ungrouped=clients.filter(c=>!c.group_id);
-    if(ungrouped.length>0){document.getElementById('group-list').innerHTML+='<div class="card" style="margin-bottom:12px;border-style:dashed"><div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">📌 미배정 내담자</div>'+ungrouped.map(c=>'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar" style="width:34px;height:34px;font-size:11px">'+(c.name||'?').substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+c.name+'</div><div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+'</div></div></div>').join('')+'</div>';}
-  }catch(e){document.getElementById('group-list').innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
-}
-
-function addClientToGroup(groupId){currentAddGroupId=groupId;goScreen('screen-host-add');}
-let currentAddGroupId=null;
-
-async function createGroup(){
-  const name=document.getElementById('new-group-name').value.trim();if(!name){document.getElementById('new-group-name').style.borderColor='var(--danger)';return;}
-  const desc=document.getElementById('new-group-desc').value.trim(),freq=parseInt(document.getElementById('new-group-freq').value)||3,months=parseInt(document.getElementById('new-group-months').value)||6,modules=parseInt(document.getElementById('new-group-modules').value)||24;
-  try{const res=await api('/api/host/groups','POST',{name,description:desc,session_frequency:freq,contract_months:months,total_modules:modules});if(res.success){document.getElementById('new-group-name').value='';document.getElementById('new-group-desc').value='';document.getElementById('group-create-success').classList.add('show');setTimeout(()=>document.getElementById('group-create-success').classList.remove('show'),2000);loadGroups();}}
-  catch(e){alert('생성 실패');}
-}
-
-async function loadHostSettings(){
-  try{const s=await api('/api/host/settings');if(s){document.getElementById('landing-text').value=s.landing_text||'';document.getElementById('company-name').value=s.company_name||'';document.getElementById('program-name').value=s.program_name||'';}}catch(e){}
-  setTimeout(()=>buildLangVoiceSettings(), 400);
-}
-async function saveSettings(){const data={landing_text:document.getElementById('landing-text').value,company_name:document.getElementById('company-name').value,program_name:document.getElementById('program-name').value};try{await api('/api/host/settings','PUT',data);document.getElementById('settings-success').classList.add('show');setTimeout(()=>document.getElementById('settings-success').classList.remove('show'),2000);}catch(e){alert('저장 실패');}}
-
-function showHostTab(tab,btn){
-  document.querySelectorAll('.host-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
-  ['groups','clients','edu','schedule','settings'].forEach(t=>{const el=document.getElementById('host-tab-'+t);if(el)el.style.display=t===tab?'block':'none';});
-  if(tab==='settings')loadHostSettings();if(tab==='schedule')loadHostSchedule();if(tab==='groups')loadGroups();
-}
-
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}
-
-function initApp(){
-  try{
-    const hash=window.location.hash,isHost=hash==='#host'||hash==='#/host';
-    const savedRole=localStorage.getItem('pip_role'),savedToken=localStorage.getItem('pip_token');
-    token=savedToken||null;
-    if(isHost){
-      if(savedToken&&savedRole==='host'){showScreen('screen-host');loadHostDashboard();}
-      else{localStorage.removeItem('pip_token');localStorage.removeItem('pip_role');token=null;showScreen('screen-host-login');}
-    }else{
-      if(savedToken&&savedRole!=='host'){try{applyLang();}catch(e){}showScreen('screen-home');loadHome();}
-      else{showScreen('screen-landing');}
-    }
-  }catch(e){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-landing').classList.add('active');}
-}
-
-window.onload = function() {
-  initApp();
-};
 </script>
 </body>
 </html>
