@@ -735,14 +735,19 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div class="field-label">프로그램 시작일</div><input type="date" id="dp-startdate" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
     <div class="field-label">특징 / 메모</div><textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="내담자 특징, 주의사항 등"></textarea>
     <div class="field-label">상담 메모 (호스트 전용)</div><textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="진행 상황, 특이사항 등"></textarea>
-    <!-- ★ 내담자별 톤 설정 (언어 무관하게 작동) -->
-    <div class="field-label" style="margin-top:14px">🔊 상담 답변 톤 설정 (이 내담자용)</div>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">톤은 내담자가 선택한 어떤 언어에서도 동일하게 적용됩니다. 언어별 목소리는 설정 탭에서 설정하세요.</div>
-    <div style="display:flex;gap:8px;margin-bottom:8px">
-      <button onclick="setClientTone('calm',this)" id="tone-btn-calm" style="flex:1;padding:10px 6px;border:1.5px solid var(--warm);border-radius:8px;font-size:12px;cursor:pointer;background:var(--white);color:var(--text)">🌙 차분</button>
-      <button onclick="setClientTone('auto',this)" id="tone-btn-auto" style="flex:1;padding:10px 6px;border:1.5px solid var(--sage);border-radius:8px;font-size:12px;cursor:pointer;background:#EDF4EE;color:var(--sage-dark)">🔀 자동</button>
-      <button onclick="setClientTone('bright',this)" id="tone-btn-bright" style="flex:1;padding:10px 6px;border:1.5px solid var(--warm);border-radius:8px;font-size:12px;cursor:pointer;background:var(--white);color:var(--text)">☀️ 밝음</button>
-      <button onclick="setClientTone('warm',this)" id="tone-btn-warm" style="flex:1;padding:10px 6px;border:1.5px solid var(--warm);border-radius:8px;font-size:12px;cursor:pointer;background:var(--white);color:var(--text)">🌱 따뜻</button>
+    <!-- ★ 내담자별 언어별 목소리 설정 -->
+    <div class="field-label" style="margin-top:16px">🔊 내담자 목소리 설정 (언어별)</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">언어 탭 선택 → 목소리 ▶ 미리 듣기 → 클릭하여 선택. 내담자가 그 언어를 선택하면 지정한 목소리로 나옵니다.</div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px" id="cv-lang-tabs">
+      <button onclick="showClientVoiceLang('ko',this)" class="cv-lang-btn" id="cv-lang-ko" style="padding:6px 10px;border:1.5px solid var(--sage);border-radius:20px;font-size:11px;cursor:pointer;background:#EDF4EE;color:var(--sage-dark)">🇰🇷 한국어</button>
+      <button onclick="showClientVoiceLang('en',this)" class="cv-lang-btn" id="cv-lang-en" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇺🇸 English</button>
+      <button onclick="showClientVoiceLang('ja',this)" class="cv-lang-btn" id="cv-lang-ja" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇯🇵 日本語</button>
+      <button onclick="showClientVoiceLang('zh',this)" class="cv-lang-btn" id="cv-lang-zh" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇨🇳 中文</button>
+      <button onclick="showClientVoiceLang('es',this)" class="cv-lang-btn" id="cv-lang-es" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇪🇸 Español</button>
+      <button onclick="showClientVoiceLang('fr',this)" class="cv-lang-btn" id="cv-lang-fr" style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:20px;font-size:11px;cursor:pointer;background:var(--white);color:var(--text)">🇫🇷 Français</button>
+    </div>
+    <div id="cv-voice-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--warm);border-radius:10px;padding:6px">
+      <div style="font-size:12px;color:var(--text-muted);padding:8px">언어를 선택하면 목소리 목록이 나옵니다.</div>
     </div>
     <div class="success-msg" id="profile-save-success" style="margin-top:8px">저장되었습니다.</div>
     <div class="spacer"></div>
@@ -1017,7 +1022,7 @@ function testSpeakLang(lang) {
   utter.lang=useLang; speechSynthesis.speak(utter);
 }
 
-// ===== 내담자별 페르소나 (톤만) =====
+// ===== 내담자별 언어별 목소리 페르소나 시스템 =====
 function getClientPersona(clientId) {
   if(!clientId) return null;
   try{return JSON.parse(localStorage.getItem('pip_persona_'+clientId)||'null');}catch(e){return null;}
@@ -1027,38 +1032,135 @@ function saveClientPersona(clientId, persona) {
   localStorage.setItem('pip_persona_'+clientId, JSON.stringify(persona));
 }
 
-function setClientTone(tone, btn) {
-  if(!currentDetailClientId) return;
-  const persona=getClientPersona(currentDetailClientId)||{};
-  persona.tone=tone; saveClientPersona(currentDetailClientId, persona);
-  ['calm','auto','bright','warm'].forEach(t=>{
-    const b=document.getElementById('tone-btn-'+t); if(!b) return;
-    if(t===tone){b.style.borderColor='var(--sage)';b.style.background='#EDF4EE';b.style.color='var(--sage-dark)';}
-    else{b.style.borderColor='var(--warm)';b.style.background='var(--white)';b.style.color='var(--text)';}
+// 내담자용 목소리 탭 전환
+let _cvCurrentLang = 'ko';
+function showClientVoiceLang(lang, btn) {
+  _cvCurrentLang = lang;
+  // 탭 버튼 스타일 초기화
+  document.querySelectorAll('.cv-lang-btn').forEach(b => {
+    b.style.borderColor = 'var(--warm)';
+    b.style.background = 'var(--white)';
+    b.style.color = 'var(--text)';
+  });
+  if (btn) {
+    btn.style.borderColor = 'var(--sage)';
+    btn.style.background = '#EDF4EE';
+    btn.style.color = 'var(--sage-dark)';
+  }
+  buildClientVoiceList(lang);
+}
+
+// 언어에 맞는 목소리 목록 표시
+function buildClientVoiceList(lang) {
+  const list = document.getElementById('cv-voice-list');
+  if (!list) return;
+  const voices = speechSynthesis.getVoices();
+  const lc = (lang||'ko').split('-')[0];
+  const byLang = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
+  const persona = getClientPersona(currentDetailClientId) || {voices:{}};
+  const selectedName = (persona.voices||{})[lc] || '';
+
+  list.innerHTML = '';
+  if (!byLang.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:10px;text-align:center">이 언어의 목소리가 기기에 없습니다.</div>';
+    return;
+  }
+
+  byLang.forEach(v => {
+    const g = guessGender(v.name);
+    const q = /neural|premium|enhanced|wavenet|natural/i.test(v.name) ? '⭐' : (v.localService ? '💾' : '🌐');
+    const isSelected = v.name === selectedName;
+    const item = document.createElement('div');
+    item.className = 'cv-voice-item';
+    item.dataset.vname = v.name;
+    item.dataset.vlang = lc;
+    item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:3px;border-radius:8px;cursor:pointer;'
+      + 'border:1.5px solid '+(isSelected?'var(--sage)':'var(--warm)')+';background:'+(isSelected?'#EDF4EE':'var(--white)');
+    item.onclick = function() { selectClientVoice(this.dataset.vlang, this.dataset.vname, this); };
+    const nameEl = document.createElement('div');
+    nameEl.style.cssText = 'font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    nameEl.textContent = g+q+' '+v.name;
+    if (isSelected) {
+      const mark = document.createElement('span');
+      mark.style.cssText = 'color:var(--sage-dark);font-size:10px;margin-left:4px';
+      mark.textContent = ' ✓ 선택됨';
+      nameEl.appendChild(mark);
+    }
+    const playBtn = document.createElement('button');
+    playBtn.textContent = '▶ 듣기';
+    playBtn.style.cssText = 'background:var(--sage);border:none;border-radius:6px;color:white;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px';
+    playBtn.onclick = function(e) { e.stopPropagation(); testClientVoice(item.dataset.vname, item.dataset.vlang); };
+    item.appendChild(nameEl);
+    item.appendChild(playBtn);
+    list.appendChild(item);
   });
 }
 
-function loadPersonaUI(clientId) {
-  const persona=getClientPersona(clientId)||{tone:'auto'};
-  const tone=persona.tone||'auto';
-  ['calm','auto','bright','warm'].forEach(t=>{
-    const b=document.getElementById('tone-btn-'+t); if(!b) return;
-    if(t===tone){b.style.borderColor='var(--sage)';b.style.background='#EDF4EE';b.style.color='var(--sage-dark)';}
-    else{b.style.borderColor='var(--warm)';b.style.background='var(--white)';b.style.color='var(--text)';}
-  });
-}
-
-function speakWithPersona(text, lang, clientId) {
-  if(!text||!window.speechSynthesis) return;
+// 목소리 미리 듣기
+function testClientVoice(voiceName, lang) {
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(vv => vv.name === voiceName);
+  const tests = {
+    ko:'안녕하세요. 오늘 어떻게 지내셨나요?',
+    en:'Hello. How are you feeling today?',
+    ja:'こんにちは。今日はどんな気分ですか？',
+    zh:'你好，今天感觉怎么样？',
+    es:'Hola. ¿Cómo te sientes hoy?',
+    fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"
+  };
   speechSynthesis.cancel();
-  const persona=clientId?getClientPersona(clientId):null;
-  const targetLang=lang||getCurrentDisplayLang()||'ko';
-  const utter=new SpeechSynthesisUtterance(text);
-  utter.voice=getBestVoice(targetLang);
-  utter.lang=targetLang;
-  const tone=TONE_PRESETS[persona?.tone||'auto']||TONE_PRESETS.auto;
-  utter.rate=Math.max(0.5,Math.min(1.5,0.92+tone.rate));
-  utter.pitch=Math.max(0,Math.min(2,1.0+tone.pitch));
+  const utter = new SpeechSynthesisUtterance(tests[lang] || tests.en);
+  if (v) utter.voice = v;
+  utter.lang = lang;
+  utter.rate = 0.92;
+  speechSynthesis.speak(utter);
+}
+
+// 목소리 선택 저장
+function selectClientVoice(lang, voiceName, el) {
+  if (!currentDetailClientId) return;
+  const persona = getClientPersona(currentDetailClientId) || {voices:{}};
+  if (!persona.voices) persona.voices = {};
+  persona.voices[lang] = voiceName;
+  saveClientPersona(currentDetailClientId, persona);
+  // UI 즉시 갱신
+  buildClientVoiceList(lang);
+}
+
+// 프로필 탭 열릴 때 목소리 UI 초기화
+function loadPersonaUI(clientId) {
+  _cvCurrentLang = 'ko';
+  // 한국어 탭 기본 활성화
+  document.querySelectorAll('.cv-lang-btn').forEach(b => {
+    b.style.borderColor = 'var(--warm)';
+    b.style.background = 'var(--white)';
+    b.style.color = 'var(--text)';
+  });
+  const koBtn = document.getElementById('cv-lang-ko');
+  if (koBtn) { koBtn.style.borderColor='var(--sage)'; koBtn.style.background='#EDF4EE'; koBtn.style.color='var(--sage-dark)'; }
+  // 목소리 목록 로드 (getVoices 준비 대기)
+  setTimeout(() => buildClientVoiceList('ko'), 350);
+}
+
+// TTS 재생 - 내담자별 언어별 설정 목소리 사용
+function speakWithPersona(text, lang, clientId) {
+  if (!text || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const targetLang = lang || getCurrentDisplayLang() || 'ko';
+  const lc = targetLang.split('-')[0];
+  const persona = clientId ? getClientPersona(clientId) : null;
+  const savedVoiceName = (persona?.voices||{})[lc] || null;
+  
+  const utter = new SpeechSynthesisUtterance(text);
+  if (savedVoiceName) {
+    const saved = speechSynthesis.getVoices().find(v => v.name === savedVoiceName);
+    utter.voice = saved || getBestVoice(targetLang);
+  } else {
+    utter.voice = getBestVoice(targetLang);
+  }
+  utter.lang = targetLang;
+  utter.rate = 0.92;
+  utter.pitch = 1.0;
   speechSynthesis.speak(utter);
 }
 
