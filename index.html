@@ -1054,6 +1054,7 @@ const KO_TRANSLATIONS = {
     '❓ 자주 묻는 질문': '❓ FAQ',
     '내면 교육 프로그램': 'Inner Education Program',
     'Peace-In Practice™ 이용 안내': 'Peace-In Practice™ User Guide',
+    '클릭하여 시작': 'Tap to begin',
     // 호스트 패널 전체
     '호스트': 'Host', '패널': 'Panel', '호스트 패널': 'Host Panel',
     '전체 내담자': 'All Clients', '교육과정': 'Curriculum',
@@ -1274,15 +1275,80 @@ function translateDOM(lang) {
   const map = KO_TRANSLATIONS[key];
   if (!map) return;
   
+  // 패턴 기반 번역 (숫자+단위, 이모지+텍스트 등)
+  const PATTERNS = {
+    en: [
+      [/^주 (\d+)회$/, (m) => `${m[1]}x/week`],
+      [/^(\d+)개월$/, (m) => `${m[1]} month(s)`],
+      [/^(\d+)모듈$/, (m) => `${m[1]} module(s)`],
+      [/^📌 미배정 내담자$/, () => '📌 Unassigned Clients'],
+      [/^💬 상담 대기 중$/, () => '💬 Counseling pending'],
+      [/^🟢 진행 중$/, () => '🟢 In progress'],
+      [/^⏸ 대기$/, () => '⏸ Waiting'],
+      [/^✅ 완료$/, () => '✅ Done'],
+      [/^● 답변완료$/, () => '● Replied'],
+      [/^● 미답변$/, () => '● Pending'],
+      [/^미답변 없음$/, () => 'No pending'],
+      [/^💬 상담 대기 중 · 주(\d+)회$/, (m) => `💬 Counseling pending · ${m[1]}x/week`],
+      [/^미답변 없음 · 주(\d+)회$/, (m) => `No pending · ${m[1]}x/week`],
+      [/^다음 세션: (.+)$/, (m) => `Next session: ${m[1]}`],
+      [/^🔑 (.+)$/, (m) => `🔑 ${m[1]}`],
+      [/^\+ 내담자$/, () => '+ Client'],
+      [/^\+ 배정$/, () => '+ Assign'],
+    ],
+    ja: [
+      [/^주 (\d+)회$/, (m) => `週${m[1]}回`],
+      [/^(\d+)개월$/, (m) => `${m[1]}ヶ月`],
+      [/^(\d+)모듈$/, (m) => `${m[1]}モジュール`],
+      [/^📌 미배정 내담자$/, () => '📌 未配定クライアント'],
+    ],
+    zh: [
+      [/^주 (\d+)회$/, (m) => `每周${m[1]}次`],
+      [/^(\d+)개월$/, (m) => `${m[1]}个月`],
+      [/^(\d+)모듈$/, (m) => `${m[1]}个模块`],
+      [/^📌 미배정 내담자$/, () => '📌 未分配客户'],
+    ],
+    es: [
+      [/^주 (\d+)회$/, (m) => `${m[1]}x/semana`],
+      [/^(\d+)개월$/, (m) => `${m[1]} mes(es)`],
+      [/^(\d+)모듈$/, (m) => `${m[1]} módulo(s)`],
+    ],
+    fr: [
+      [/^주 (\d+)회$/, (m) => `${m[1]}x/semaine`],
+      [/^(\d+)개월$/, (m) => `${m[1]} mois`],
+      [/^(\d+)모듈$/, (m) => `${m[1]} module(s)`],
+    ],
+    de: [
+      [/^주 (\d+)회$/, (m) => `${m[1]}x/Woche`],
+      [/^(\d+)개월$/, (m) => `${m[1]} Monat(e)`],
+      [/^(\d+)모듈$/, (m) => `${m[1]} Modul(e)`],
+    ],
+  };
+
+  function applyPatterns(txt, langKey) {
+    const patterns = PATTERNS[langKey] || PATTERNS.en;
+    for (const [regex, fn] of patterns) {
+      const m = txt.match(regex);
+      if (m) return fn(m);
+    }
+    return null;
+  }
+
   function walk(node) {
     if (!node) return;
     if (node.nodeType === 3) { // TEXT_NODE
       const txt = node.textContent;
       if (txt && txt.trim()) {
         const trimmed = txt.trim();
-        // 정확한 전체 텍스트 매칭만 (부분 매칭 제거 - 오번역 방지)
+        // 1. 정확한 전체 매칭
         if (map[trimmed]) {
           node.textContent = txt.replace(trimmed, map[trimmed]);
+          return;
+        }
+        // 2. 패턴 매칭 (숫자+단위, 이모지+텍스트)
+        const patternResult = applyPatterns(trimmed, key);
+        if (patternResult) {
+          node.textContent = txt.replace(trimmed, patternResult);
         }
       }
     } else if (node.nodeType === 1) { // ELEMENT_NODE
@@ -1291,9 +1357,6 @@ function translateDOM(lang) {
       if (node.classList && node.classList.contains('notranslate')) return;
       if (node.placeholder && map[node.placeholder]) {
         node.placeholder = map[node.placeholder];
-      }
-      if (node.title && map[node.title]) {
-        node.title = map[node.title];
       }
       node.childNodes.forEach(walk);
     }
