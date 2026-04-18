@@ -884,6 +884,128 @@ function getBestVoice(langCode) {
   return normal[0] || voices[0] || null;
 }
 
+
+// ===== 내담자별 언어별 목소리 페르소나 =====
+function getClientPersona(clientId) {
+  if(!clientId) return null;
+  try{return JSON.parse(localStorage.getItem('pip_persona_'+clientId)||'null');}catch(e){return null;}
+}
+function saveClientPersona(clientId, persona) {
+  if(!clientId) return;
+  localStorage.setItem('pip_persona_'+clientId, JSON.stringify(persona));
+}
+
+function guessGender(name) {
+  if(/female|woman|fiona|victoria|karen|samantha|heami|yuna|sora|alice|jenny|nova|shimmer/i.test(name)) return '👩';
+  if(/male|man|daniel|thomas|alex|fred|oliver|echo|onyx|ryan|minjun/i.test(name)) return '👨';
+  return '🔊';
+}
+
+let _cvCurrentLang = 'ko';
+function showClientVoiceLang(lang, btn) {
+  _cvCurrentLang = lang;
+  document.querySelectorAll('.cv-lang-btn').forEach(b => {
+    b.style.borderColor='var(--warm)'; b.style.background='var(--white)'; b.style.color='var(--text)';
+  });
+  if(btn){btn.style.borderColor='var(--sage)';btn.style.background='#EDF4EE';btn.style.color='var(--sage-dark)';}
+  buildClientVoiceList(lang);
+}
+
+function buildClientVoiceList(lang) {
+  const list = document.getElementById('cv-voice-list');
+  if(!list) return;
+  const voices = speechSynthesis.getVoices();
+  const lc = (lang||'ko').split('-')[0];
+  const langNames = {ko:['korean','ko-'],en:['english','en-'],ja:['japanese','ja-'],zh:['chinese','zh-'],es:['spanish','es-'],fr:['french','fr-']};
+  const keywords = langNames[lc]||[lc+'-'];
+  const byLang = voices.filter(v=>{
+    const vl=v.lang.toLowerCase(), vn=v.name.toLowerCase();
+    return vl.startsWith(lc)||keywords.some(k=>vl.includes(k)||vn.includes(k));
+  });
+  const persona = getClientPersona(currentDetailClientId)||{voices:{}};
+  const selectedName = (persona.voices||{})[lc]||'';
+  list.innerHTML='';
+  if(!byLang.length){
+    list.innerHTML='<div style="padding:12px;font-size:12px;color:var(--text-muted)">이 언어 목소리 없음 - Windows 설정에서 추가 가능</div>';
+    return;
+  }
+  const fem=byLang.filter(v=>/female|woman|fiona|victoria|karen|samantha|heami|yuna|alice|jenny|nova|shimmer/i.test(v.name));
+  const mal=byLang.filter(v=>/male|man|daniel|thomas|alex|fred|oliver|echo|onyx|minjun/i.test(v.name));
+  const oth=byLang.filter(v=>!fem.includes(v)&&!mal.includes(v));
+  const renderGroup=(label,group)=>{
+    if(!group.length)return;
+    const h=document.createElement('div');h.style.cssText='font-size:10px;color:var(--sage-dark);padding:4px 6px;font-weight:600';h.textContent='── '+label+' ──';list.appendChild(h);
+    group.forEach(v=>{
+      const q=/neural|premium|enhanced/i.test(v.name)?'⭐':(v.localService?'💾':'🌐');
+      const isSel=v.name===selectedName;
+      const item=document.createElement('div');item.className='cv-voice-item';item.dataset.vname=v.name;item.dataset.vlang=lc;
+      item.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:3px;border-radius:8px;cursor:pointer;border:1.5px solid '+(isSel?'var(--sage)':'var(--warm)')+';background:'+(isSel?'#EDF4EE':'var(--white)');
+      item.onclick=function(){selectClientVoice(this.dataset.vlang,this.dataset.vname,this);};
+      const nm=document.createElement('div');nm.style.cssText='font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      nm.textContent=guessGender(v.name)+q+' '+v.name;
+      if(isSel){const mk=document.createElement('span');mk.style.cssText='color:var(--sage-dark);font-size:10px;margin-left:4px';mk.textContent=' ✓ 선택됨';nm.appendChild(mk);}
+      const pb=document.createElement('button');pb.textContent='▶ 듣기';pb.style.cssText='background:var(--sage);border:none;border-radius:6px;color:white;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px';
+      pb.onclick=function(e){e.stopPropagation();testClientVoice(item.dataset.vname,item.dataset.vlang);};
+      item.appendChild(nm);item.appendChild(pb);list.appendChild(item);
+    });
+  };
+  renderGroup('👩 여성',fem); renderGroup('👨 남성',mal); if(oth.length)renderGroup('🔊 기타',oth);
+  if(lc==='ko'&&mal.length===0){
+    const g=document.createElement('div');g.style.cssText='margin-top:8px;padding:10px;background:#FDF8F0;border-radius:8px;font-size:11px;color:#8B5E2A';
+    g.innerHTML='👨 <b>한국어 남성 목소리 없음</b><br>Windows 설정→시간 및 언어→한국어→음성 합성기→Microsoft Minjun 추가';
+    list.appendChild(g);
+  }
+}
+
+function selectClientVoice(lang, voiceName, el) {
+  if(!currentDetailClientId)return;
+  const persona=getClientPersona(currentDetailClientId)||{voices:{}};
+  if(!persona.voices)persona.voices={};
+  persona.voices[lang]=voiceName;
+  saveClientPersona(currentDetailClientId,persona);
+  buildClientVoiceList(lang);
+}
+
+function testClientVoice(voiceName, lang) {
+  const tests={ko:'안녕하세요. 오늘 어떻게 지내셨나요?',en:'Hello. How are you feeling today?',ja:'こんにちは。今日はどんな気分ですか？',zh:'你好，今天感觉怎么样？',es:'Hola. ¿Cómo te sientes hoy?',fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"};
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const run=()=>{
+    const utter=new SpeechSynthesisUtterance(tests[lang]||tests.en);
+    const v=speechSynthesis.getVoices().find(vv=>vv.name===voiceName);
+    if(v)utter.voice=v; utter.lang=lang; utter.rate=0.92;
+    try{speechSynthesis.speak(utter);}catch(e){}
+  };
+  const vv=speechSynthesis.getVoices();
+  if(vv.length>0){run();}else{speechSynthesis.onvoiceschanged=()=>{speechSynthesis.onvoiceschanged=null;run();};}
+}
+
+function loadPersonaUI(clientId) {
+  _cvCurrentLang='ko';
+  document.querySelectorAll('.cv-lang-btn').forEach(b=>{b.style.borderColor='var(--warm)';b.style.background='var(--white)';b.style.color='var(--text)';});
+  const koBtn=document.getElementById('cv-lang-ko');
+  if(koBtn){koBtn.style.borderColor='var(--sage)';koBtn.style.background='#EDF4EE';koBtn.style.color='var(--sage-dark)';}
+  setTimeout(()=>buildClientVoiceList('ko'),350);
+}
+
+// getBestVoice - 언어별 저장 목소리 우선
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function pipSpeak() {
   const el = document.getElementById('reply-content');
   if (!el) return;
@@ -1103,6 +1225,47 @@ const KO_TRANSLATIONS = {
     '선택지 (한 줄에 하나)': 'Options (one per line)',
     '주': 'week', '회': 'session(s)', '개월': 'month(s)',
     '미배정 내담자': 'Unassigned Clients',
+    '클릭하여 질문 편집': 'Click to edit questions',
+    '클릭하여 시작': 'Tap to begin', '탭하여 시작': 'Tap to begin',
+    '질문 로딩 중...': 'Loading questions...', '질문 로드 실패': 'Failed to load',
+    '모듈 없음': 'No modules', '대기 중인 요청 없음': 'No pending requests',
+    '확정된 세션 없음': 'No confirmed sessions',
+    '+ 객관식 추가': '+ Add choice', '+ 주관식 추가': '+ Add text',
+    '+ 그룹 생성': '+ Create group',
+    '선택지 1': 'Option 1', '선택지 2': 'Option 2', '선택지 3': 'Option 3',
+    '이 모듈을 제거할까요?': 'Remove this module?',
+    '이 질문을 삭제할까요?': 'Delete this question?',
+    '아직 답변이 없습니다.': 'No answers yet.',
+    '✓ 선택됨': '✓ Selected', '▶ 듣기': '▶ Listen',
+    '이 언어의 목소리가 기기에 없습니다.': 'No voices available.',
+    '이 언어 목소리 없음 - Windows 설정에서 추가 가능': 'No voice - add via Windows Settings',
+    '목소리 목록 로딩 중...': 'Loading voices...',
+    '세션이 완료되었습니다.': 'Session completed.',
+    '이미 완료된 세션': 'Already completed.',
+    '수고하셨습니다. 오늘 세션이 완료되었습니다.': "Well done! Today's session is complete.",
+    '오류가 발생했습니다. 다시 시도해 주세요.': 'An error occurred. Please try again.',
+    '저장 중 오류: ': 'Save error: ',
+    '다음 질문을 불러오지 못했습니다.': 'Could not load next question.',
+    '이전에 진행하던 부분부터 이어서 시작합니다.': 'Resuming from where you left off.',
+    '이 모듈은 이미 완료되었습니다. 수고하셨습니다! ✅': 'This module is already completed! ✅',
+    '홈으로 돌아가기': 'Return to Home',
+    '여기에 자유롭게 적어주세요...': 'Write freely here...',
+    '내용을 입력해주세요.': 'Please enter content.',
+    '이메일과 비밀번호를 입력해주세요.': 'Please enter email and password.',
+    '비밀번호는 6자 이상이어야 합니다.': 'Password must be at least 6 characters.',
+    '비밀번호가 일치하지 않습니다.': 'Passwords do not match.',
+    '서버 오류.': 'Server error.', '서버 오류': 'Server error',
+    '요청이 전송되었습니다.': 'Request sent.',
+    '전송 완료': 'Sent', '상담 내용이 전송되었습니다.': 'Your counseling has been sent.',
+    '확인 가능한 답변이 없습니다.': 'No answer available.',
+    '답변이 도착했습니다': 'A reply has arrived',
+    '상담 답변이 도착했습니다': 'A counseling reply has arrived',
+    '다음 세션: ': 'Next session: ',
+    '일정 없음 — 새 세션 요청하기': 'No schedule — Request new session',
+    '초대코드가 확인되었습니다.': 'Invite code verified.',
+    '유효하지 않은 초대코드입니다.': 'Invalid invite code.',
+    '초대코드를 입력해주세요.': 'Please enter invite code.',
+    '회원가입 완료. 로그인 중...': 'Sign up complete. Logging in...',
   },
   ja: {
     '로그인': 'ログイン', '로그아웃': 'ログアウト', '저장': '保存', '취소': 'キャンセル',
@@ -1268,6 +1431,46 @@ function stopAutoTranslation() {
   clearTimeout(_translationTimer);
 }
 
+
+// ===== DB 데이터 번역 (그룹명, 모듈명 등) =====
+async function translateDataElements(lang) {
+  if (!lang || lang === 'ko') return;
+  const lc = lang.split('-')[0];
+  const key = lc==='zh'?'zh':(KO_TRANSLATIONS[lang]?lang:(KO_TRANSLATIONS[lc]?lc:'en'));
+  
+  // 번역 필요한 텍스트 노드 수집
+  const toTranslate = [];
+  function collect(node) {
+    if (!node) return;
+    if (node.nodeType === 3) {
+      const txt = node.textContent.trim();
+      // 한글 포함된 텍스트만 (딕셔너리에 없는 것)
+      if (txt && txt.length > 1 && /[가-힣]/.test(txt) && !KO_TRANSLATIONS[key]?.[txt]) {
+        toTranslate.push({node, txt});
+      }
+    } else if (node.nodeType === 1) {
+      const tag = node.tagName;
+      if (tag==='SCRIPT'||tag==='STYLE') return;
+      if (node.classList && node.classList.contains('notranslate')) return;
+      node.childNodes.forEach(collect);
+    }
+  }
+  const activeScreen = document.querySelector('.screen.active');
+  if (activeScreen) collect(activeScreen);
+  
+  // 배치 번역 (최대 10개씩)
+  const BATCH = 10;
+  for (let i = 0; i < toTranslate.length; i += BATCH) {
+    const batch = toTranslate.slice(i, i+BATCH);
+    await Promise.all(batch.map(async ({node, txt}) => {
+      try {
+        const t = await translateText(txt, lang, 'auto');
+        if (t && t !== txt && t.trim()) node.textContent = node.textContent.replace(txt, t);
+      } catch(e) {}
+    }));
+  }
+}
+
 // DOM 전체 순회하며 번역 적용 (메인 번역 엔진)
 function translateDOM(lang) {
   const lc = (lang||'ko').split('-')[0];
@@ -1417,6 +1620,8 @@ function applyFullTranslation(lang) {
   if(listenBtn) listenBtn.textContent=t.listenBtn;
   const hostPwInput = document.getElementById('host-pw');
   if(hostPwInput && t.hostPwPlaceholder) hostPwInput.placeholder = t.hostPwPlaceholder;
+  // DB 데이터(그룹명, 모듈명 등) DeepL 번역 (지연)
+  setTimeout(() => translateDataElements(lang), 800);
   console.log('[PIP] 번역 완료:', lang);
 }
 
