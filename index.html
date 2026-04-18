@@ -661,6 +661,23 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div id="host-confirmed-schedule"><div class="loading">로딩 중...</div></div>
   </div>
   <div id="host-tab-settings" class="content" style="display:none">
+    <!-- 보이스 설정 -->
+    <p class="sec-label">🔊 음성(TTS) 설정</p>
+    <div class="field-label">언어 선택</div>
+    <select id="voice-lang-select" onchange="loadVoiceList(this.value)" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px">
+      <option value="ko">한국어</option>
+      <option value="en">English</option>
+      <option value="ja">日本語</option>
+      <option value="zh">中文</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+    </select>
+    <div class="field-label">목소리 선택 (기기에 설치된 목소리)</div>
+    <select id="voice-pref-select" onchange="saveVoicePref()" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px">
+      <option value="">로딩 중...</option>
+    </select>
+    <button onclick="testSpeak()" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px">▶ 미리 듣기</button>
+    <div class="divider"></div>
     <p class="sec-label">앱 소개 글 수정</p>
     <div class="field-label">랜딩 소개 문구</div><textarea class="editor-area" id="landing-text" rows="4"></textarea>
     <div class="field-label">회사명</div><input type="text" id="company-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none" />
@@ -857,21 +874,59 @@ function releaseWakeLock() {
 function getBestVoice(langCode) {
   const voices = speechSynthesis.getVoices();
   if (!voices.length) return null;
+  // 저장된 보이스 이름 우선 사용
+  const savedName = localStorage.getItem('pip_voice_name');
+  if (savedName) {
+    const saved = voices.find(v => v.name === savedName);
+    if (saved) return saved;
+  }
   const lc = (langCode||'ko').toLowerCase().split('-')[0].split('_')[0];
-  // 우선순위: 1) 로컬 고품질 2) 원격 고품질 3) 일반 로컬 4) 아무거나
   const byLang = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
-  // 고품질 키워드 (iOS Siri, Android Neural, Windows Neural 등)
   const highQ = byLang.filter(v => /neural|premium|enhanced|wavenet|natural|siri|google|microsoft/i.test(v.name));
-  // 로컬 우선 (외부 서버 전송 없음 = 보안)
   const localHighQ = highQ.filter(v => v.localService);
   if (localHighQ.length) return localHighQ[0];
   if (highQ.length) return highQ[0];
-  // 로컬 일반
   const localNorm = byLang.filter(v => v.localService);
   if (localNorm.length) return localNorm[0];
   if (byLang.length) return byLang[0];
   return voices[0];
 }
+
+// ===== 보이스 설정 함수 =====
+function loadVoiceList(lang) {
+  const sel = document.getElementById('voice-pref-select');
+  if (!sel) return;
+  const voices = speechSynthesis.getVoices();
+  const lc = (lang||'ko').toLowerCase().split('-')[0];
+  const byLang = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
+  const savedName = localStorage.getItem('pip_voice_name');
+  sel.innerHTML = '<option value="">🔀 자동 선택 (기기 최고음질)</option>';
+  byLang.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.name;
+    const gender = /female|woman|fiona|victoria|karen|samantha|yuna|sora|ha-eun/i.test(v.name) ? '👩' :
+                  /male|man|daniel|thomas|alex|fred|oliver/i.test(v.name) ? '👨' : '🔊';
+    opt.textContent = gender + ' ' + v.name + (v.localService ? ' (기기)' : ' (온라인)');
+    if (v.name === savedName) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function saveVoicePref() {
+  const sel = document.getElementById('voice-pref-select');
+  const lang = document.getElementById('voice-lang-select')?.value || 'ko';
+  if (!sel) return;
+  if (sel.value) { localStorage.setItem('pip_voice_name', sel.value); }
+  else { localStorage.removeItem('pip_voice_name'); }
+  localStorage.setItem('pip_voice_lang', lang);
+}
+
+function testSpeak() {
+  const lang = document.getElementById('voice-lang-select')?.value || 'ko';
+  const texts = {ko:'안녕하세요. 상담을 시작하겠습니다.', en:'Hello, let us begin the session today.', ja:'こんにちは。セッションを始めましょう。'};
+  speakText(texts[lang] || texts.ko, lang);
+}
+
 function listAvailableVoices(lang) {
   // 개발용: 사용 가능한 보이스 목록 콘솔 출력
   const voices = speechSynthesis.getVoices();
@@ -1289,9 +1344,46 @@ function applyHostLang(){
 }
 
 window.addEventListener('load',()=>{
-  const saved=localStorage.getItem('pip_lang_display');const el=document.getElementById('langSelected');if(saved&&el)el.textContent=saved;
-  const hostSaved=localStorage.getItem('pip_host_lang_display');const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
+  // ★ 실제 쿠키 기반으로 Language 버튼 현재 언어 표시 (저장값과 무관하게 정확히)
+  const cookie = document.cookie.split(';').find(c => c.trim().startsWith('googtrans='));
+  const el = document.getElementById('langSelected');
+  if (el) {
+    if (cookie) {
+      const parts = cookie.trim().replace('googtrans=','').split('/');
+      const lang = parts[2];
+      el.textContent = LANG_NAMES[lang] || lang || '한국어';
+    } else {
+      el.textContent = '한국어';
+    }
+  }
+  const hostSaved=localStorage.getItem('pip_host_lang_display');
+  const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
   const hostLoginEl=document.getElementById('hostLoginLangSelected');if(hostSaved&&hostLoginEl)hostLoginEl.textContent=hostSaved;
+
+  // ★ 첫 방문 시 브라우저/폰 언어 자동 감지
+  if (!localStorage.getItem('pip_lang_auto_set') && !cookie) {
+    const browserLang = (navigator.language || navigator.userLanguage || 'ko').toLowerCase();
+    const lc = browserLang.split('-')[0];
+    if (lc !== 'ko') {
+      const langMap = {
+        'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr',
+        'de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'
+      };
+      let target = langMap[lc];
+      if (lc === 'zh') target = (browserLang.includes('tw')||browserLang.includes('hk')) ? 'zh-TW' : 'zh-CN';
+      if (target) {
+        const val = '/ko/' + target;
+        document.cookie = 'googtrans=' + val + '; path=/';
+        document.cookie = 'googtrans=' + val + '; path=/; domain=' + location.hostname;
+        document.cookie = 'googtrans=' + val + '; path=/; domain=.' + location.hostname;
+        localStorage.setItem('pip_lang_display', LANG_NAMES[target] || target);
+        localStorage.setItem('pip_lang_auto_set', '1');
+        location.reload();
+        return;
+      }
+    }
+    localStorage.setItem('pip_lang_auto_set', '1');
+  }
 });
 
 document.addEventListener('click',(e)=>{
@@ -1556,7 +1648,16 @@ async function createGroup(){
   catch(e){alert('생성 실패');}
 }
 
-async function loadHostSettings(){try{const s=await api('/api/host/settings');if(s){document.getElementById('landing-text').value=s.landing_text||'';document.getElementById('company-name').value=s.company_name||'';document.getElementById('program-name').value=s.program_name||'';}}catch(e){}}
+async function loadHostSettings(){
+  try{const s=await api('/api/host/settings');if(s){document.getElementById('landing-text').value=s.landing_text||'';document.getElementById('company-name').value=s.company_name||'';document.getElementById('program-name').value=s.program_name||'';}}catch(e){}
+  // 보이스 목록 로드 (약간 지연 - getVoices 준비 대기)
+  setTimeout(()=>{
+    const savedLang = localStorage.getItem('pip_voice_lang') || 'ko';
+    const langSel = document.getElementById('voice-lang-select');
+    if (langSel) langSel.value = savedLang;
+    loadVoiceList(savedLang);
+  }, 300);
+}
 async function saveSettings(){const data={landing_text:document.getElementById('landing-text').value,company_name:document.getElementById('company-name').value,program_name:document.getElementById('program-name').value};try{await api('/api/host/settings','PUT',data);document.getElementById('settings-success').classList.add('show');setTimeout(()=>document.getElementById('settings-success').classList.remove('show'),2000);}catch(e){alert('저장 실패');}}
 
 function showHostTab(tab,btn){
