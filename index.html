@@ -870,12 +870,24 @@ const L = {
 };
 
 // ===== 백엔드 번역 (Railway 경유) =====
+// api() 래퍼 대신 직접 fetch 사용 (401시 로그인 리다이렉트 방지)
 async function translateText(text, targetLang, sourceLang) {
   if (!text || !text.trim()) return text;
   if (!sourceLang) sourceLang = 'auto';
+  const tk = localStorage.getItem('pip_token') || token;
+  if (!tk) return text;
   try {
-    const res = await api('/api/translate', 'POST', { text, targetLang, sourceLang });
-    return res.translated || text;
+    const res = await fetch(API + '/api/translate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + tk
+      },
+      body: JSON.stringify({ text, targetLang, sourceLang })
+    });
+    if (!res.ok) return text;
+    const data = await res.json();
+    return data.translated || text;
   } catch(e) { return text; }
 }
 
@@ -1525,22 +1537,26 @@ async function sendCounsel(){
 }
 
 async function loadReply(){
-  document.getElementById('reply-view-section').style.display='block';document.getElementById('reply-confirmed-section').style.display='none';
-  try{
-    const res=await api('/api/counsel/reply');
-    if(res.hasReply){
-      currentCounselId=res.counselId;
-      let replyText=res.reply||'';
-      const clientLang=getCurrentDisplayLang()||'ko';
-      try{
-        const translated=await translateText(replyText, clientLang, 'auto');
-        if(translated&&translated.trim()&&translated!==replyText) replyText=translated;
-      }catch(e){}
-      document.getElementById('reply-content').textContent=replyText;
-    }else{
-      document.getElementById('reply-content').textContent='확인 가능한 답변이 없습니다.';
+  document.getElementById('reply-view-section').style.display='block';
+  document.getElementById('reply-confirmed-section').style.display='none';
+  const replyEl = document.getElementById('reply-content');
+  replyEl.textContent = '...';
+  try {
+    const res = await api('/api/counsel/reply');
+    if (res && res.hasReply) {
+      currentCounselId = res.counselId;
+      let replyText = res.reply || '';
+      // 직접 fetch로 번역 (api() 래퍼 사용 안함 - 401시 리다이렉트 방지)
+      const clientLang = getCurrentDisplayLang() || 'ko';
+      const translated = await translateText(replyText, clientLang, 'auto');
+      if (translated && translated.trim()) replyText = translated;
+      replyEl.textContent = replyText;
+    } else {
+      replyEl.textContent = '확인 가능한 답변이 없습니다.';
     }
-  }catch(e){}
+  } catch(e) {
+    replyEl.textContent = '답변 로드 실패. 다시 시도해 주세요.';
+  }
 }
 
 async function confirmReply(){
@@ -1607,9 +1623,55 @@ function applyHostLang(){
 }
 
 window.addEventListener('load',()=>{
-  const saved=localStorage.getItem('pip_lang_display');const el=document.getElementById('langSelected');if(saved&&el)el.textContent=saved;
-  const hostSaved=localStorage.getItem('pip_host_lang_display');const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
+  // ★ 실제 쿠키 기반으로 Language 버튼 표시
+  const cookie = document.cookie.split(';').find(c=>c.trim().startsWith('googtrans='));
+  const el = document.getElementById('langSelected');
+  if (el) {
+    if (cookie) {
+      const parts = cookie.trim().replace('googtrans=','').split('/');
+      const lang = parts[2];
+      el.textContent = LANG_NAMES[lang] || lang || '한국어';
+    } else {
+      el.textContent = '한국어';
+    }
+  }
+  const hostSaved=localStorage.getItem('pip_host_lang_display');
+  const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
   const hostLoginEl=document.getElementById('hostLoginLangSelected');if(hostSaved&&hostLoginEl)hostLoginEl.textContent=hostSaved;
+  
+  // ★ 브라우저/폰 언어 자동 감지 (pip_client_lang_pref 미설정 + 쿠키 없을 때)
+  const isHost = location.hash==='#host'||location.hash==='#/host';
+  if (!isHost && !localStorage.getItem('pip_client_lang_pref') && !cookie) {
+    const browserLang = (navigator.language || navigator.userLanguage || 'ko').toLowerCase();
+    const lc = browserLang.split('-')[0];
+    if (lc !== 'ko') {
+      const langMap = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
+      let target = langMap[lc];
+      if (lc==='zh') target = (browserLang.includes('tw')||browserLang.includes('hk'))?'zh-TW':'zh-CN';
+      if (target) {
+        const val = '/ko/'+target;
+        document.cookie = 'googtrans='+val+'; path=/';
+        document.cookie = 'googtrans='+val+'; path=/; domain='+location.hostname;
+        document.cookie = 'googtrans='+val+'; path=/; domain=.'+location.hostname;
+        localStorage.setItem('pip_lang_display', LANG_NAMES[target]||target);
+        localStorage.setItem('pip_client_lang_pref', target);
+        location.reload();
+        return;
+      }
+    }
+    localStorage.setItem('pip_client_lang_pref', 'ko');
+  }
+  
+  // Google Translate 쿠키 있으면 위젯 강제 트리거
+  if (cookie && !isHost) {
+    setTimeout(()=>{
+      const lang = cookie.trim().replace('googtrans=','').split('/').pop();
+      if (lang && lang!=='ko') {
+        const combo = document.querySelector('.goog-te-combo');
+        if (combo && combo.value!==lang) { combo.value=lang; combo.dispatchEvent(new Event('change')); }
+      }
+    }, 1200);
+  }
 });
 
 document.addEventListener('click',(e)=>{
