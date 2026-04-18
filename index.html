@@ -676,9 +676,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   <div class="content">
     <div class="card"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">내담자 원문</div><p style="font-size:14px;line-height:1.8" id="host-counsel-text">로딩 중...</p></div>
     <div class="field-label">답변 작성</div>
-    <textarea class="editor-area" id="host-reply-text" rows="6" placeholder="내담자에게 보낼 답변을 작성하세요..."></textarea>
+    <textarea class="editor-area" id="host-reply-text" rows="6" placeholder="답변을 작성하세요... (🎤 음성 입력 가능)"></textarea>
+    <button id="mic-host-reply-text" onclick="startVoiceInput('host-reply-text', 'ko-KR')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px">🎤 음성으로 답변 입력</button>
     <div class="spacer"></div>
-    <button class="btn primary" onclick="sendHostReply()">답변 전송 + 알림 발송</button>
+    <button class="btn primary" onclick="stopVoiceInput('host-reply-text');sendHostReply()">답변 전송 + 알림 발송</button>
     <div class="success-msg" id="reply-success">답변이 전송되었습니다.</div>
   </div>
 </div>
@@ -773,9 +774,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
       <div class="card" style="background:var(--cream)"><p style="font-size:13px;line-height:1.7;color:var(--sage-dark)" id="detail-reply-prev"></p></div>
     </div>
     <div class="field-label">답변 작성</div>
-    <textarea class="editor-area" id="detail-reply-text" rows="6" placeholder="답변을 작성하세요..."></textarea>
+    <textarea class="editor-area" id="detail-reply-text" rows="6" placeholder="답변을 작성하세요... (🎤 음성 입력 가능)"></textarea>
+    <button id="mic-detail-reply-text" onclick="startVoiceInput('detail-reply-text', 'ko-KR')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px">🎤 음성으로 답변 입력</button>
     <div class="spacer"></div>
-    <button class="btn primary" onclick="sendDetailReply()">답변 전송</button>
+    <button class="btn primary" onclick="stopVoiceInput('detail-reply-text');sendDetailReply()">답변 전송</button>
     <div class="success-msg" id="detail-reply-success">전송되었습니다.</div>
   </div>
 </div>
@@ -860,11 +862,27 @@ function releaseWakeLock() {
 // ===== TTS =====
 function getBestVoice(langCode) {
   const voices = speechSynthesis.getVoices();
+  if (!voices.length) return null;
   const lc = (langCode||'ko').toLowerCase().split('-')[0].split('_')[0];
-  const premium = voices.filter(v => v.lang.toLowerCase().startsWith(lc) && /neural|premium|enhanced|wavenet|natural/i.test(v.name));
-  if (premium.length) return premium[0];
-  const normal = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
-  return normal[0] || voices[0] || null;
+  // 우선순위: 1) 로컬 고품질 2) 원격 고품질 3) 일반 로컬 4) 아무거나
+  const byLang = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
+  // 고품질 키워드 (iOS Siri, Android Neural, Windows Neural 등)
+  const highQ = byLang.filter(v => /neural|premium|enhanced|wavenet|natural|siri|google|microsoft/i.test(v.name));
+  // 로컬 우선 (외부 서버 전송 없음 = 보안)
+  const localHighQ = highQ.filter(v => v.localService);
+  if (localHighQ.length) return localHighQ[0];
+  if (highQ.length) return highQ[0];
+  // 로컬 일반
+  const localNorm = byLang.filter(v => v.localService);
+  if (localNorm.length) return localNorm[0];
+  if (byLang.length) return byLang[0];
+  return voices[0];
+}
+function listAvailableVoices(lang) {
+  // 개발용: 사용 가능한 보이스 목록 콘솔 출력
+  const voices = speechSynthesis.getVoices();
+  const lc = (lang||'ko').toLowerCase().split('-')[0];
+  console.log('사용 가능한 보이스:', voices.filter(v=>v.lang.toLowerCase().startsWith(lc)).map(v=>v.name+' ('+v.lang+(v.localService?' local':' remote')+')'));
 }
 function speakText(text, lang) {
   if (!text || !window.speechSynthesis) return;
