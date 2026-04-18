@@ -1229,6 +1229,7 @@ function speakWithPersona(text, lang, clientId) {
   const lc = targetLang.split('-')[0];
   const persona = clientId ? getClientPersona(clientId) : null;
   const savedVoiceName = (persona?.voices||{})[lc] || localStorage.getItem('pip_voice_for_'+lc) || null;
+  console.log('[PIP TTS] lang:', targetLang, 'clientId:', clientId, 'persona:', persona, 'voice:', savedVoiceName);
 
   // Chrome에서 첫 호출 시 getVoices()가 빈 배열 반환하는 문제 해결
   const voices = speechSynthesis.getVoices();
@@ -1294,7 +1295,15 @@ function switchLoginTab(tab) {
 }
 
 function extractClientId(jwtToken) {
-  try { const p=jwtToken.split('.')[1]; const d=p+'='.repeat((4-p.length%4)%4); const obj=JSON.parse(atob(d)); return obj.clientId||obj.id||obj.sub||null; } catch(e) { return null; }
+  try {
+    const p = jwtToken.split('.')[1];
+    const d = p + '='.repeat((4-p.length%4)%4);
+    const obj = JSON.parse(atob(d));
+    // 백엔드 JWT 필드 모두 시도
+    const id = obj.clientId || obj.id || obj.userId || obj.client_id || obj.sub || null;
+    console.log('[PIP] JWT payload:', JSON.stringify(obj), '→ clientId:', id);
+    return id;
+  } catch(e) { return null; }
 }
 
 async function clientEmailLogin() {
@@ -1541,36 +1550,37 @@ async function loadReply(){
   document.getElementById('reply-confirmed-section').style.display='none';
   const replyEl = document.getElementById('reply-content');
   replyEl.textContent = '...';
-  
-  // api() 래퍼 대신 직접 fetch (401 시 로그인 리다이렉트 방지)
-  const tk = localStorage.getItem('pip_token') || token;
-  if (!tk) { replyEl.textContent = '로그인이 필요합니다.'; return; }
-  
+
+  // 1단계: 답변 로드
+  let originalReply = '';
   try {
-    const fetchRes = await fetch(API + '/api/counsel/reply', {
-      headers: { 'Authorization': 'Bearer ' + tk }
-    });
-    if (!fetchRes.ok) {
-      replyEl.textContent = fetchRes.status === 401 
-        ? '세션이 만료되었습니다. 다시 로그인해 주세요.'
-        : '답변을 불러올 수 없습니다. (' + fetchRes.status + ')';
-      return;
-    }
-    const res = await fetchRes.json();
+    const res = await api('/api/counsel/reply');
     if (res && res.hasReply) {
       currentCounselId = res.counselId;
-      let replyText = res.reply || '';
-      // 현재 표시 언어로 번역
-      const clientLang = getCurrentDisplayLang() || 'ko';
-      const translated = await translateText(replyText, clientLang, 'auto');
-      if (translated && translated.trim()) replyText = translated;
-      replyEl.textContent = replyText;
+      originalReply = res.reply || '';
+      replyEl.textContent = originalReply; // 즉시 원문 표시
     } else {
       replyEl.textContent = '확인 가능한 답변이 없습니다.';
+      return;
     }
   } catch(e) {
-    replyEl.textContent = '네트워크 오류. 인터넷 연결을 확인해 주세요.';
-    console.error('loadReply 오류:', e);
+    // api()가 401로 로그인 화면 전환 시 여기 도달
+    if (replyEl.textContent === '...') {
+      replyEl.textContent = '확인 가능한 답변이 없습니다.';
+    }
+    return;
+  }
+
+  // 2단계: 번역 (실패해도 원문 유지)
+  const clientLang = getCurrentDisplayLang() || 'ko';
+  if (originalReply && clientLang !== 'ko') {
+    translateText(originalReply, clientLang, 'auto')
+      .then(translated => {
+        if (translated && translated.trim() && translated !== originalReply) {
+          replyEl.textContent = translated;
+        }
+      })
+      .catch(() => {}); // 번역 실패 시 원문 유지
   }
 }
 
