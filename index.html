@@ -1257,6 +1257,31 @@ const KO_TRANSLATIONS = {
     '서버 오류.': 'Server error.', '서버 오류': 'Server error',
     '요청이 전송되었습니다.': 'Request sent.',
     '전송 완료': 'Sent', '상담 내용이 전송되었습니다.': 'Your counseling has been sent.',
+    // 상담 화면 (Image 4)
+    '개인 상담 신청': 'Personal Counseling', '암호화 전송 · 서버에만 보관': 'Encrypted · Server only',
+    '📌 작성하신 내용은 암호화되어 전송되며, 이 기기에는 저장되지 않습니다.': '📌 Your content is encrypted and sent securely. Not saved on this device.',
+    '지금 마음속에 있는 것을 자유롭게 적어주세요': 'Write freely about what is on your mind',
+    '여기에 작성하세요...': 'Write here...', '여기에 자유롭게 적어주세요...': 'Write freely here...',
+    '🎤 음성 입력': '🎤 Voice Input', '암호화하여 전송하기': 'Send Encrypted',
+    // 전송 완료 화면
+    '전송되었습니다': 'Sent Successfully',
+    '상담자가 검토 후 답변을 보내드립니다.': 'The counselor will review and respond.',
+    '홈으로 돌아가기': 'Return to Home',
+    // 사용설명서 화면
+    '⊙ 홈 화면': '⊙ Home Screen', '◈ 교육 세션': '◈ Education Sessions',
+    '✉ 개인 상담': '✉ Personal Counseling',
+    // ✏️ 편집 버튼 (Curriculum 탭)
+    '✏️ 편집': '✏️ Edit',
+    '📋 내담자 교육 답변 확인': '📋 View Client Answers',
+    '📋 답변 숨기기': '📋 Hide Answers',
+    // 교육 화면
+    '진행 중...': 'In progress...',
+    '이 모듈은 이미 완료되었습니다. 수고하셨습니다! ✅': 'This module is already complete! ✅',
+    '홈으로 돌아가기': 'Return to Home',
+    '이전에 진행하던 부분부터 이어서 시작합니다.': 'Resuming from where you left off.',
+    '오류가 발생했습니다. 다시 시도해 주세요.': 'An error occurred. Please try again.',
+    '다음 질문을 불러오지 못했습니다.': 'Could not load next question.',
+    '수고하셨습니다. 오늘 세션이 완료되었습니다.': "Well done! Today's session is complete.",
     '확인 가능한 답변이 없습니다.': 'No answer available.',
     '답변이 도착했습니다': 'A reply has arrived',
     '상담 답변이 도착했습니다': 'A counseling reply has arrived',
@@ -1405,8 +1430,7 @@ function startAutoTranslation(lang) {
     _translationTimer = setTimeout(() => {
       if (_activeTranslationLang && _activeTranslationLang !== 'ko') {
         _isTranslating = true;
-        translateDOM(_activeTranslationLang);
-        _isTranslating = false;
+        try { translateDOM(_activeTranslationLang); } finally { _isTranslating = false; }
       }
     }, 150);
   });
@@ -1421,8 +1445,7 @@ function startAutoTranslation(lang) {
   // 즉시 한 번 번역
   setTimeout(() => {
     _isTranslating = true;
-    translateDOM(lang);
-    _isTranslating = false;
+    try { translateDOM(lang); } finally { _isTranslating = false; }
   }, 50);
 }
 
@@ -1620,8 +1643,23 @@ function applyFullTranslation(lang) {
   if(listenBtn) listenBtn.textContent=t.listenBtn;
   const hostPwInput = document.getElementById('host-pw');
   if(hostPwInput && t.hostPwPlaceholder) hostPwInput.placeholder = t.hostPwPlaceholder;
+  // 상담 화면 특정 요소 직접 번역
+  const lc2=(lang||'ko').split('-')[0];
+  const key2=lc2==='zh'?'zh':(UI_TR[lang]?lang:(UI_TR[lc2]?lc2:'en'));
+  const t2=UI_TR[key2]||UI_TR.en;
+  const s2=(id,txt)=>{const e=document.getElementById(id);if(e&&txt)e.textContent=txt;};
+  // 상담 화면 placeholder
+  const counselTA=document.getElementById('counsel-text');
+  if(counselTA) counselTA.placeholder=KO_TRANSLATIONS[key2]?.['여기에 작성하세요...']||'Write here...';
+  // 상담 전송 버튼
+  const sendBtn=document.querySelector('#screen-counsel .btn.primary');
+  if(sendBtn) sendBtn.textContent=KO_TRANSLATIONS[key2]?.['암호화하여 전송하기']||'Send Encrypted';
+  // 음성 입력 버튼
+  const micBtn=document.getElementById('mic-counsel-text');
+  if(micBtn) micBtn.textContent=KO_TRANSLATIONS[key2]?.['🎤 음성 입력']||'🎤 Voice Input';
+  
   // DB 데이터(그룹명, 모듈명 등) DeepL 번역 (지연)
-  setTimeout(() => translateDataElements(lang), 800);
+  setTimeout(() => translateDataElements(lang), 1000);
   console.log('[PIP] 번역 완료:', lang);
 }
 
@@ -1899,7 +1937,12 @@ async function submitAnswer(value, btn, label) {
 const BASE_SLOTS_KST=[{day:1,hour:18,minute:0},{day:2,hour:10,minute:0},{day:3,hour:19,minute:0},{day:4,hour:20,minute:0}];
 function getNextSlotDate(dayKST,hourKST,minuteKST){const now=new Date(),KST=9*60*60000,nowKST=new Date(now.getTime()+KST),kstDay=nowKST.getUTCDay(),daysUntil=(dayKST-kstDay+7)%7,candidate=new Date(nowKST);candidate.setUTCDate(candidate.getUTCDate()+daysUntil);candidate.setUTCHours(hourKST,minuteKST,0,0);if(candidate<=nowKST)candidate.setUTCDate(candidate.getUTCDate()+7);return new Date(candidate.getTime()-KST);}
 function formatSlotForTZ(date,tz,lang){const locale=lang==='ko'?'ko-KR':'en-US';return new Intl.DateTimeFormat(locale,{timeZone:tz,weekday:'long',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).format(date);}
-function formatDateForHost(isoString){const date=new Date(isoString),hostTZ=Intl.DateTimeFormat().resolvedOptions().timeZone;return new Intl.DateTimeFormat('ko-KR',{timeZone:hostTZ,weekday:'long',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false,timeZoneName:'short'}).format(date);}
+function formatDateForHost(isoString){
+  const date=new Date(isoString),hostTZ=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const hl=localStorage.getItem('pip_host_lang_pref')||'ko';
+  const locale=hl==='ko'?'ko-KR':hl==='ja'?'ja-JP':hl.startsWith('zh')?'zh-CN':'en-US';
+  return new Intl.DateTimeFormat(locale,{timeZone:hostTZ,weekday:'long',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:hl!=='ko',timeZoneName:'short'}).format(date);
+}
 
 function buildTimeSlots(){
   const clientTZ=Intl.DateTimeFormat().resolvedOptions().timeZone,lang=userLang||'ko';
@@ -2009,10 +2052,35 @@ function applyHostLang(){
   localStorage.setItem('pip_host_lang_pref', pref);
 }
 
-window.addEventListener('load',()=>{
-  const saved=localStorage.getItem('pip_lang_display');const el=document.getElementById('langSelected');if(saved&&el)el.textContent=saved;
-  const hostSaved=localStorage.getItem('pip_host_lang_display');const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
-  const hostLoginEl=document.getElementById('hostLoginLangSelected');if(hostSaved&&hostLoginEl)hostLoginEl.textContent=hostSaved;
+window.addEventListener('load', () => {
+  const isHost = location.hash==='#host'||location.hash==='#/host';
+  
+  // 브라우저 언어 감지 (항상 브라우저 언어로 초기화)
+  const browserLang = (navigator.language || navigator.userLanguage || 'ko').toLowerCase();
+  const blc = browserLang.split('-')[0];
+  const lm = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
+  let detected = lm[blc];
+  if (blc==='zh') detected=(browserLang.includes('tw')||browserLang.includes('hk'))?'zh-TW':'zh-CN';
+  const detectedLang = detected || 'ko';
+  
+  if (!isHost) {
+    // 내담자: 저장된 언어 없으면 브라우저 언어 사용
+    if (!localStorage.getItem('pip_client_lang_pref')) {
+      localStorage.setItem('pip_client_lang_pref', detectedLang);
+    }
+    const clientLang = localStorage.getItem('pip_client_lang_pref') || detectedLang;
+    const el = document.getElementById('langSelected');
+    if (el) el.textContent = LANG_NAMES[clientLang] || '한국어';
+  } else {
+    // 호스트: 저장된 언어 없으면 브라우저 언어 사용
+    if (!localStorage.getItem('pip_host_lang_pref')) {
+      localStorage.setItem('pip_host_lang_pref', detectedLang);
+      localStorage.setItem('pip_host_lang_display', LANG_NAMES[detectedLang] || detectedLang);
+    }
+    const hostSaved = localStorage.getItem('pip_host_lang_display');
+    const hostEl=document.getElementById('hostLangSelected'); if(hostSaved&&hostEl) hostEl.textContent=hostSaved;
+    const hostLoginEl=document.getElementById('hostLoginLangSelected'); if(hostSaved&&hostLoginEl) hostLoginEl.textContent=hostSaved;
+  }
 });
 
 document.addEventListener('click',(e)=>{
