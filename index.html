@@ -933,37 +933,62 @@ async function translateDataElements(lang) {
   function collect(node) {
     if (!node) return;
     if (node.nodeType === 3) {
+      const parent = node.parentElement;
+      // 이미 번역된 노드는 스킵
+      if (parent && parent.getAttribute('data-translated') === lang) return;
       const txt = node.textContent.trim();
-      if (txt && txt.length > 1 && txt.length < 400 && /[가-힣]/.test(txt) && !staticMap[txt]) {
-        toTranslate.push({node, txt});
+      if (txt && txt.length > 1 && txt.length < 1500 && /[가-힣]/.test(txt) && !staticMap[txt]) {
+        toTranslate.push({node, txt, parent});
       }
     } else if (node.nodeType === 1) {
       if (['SCRIPT','STYLE','INPUT','TEXTAREA'].includes(node.tagName)) return;
       if (node.classList && node.classList.contains('notranslate')) return;
+      if (node.getAttribute && node.getAttribute('data-translated') === lang) return;
       node.childNodes.forEach(collect);
     }
   }
+  // 활성 화면만 스캔 (성능 10배 향상)
   const active = document.querySelector('.screen.active');
   if (active) collect(active);
-  const seen = new Set();
-  const unique = toTranslate.filter(({txt}) => { if(seen.has(txt)) return false; seen.add(txt); return true; }).slice(0, 80);
-  // 캐시된 것 먼저 적용
-  for (const {node, txt} of unique) {
+
+  // 중복 텍스트 제거 - 같은 단어 여러번 호출 안 함
+  const byText = {};
+  toTranslate.forEach(item => {
+    if (!byText[item.txt]) byText[item.txt] = [];
+    byText[item.txt].push(item);
+  });
+  const uniqueTexts = Object.keys(byText).slice(0, 60);  // 한번에 최대 60개
+
+  // 캐시된 것 먼저 일괄 적용
+  const needFetch = [];
+  for (const txt of uniqueTexts) {
     const ck = lang+'::'+txt;
     if (_translateCache[ck]) {
-      try { node.textContent = node.textContent.replace(txt, _translateCache[ck]); } catch(e){}
+      byText[txt].forEach(({node, parent}) => {
+        try { node.textContent = node.textContent.replace(txt, _translateCache[ck]); } catch(e){}
+        if (parent) parent.setAttribute('data-translated', lang);
+      });
+    } else {
+      needFetch.push(txt);
     }
   }
-  const needFetch = unique.filter(({txt}) => !_translateCache[lang+'::'+txt]);
-  for (const {node, txt} of needFetch) {
-    try {
-      const translated = await translateText(txt, lang, 'auto');
-      if (translated && translated !== txt && translated.trim()) {
-        _translateCache[lang+'::'+txt] = translated;
-        try { node.textContent = node.textContent.replace(txt, translated); } catch(e){}
-      }
-      await new Promise(r => setTimeout(r, 40));
-    } catch(e) {}
+
+  // 병렬 번역 (6개씩 동시)
+  const chunkSize = 6;
+  for (let i = 0; i < needFetch.length; i += chunkSize) {
+    const chunk = needFetch.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(async (txt) => {
+      try {
+        const translated = await translateText(txt, lang, 'auto');
+        if (translated && translated !== txt && translated.trim()) {
+          _translateCache[lang+'::'+txt] = translated;
+          byText[txt].forEach(({node, parent}) => {
+            try { node.textContent = node.textContent.replace(txt, translated); } catch(e){}
+            if (parent) parent.setAttribute('data-translated', lang);
+          });
+        }
+      } catch(e) {}
+    }));
   }
 }
 
@@ -1961,14 +1986,15 @@ const _mutationObserver = new MutationObserver(() => {
     try { translateDOM(lang); } catch(e){}
     translateDataElements(lang).catch(()=>{}).finally(() => {
       try { translateDOM(lang); } catch(e){}
-      setTimeout(() => { _translationLock = false; }, 150);
+      // lock 오래 유지해서 rate limit 폭발 방지
+      setTimeout(() => { _translationLock = false; }, 3000);
     });
-  }, 350);
+  }, 1500);  // 디바운스 1.5초 (화면 안정된 후 호출)
 });
 // 초기 렌더링 끝난 뒤 observer 시작
 setTimeout(() => {
   try { _mutationObserver.observe(document.body, { childList: true, subtree: true }); } catch(e){}
-}, 2000);
+}, 2500);
 </script>
 </body>
 </html>
