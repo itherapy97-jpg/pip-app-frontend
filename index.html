@@ -514,7 +514,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
             style="background:#EDF4EE;border:1px solid var(--sage-light);border-radius:6px;cursor:pointer;font-size:13px;padding:4px 8px;color:var(--sage-dark)" 
             title="음성으로 듣기">🔊 듣기</button>
         </div>
-        <p style="font-size:14px;line-height:1.8" id="reply-content">로딩 중...</p>
+        <p style="font-size:14px;line-height:1.8" id="reply-content" class="notranslate">로딩 중...</p>
       </div>
       <div class="spacer"></div>
       <button class="btn primary" onclick="confirmReply()">확인했습니다</button>
@@ -823,40 +823,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 </div>
 
 <!-- Google Translate 스크립트 -->
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({
-    pageLanguage: 'ko',
-    includedLanguages: 'en,zh-CN,zh-TW,ja,es,fr,de,ar,pt,ru,vi,th,id,hi',
-    layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-    autoDisplay: false
-  }, 'google_translate_element');
-}
-</script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<!-- Google Translate 제거됨 (보안) -->
 
 <script>
-// ★ 최우선: Google Translate보다 먼저 올바른 언어 쿠키 설정
-(function applyCorrectLangCookie() {
-  const isHost = location.hash === '#host' || location.hash === '#/host';
-  const wantedLang = isHost
-    ? (localStorage.getItem('pip_host_lang_pref') || 'ko')
-    : (localStorage.getItem('pip_client_lang_pref') || 'ko');
-  const cookie = document.cookie.split(';').find(c => c.trim().startsWith('googtrans='));
-  const currentVal = cookie ? cookie.trim().replace('googtrans=', '') : '';
-  const wantedVal = wantedLang === 'ko' ? '' : '/ko/' + wantedLang;
-  if (currentVal === wantedVal) return;
-  if (wantedLang === 'ko') {
-    document.cookie = 'googtrans=; path=/; expires=' + new Date(0).toUTCString();
-    document.cookie = 'googtrans=; path=/; domain=' + location.hostname + '; expires=' + new Date(0).toUTCString();
-    document.cookie = 'googtrans=; path=/; domain=.' + location.hostname + '; expires=' + new Date(0).toUTCString();
-  } else {
-    document.cookie = 'googtrans=' + wantedVal + '; path=/';
-    document.cookie = 'googtrans=' + wantedVal + '; path=/; domain=' + location.hostname;
-    document.cookie = 'googtrans=' + wantedVal + '; path=/; domain=.' + location.hostname;
-  }
-  location.reload();
-})();
+// IIFE 제거됨 (Google Translate 제거로 불필요)
 
 const API = 'https://pip-app-backend-production.up.railway.app';
 let token = localStorage.getItem('pip_token');
@@ -897,7 +867,7 @@ async function translateText(text, targetLang, sourceLang) {
 }
 
 function getHostDisplayLang() {
-  const c = document.cookie.split(';').find(x => x.trim().startsWith('googtrans='));
+  // Google Translate 제거됨
   if (c) { const p = c.split('=')[1].split('/'); return p[2] || 'ko'; }
   return 'ko';
 }
@@ -1613,16 +1583,8 @@ async function confirmReply(){
 // ===== 호스트 언어 =====
 const LANG_NAMES={'en':'English','zh-CN':'中文（简体）','zh-TW':'中文（繁體）','ja':'日本語','hi':'हिन्दी','es':'Español','fr':'Français','de':'Deutsch','ar':'العربية','pt':'Português','ru':'Русский','vi':'Tiếng Việt','th':'ภาษาไทย','id':'Bahasa Indonesia','ko':'한국어'};
 
-// ★ 현재 표시 언어 감지 (googtrans 쿠키 기반)
+// ★ 현재 표시 언어 감지 (localStorage 기반 - Google Translate 제거됨)
 function getCurrentDisplayLang() {
-  try {
-    const c = document.cookie.split(';').find(x => x.trim().startsWith('googtrans='));
-    if (c) {
-      const val = c.trim().replace('googtrans=','');
-      const parts = val.split('/');
-      return parts[2] || 'ko';
-    }
-  } catch(e) {}
   return localStorage.getItem('pip_client_lang_pref') || 'ko';
 }
 
@@ -1634,32 +1596,47 @@ function getHostDisplayLang() {
 function toggleLangMenu(){document.getElementById('langMenu').classList.toggle('open');}
 function setLang(lang, el) {
   document.getElementById('langMenu').classList.remove('open');
-  // 쿠키 설정
-  if (lang === 'ko') {
-    document.cookie = 'googtrans=; path=/; expires=' + new Date(0).toUTCString();
-    document.cookie = 'googtrans=; path=/; domain=' + location.hostname + '; expires=' + new Date(0).toUTCString();
-    document.cookie = 'googtrans=; path=/; domain=.' + location.hostname + '; expires=' + new Date(0).toUTCString();
-  } else {
-    const val = '/ko/' + lang;
-    document.cookie = 'googtrans=' + val + '; path=/';
-    document.cookie = 'googtrans=' + val + '; path=/; domain=' + location.hostname;
-    document.cookie = 'googtrans=' + val + '; path=/; domain=.' + location.hostname;
-  }
   localStorage.setItem('pip_lang_display', LANG_NAMES[lang] || lang);
   localStorage.setItem('pip_client_lang_pref', lang);
-  
-  // Google Translate 위젯 직접 트리거 시도
-  const combo = document.querySelector('.goog-te-combo');
-  if (combo) {
-    combo.value = lang === 'ko' ? '' : lang;
-    combo.dispatchEvent(new Event('change'));
-    // 버튼 업데이트 후 리로드
-    const langEl = document.getElementById('langSelected');
-    if (langEl) langEl.textContent = LANG_NAMES[lang] || lang;
-    setTimeout(() => location.reload(), 600);
-  } else {
-    location.reload();
+  // 언어 버튼 업데이트
+  const langEl = document.getElementById('langSelected');
+  if (langEl) langEl.textContent = LANG_NAMES[lang] || lang;
+  // 페이지 번역 적용
+  applyPageTranslation(lang);
+}
+
+// DeepL 백엔드로 페이지 핵심 텍스트 번역
+async function applyPageTranslation(lang) {
+  if (lang === 'ko') {
+    restoreKorean();
+    return;
   }
+  // 번역 대상 요소 목록
+  const targets = [
+    {id:'landing-quote-text', ko:'"내면의 평화는 고치는 것이 아니라,\n이미 있는 것을 발견하는 것입니다."'},
+    {id:'landing-desc', ko:'Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 인류 최초의 독자적 내면 교육 방법론입니다.\n\n전문 상담가가 창안한 이 프로그램은 교육 과정 안에 1:1 실제 상담이 정기적으로 포함되어 있습니다.'},
+    {id:'landing-notice', ko:'본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. 허가된 참여자만 접근 가능합니다.'},
+  ];
+  
+  for (const t of targets) {
+    const el = document.getElementById(t.id);
+    if (!el) continue;
+    if (!el.dataset.ko) el.dataset.ko = el.innerText || t.ko; // 원문 저장
+    try {
+      const translated = await translateText(el.dataset.ko, lang, 'ko');
+      if (translated && translated !== el.dataset.ko) {
+        el.textContent = translated;
+      }
+    } catch(e) {}
+  }
+}
+
+function restoreKorean() {
+  const targets = ['landing-quote-text','landing-desc','landing-notice'];
+  targets.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.dataset.ko) el.textContent = el.dataset.ko;
+  });
 }
 
 function toggleHostLangMenu(){
@@ -1672,68 +1649,42 @@ function toggleHostLangMenu(){
 function setHostLang(lang,el){
   if(document.getElementById('hostLangMenu'))document.getElementById('hostLangMenu').classList.remove('open');
   if(document.getElementById('hostLoginLangMenu'))document.getElementById('hostLoginLangMenu').classList.remove('open');
-  if(lang==='ko'){document.cookie='googtrans=; path=/; expires='+new Date(0).toUTCString();document.cookie='googtrans=; path=/; domain='+location.hostname+'; expires='+new Date(0).toUTCString();document.cookie='googtrans=; path=/; domain=.'+location.hostname+'; expires='+new Date(0).toUTCString();}
-  else{const val='/ko/'+lang;document.cookie='googtrans='+val+'; path=/';document.cookie='googtrans='+val+'; path=/; domain='+location.hostname;document.cookie='googtrans='+val+'; path=/; domain=.'+location.hostname;}
+  // Google Translate 제거됨
+  localStorage.setItem('pip_host_lang_pref', lang);
   localStorage.setItem('pip_host_lang_display',LANG_NAMES[lang]||lang);
   localStorage.setItem('pip_host_lang_pref',lang);
   location.reload();
 }
 
-function applyHostLang(){
-  const pref=localStorage.getItem('pip_host_lang_pref')||'ko';
-  if(pref==='ko'){document.cookie='googtrans=; path=/; expires='+new Date(0).toUTCString();document.cookie='googtrans=; path=/; domain='+location.hostname+'; expires='+new Date(0).toUTCString();document.cookie='googtrans=; path=/; domain=.'+location.hostname+'; expires='+new Date(0).toUTCString();}
-  else{const val='/ko/'+pref;document.cookie='googtrans='+val+'; path=/';document.cookie='googtrans='+val+'; path=/; domain='+location.hostname;document.cookie='googtrans='+val+'; path=/; domain=.'+location.hostname;}
-}
+function applyHostLang(){}
 
 window.addEventListener('load',()=>{
-  // ★ 실제 쿠키 기반으로 Language 버튼 표시
-  const cookie = document.cookie.split(';').find(c=>c.trim().startsWith('googtrans='));
+  // Language 버튼 표시 (localStorage 기반)
+  const savedClientLang = localStorage.getItem('pip_client_lang_pref') || 'ko';
   const el = document.getElementById('langSelected');
-  if (el) {
-    if (cookie) {
-      const parts = cookie.trim().replace('googtrans=','').split('/');
-      const lang = parts[2];
-      el.textContent = LANG_NAMES[lang] || lang || '한국어';
-    } else {
-      el.textContent = '한국어';
-    }
-  }
+  if (el) el.textContent = LANG_NAMES[savedClientLang] || '한국어';
   const hostSaved=localStorage.getItem('pip_host_lang_display');
   const hostEl=document.getElementById('hostLangSelected');if(hostSaved&&hostEl)hostEl.textContent=hostSaved;
   const hostLoginEl=document.getElementById('hostLoginLangSelected');if(hostSaved&&hostLoginEl)hostLoginEl.textContent=hostSaved;
   
-  // ★ 브라우저/폰 언어 자동 감지 (pip_client_lang_pref 미설정 + 쿠키 없을 때)
+  // ★ 브라우저/폰 언어 자동 감지 (pip_client_lang_pref 미설정 시)
   const isHost = location.hash==='#host'||location.hash==='#/host';
-  if (!isHost && !localStorage.getItem('pip_client_lang_pref') && !cookie) {
+  if (!isHost && !localStorage.getItem('pip_client_lang_pref')) {
     const browserLang = (navigator.language || navigator.userLanguage || 'ko').toLowerCase();
     const lc = browserLang.split('-')[0];
-    if (lc !== 'ko') {
-      const langMap = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
-      let target = langMap[lc];
-      if (lc==='zh') target = (browserLang.includes('tw')||browserLang.includes('hk'))?'zh-TW':'zh-CN';
-      if (target) {
-        const val = '/ko/'+target;
-        document.cookie = 'googtrans='+val+'; path=/';
-        document.cookie = 'googtrans='+val+'; path=/; domain='+location.hostname;
-        document.cookie = 'googtrans='+val+'; path=/; domain=.'+location.hostname;
-        localStorage.setItem('pip_lang_display', LANG_NAMES[target]||target);
-        localStorage.setItem('pip_client_lang_pref', target);
-        location.reload();
-        return;
-      }
-    }
-    localStorage.setItem('pip_client_lang_pref', 'ko');
+    const langMap = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
+    let target = langMap[lc];
+    if (lc==='zh') target = (browserLang.includes('tw')||browserLang.includes('hk'))?'zh-TW':'zh-CN';
+    const finalLang = target || 'ko';
+    localStorage.setItem('pip_client_lang_pref', finalLang);
+    if (el) el.textContent = LANG_NAMES[finalLang] || '한국어';
+    if (finalLang !== 'ko') setTimeout(() => applyPageTranslation(finalLang), 600);
   }
   
-  // Google Translate 쿠키 있으면 위젯 강제 트리거
-  if (cookie && !isHost) {
-    setTimeout(()=>{
-      const lang = cookie.trim().replace('googtrans=','').split('/').pop();
-      if (lang && lang!=='ko') {
-        const combo = document.querySelector('.goog-te-combo');
-        if (combo && combo.value!==lang) { combo.value=lang; combo.dispatchEvent(new Event('change')); }
-      }
-    }, 1200);
+  // Google Translate 제거됨 - DeepL 백엔드 사용
+  const savedLang = localStorage.getItem('pip_client_lang_pref');
+  if (savedLang && savedLang !== 'ko' && !isHost) {
+    setTimeout(() => applyPageTranslation(savedLang), 500);
   }
 });
 
@@ -2039,20 +1990,6 @@ function initApp(){
 
 window.onload = function() {
   initApp();
-  // Google Translate 쿠키가 있으면 위젯 트리거
-  setTimeout(() => {
-    const cookie = document.cookie.split(';').find(c => c.trim().startsWith('googtrans='));
-    if (cookie) {
-      const lang = cookie.trim().replace('googtrans=','').split('/').pop();
-      if (lang && lang !== 'ko') {
-        const combo = document.querySelector('.goog-te-combo');
-        if (combo && combo.value !== lang) {
-          combo.value = lang;
-          combo.dispatchEvent(new Event('change'));
-        }
-      }
-    }
-  }, 1200);
 };
 </script>
 </body>
