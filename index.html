@@ -467,6 +467,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div class="spacer"></div>
     <button class="btn primary" onclick="saveSettings()">저장하기</button>
     <div class="success-msg" id="settings-success">저장되었습니다.</div>
+
+    <div class="divider"></div>
+    <p class="sec-label">🔊 음성(TTS) 설정</p>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.7">호스트가 🔊 듣기 버튼을 누를 때 사용할 음성입니다.<br>⭐ Microsoft 음성 우선 표시 (Windows / Edge / Chrome)<br>💡 이 기기에만 저장됩니다.</p>
+
+    <div class="field-label">🇰🇷 한국어 음성</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <select id="host-voice-ko" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('ko')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 테스트</button>
+    </div>
+
+    <div class="field-label">🇺🇸 English Voice</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <select id="host-voice-en" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('en')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+    </div>
+
+    <div class="field-label">🇯🇵 日本語 音声</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <select id="host-voice-ja" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('ja')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 テスト</button>
+    </div>
+
+    <div class="field-label">🇨🇳 中文语音</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <select id="host-voice-zh" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('zh')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 测试</button>
+    </div>
+
+    <div id="host-voice-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:8px 12px;background:var(--cream);border-radius:6px"></div>
   </div>
 </div>
 
@@ -513,6 +543,54 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div class="field-label">특징 / 메모</div><textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;margin-bottom:8px"></textarea>
     <div class="field-label">상담 메모 (호스트 전용)</div><textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;margin-bottom:8px"></textarea>
     <div class="success-msg" id="profile-save-success">저장되었습니다.</div>
+
+    <div class="divider"></div>
+    <p class="sec-label">🔊 음성(TTS) 설정</p>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.7">🔊 듣기 버튼에서 사용할 음성입니다.<br>⭐ Microsoft 음성 우선 표시 (Windows / Edge / Chrome)<br>💡 선택한 음성은 이 기기에만 저장됩니다.</p>
+
+    <div class="field-label">🇰🇷 한국어 음성</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="voice-ko" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('ko')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 테스트</button>
+    </div>
+
+    <div class="field-label">🇺🇸 English Voice</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="voice-en" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('en')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+    </div>
+
+    <div class="field-label">🇯🇵 日本語 音声</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="voice-ja" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('ja')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 テスト</button>
+    </div>
+
+    <div class="field-label">🇨🇳 中文语音</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="voice-zh" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('zh')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 测试</button>
+    </div>
+
+    <div class="field-label">🇪🇸 Voz en Español</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="voice-es" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('es')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Prueba</button>
+    </div>
+
+    <div class="field-label">🇫🇷 Voix Française</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="voice-fr" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('fr')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+    </div>
+
+    <div class="field-label">🇩🇪 Deutsche Stimme</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="voice-de" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('de')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+    </div>
+
+    <div id="voice-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:8px 12px;background:var(--cream);border-radius:6px"></div>
     <div class="spacer"></div>
   </div>
   <div id="detail-tab-modules" class="content" style="display:none;overflow-y:auto">
@@ -669,7 +747,22 @@ const KO_TRANSLATIONS = {
     '모듈 없음':'No modules','대기 중인 요청 없음':'No pending requests',
     '확정된 세션 없음':'No confirmed sessions','상담 내역 없음':'No counseling history',
     '배정된 모듈 없음':'No modules assigned','배정 가능한 모듈 없음':'No modules available',
-    '이 시간으로 요청하기':'Request This Time'
+    '이 시간으로 요청하기':'Request This Time',
+    'Language':'Language','다음 세션':'Next session','듣기':'Listen',
+    '보기':'View','선택':'Select','선택 →':'Select →','열기 →':'Open →',
+    '메시지 없음':'No messages','스레드를 찾을 수 없음':'Thread not found',
+    '답변할 질문을 선택하세요.':'Select a question to reply to.',
+    '답변 내용을 입력하세요.':'Enter your reply.','답변이 전송되었습니다.':'Reply sent.',
+    '전송 실패':'Send failed','처리 실패':'Operation failed',
+    '내담자를 먼저 선택해주세요.':'Please select a client first.',
+    '이 스레드의 모든 메시지를 확인했습니까?':'Have you reviewed all messages in this thread?',
+    '확인하시면 이 기기에서 삭제됩니다.':'Confirming will remove them from this device.',
+    '미답변':'Pending','이 모듈은 이미 완료되었습니다. 수고하셨습니다! ✅':'This module is already complete! ✅',
+    '모듈 로드 실패':'Failed to load modules','상담 내역 없음':'No counseling history',
+    '열기':'Open','메시지':'Messages','건':'item(s)',
+    '이 브라우저는 음성 출력을 지원하지 않습니다.':'This browser does not support speech output.',
+    '내담자 질문':'Client question','호스트 답변':'Host reply',
+    '💬 질문에 대한 답변:':'💬 Reply to question:','✓ 선택됨':'✓ Selected'
   },
   ja: {
     '시작하기 →':'始める →','← 뒤로':'← 戻る','← 홈':'← ホーム','← 홈으로':'← ホーム','← 스레드 목록':'← スレッド一覧',
@@ -990,20 +1083,137 @@ function stopVoiceInput(targetId) {
 // TTS (음성 출력)
 // ============================================================
 function speakText(text, lang) {
-  if (!text || !window.speechSynthesis) return;
-  speechSynthesis.cancel();
+  if (!text || !window.speechSynthesis) { alert('이 브라우저는 음성 출력을 지원하지 않습니다.'); return; }
+  try { speechSynthesis.cancel(); } catch(e){}
   const utter = new SpeechSynthesisUtterance(text);
   const dl = lang || getCurrentDisplayLang() || 'ko';
-  utter.lang = dl;
-  utter.rate = 0.92;
-  const voices = speechSynthesis.getVoices();
   const lc = dl.split('-')[0];
-  const v = voices.find(vv => vv.lang.toLowerCase().startsWith(lc));
-  if (v) utter.voice = v;
+  const voices = speechSynthesis.getVoices() || [];
+  let v = null;
+  // 1) 사용자가 저장한 음성 우선 (프로필에서 선택한 것)
+  const savedURI = localStorage.getItem('pip_voice_'+lc);
+  if (savedURI) v = voices.find(vv => vv.voiceURI === savedURI);
+  // 2) Microsoft 음성 우선
+  if (!v) v = voices.find(vv => vv.lang && vv.lang.toLowerCase().startsWith(lc) && /microsoft/i.test(vv.name||''));
+  // 3) 정확한 언어코드 매치
+  if (!v) v = voices.find(vv => vv.lang && vv.lang.toLowerCase() === dl.toLowerCase());
+  // 4) 언어 prefix 매치
+  if (!v) v = voices.find(vv => vv.lang && vv.lang.toLowerCase().startsWith(lc));
+  // 5) 한국어 텍스트 감지 폴백
+  if (!v && /[가-힣]/.test(text)) {
+    v = voices.find(vv => vv.lang && vv.lang.toLowerCase().startsWith('ko'));
+  }
+  if (v) { utter.voice = v; utter.lang = v.lang; }
+  else { utter.lang = dl; }
+  utter.rate = 0.92;
+  utter.onerror = (e) => { console.warn('TTS error:', e); };
   speechSynthesis.speak(utter);
 }
 if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
-  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => {
+    speechSynthesis.getVoices();
+    // 음성 설정 UI가 열려 있으면 자동 재로드
+    if (document.getElementById('voice-ko') || document.getElementById('host-voice-ko')) {
+      try { loadVoiceOptions(); } catch(e){}
+    }
+  };
+}
+// 즉시 한 번 트리거 (일부 브라우저는 호출해야 voices 로드됨)
+if (window.speechSynthesis) { try { speechSynthesis.getVoices(); } catch(e){} }
+
+// 버블 안의 현재 "화면에 보이는" 텍스트를 읽기 (번역됐으면 번역된 걸로)
+function speakBubble(btn) {
+  if (!btn || !window.speechSynthesis) return;
+  const bubble = btn.closest('.tl-bubble');
+  if (!bubble) return;
+  const clone = bubble.cloneNode(true);
+  // 버튼과 이전질문 컨텍스트는 제외
+  clone.querySelectorAll('.tl-speak, .tl-reply-context').forEach(n => n.remove());
+  const text = (clone.textContent || '').trim();
+  if (!text) return;
+  // 화면 표시 언어로 읽기
+  const lang = getCurrentDisplayLang() || 'ko';
+  speakText(text, lang);
+}
+
+// 강제 번역 실행 (동적 DOM 렌더링 직후 호출)
+async function forceTranslate() {
+  const lang = getCurrentDisplayLang();
+  if (!lang || lang === 'ko') return;
+  try { translateDOM(lang); } catch(e){}
+  try { await translateDataElements(lang); } catch(e){}
+  try { translateDOM(lang); } catch(e){}
+}
+
+// ============================================================
+// 음성(TTS) 선택 UI
+// ============================================================
+function loadVoiceOptions() {
+  const voices = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+  if (voices.length === 0) {
+    // 아직 로드 안 됨 - 500ms 후 재시도
+    setTimeout(loadVoiceOptions, 500);
+    return;
+  }
+  const langs = ['ko','en','ja','zh','es','fr','de'];
+  // 내담자 프로필 탭용 + 호스트 설정 탭용 두 세트 모두 채움
+  ['voice-','host-voice-'].forEach(prefix => {
+    langs.forEach(l => {
+      const sel = document.getElementById(prefix+l);
+      if (!sel) return;
+      const matches = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(l));
+      // Microsoft 음성 우선 정렬
+      matches.sort((a,b) => {
+        const aMs = /microsoft/i.test(a.name||'');
+        const bMs = /microsoft/i.test(b.name||'');
+        if (aMs && !bMs) return -1;
+        if (!aMs && bMs) return 1;
+        return (a.name||'').localeCompare(b.name||'');
+      });
+      if (matches.length === 0) {
+        sel.innerHTML = '<option value="">(사용 가능한 음성 없음)</option>';
+        sel.disabled = true;
+        return;
+      }
+      sel.disabled = false;
+      const saved = localStorage.getItem('pip_voice_'+l);
+      sel.innerHTML = '<option value="">(자동 선택)</option>' +
+        matches.map(v => {
+          const isMs = /microsoft/i.test(v.name||'');
+          const label = (isMs?'⭐ ':'')+v.name+' · '+v.lang;
+          const uri = (v.voiceURI||'').replace(/"/g,'&quot;');
+          const selected = (saved === v.voiceURI) ? ' selected' : '';
+          return '<option value="'+uri+'"'+selected+'>'+label+'</option>';
+        }).join('');
+      sel.onchange = function() {
+        if (sel.value) localStorage.setItem('pip_voice_'+l, sel.value);
+        else localStorage.removeItem('pip_voice_'+l);
+        // 두 개 드롭다운 동기화
+        const otherId = (prefix === 'voice-') ? ('host-voice-'+l) : ('voice-'+l);
+        const other = document.getElementById(otherId);
+        if (other) { try { other.value = sel.value; } catch(e){} }
+      };
+    });
+  });
+  // 상태 표시
+  const msCount = voices.filter(v => /microsoft/i.test(v.name||'')).length;
+  const totalCount = voices.length;
+  const statusText = '🎙 브라우저에서 감지된 음성: 총 '+totalCount+'개 (Microsoft '+msCount+'개)';
+  const s1 = document.getElementById('voice-status'); if (s1) s1.textContent = statusText;
+  const s2 = document.getElementById('host-voice-status'); if (s2) s2.textContent = statusText;
+}
+
+function testVoice(langCode) {
+  const samples = {
+    ko: '안녕하세요. 한국어 음성 테스트입니다.',
+    en: 'Hello. This is an English voice test.',
+    ja: 'こんにちは。日本語の音声テストです。',
+    zh: '你好。这是中文语音测试。',
+    es: 'Hola. Esta es una prueba de voz en español.',
+    fr: 'Bonjour. Ceci est un test de voix française.',
+    de: 'Hallo. Dies ist ein deutscher Sprachtest.'
+  };
+  speakText(samples[langCode] || 'Voice test.', langCode);
 }
 
 // ============================================================
@@ -1161,18 +1371,17 @@ function renderThreadTimeline(timeline) {
         const prev = (item.inReplyToMessage || '').substring(0, 100) + (item.inReplyToMessage.length > 100 ? '...' : '');
         context = '<div class="tl-reply-context"><b>💬 이전 질문:</b>'+escapeHTML(prev)+'</div>';
       }
-      const safeText = JSON.stringify(item.content);
       return '<div class="tl-item tl-host"><div class="tl-meta"><span class="tl-tag">📩 상담가 답변</span> · '+dateStr+'</div>'
            + '<div class="tl-bubble">'+context+escapeHTML(item.content)
-           + '<button class="tl-speak" onclick="speakText('+safeText+', getCurrentDisplayLang())">🔊 듣기</button></div></div>';
+           + '<button class="tl-speak" onclick="speakBubble(this)">🔊 듣기</button></div></div>';
     } else if (item.type === 'host_notice') {
-      const safeText = JSON.stringify(item.content);
       return '<div class="tl-item tl-hostnotice"><div class="tl-meta"><span class="tl-tag notice">📌 상담 안내</span> · '+dateStr+'</div>'
            + '<div class="tl-bubble">'+escapeHTML(item.content)
-           + '<button class="tl-speak" onclick="speakText('+safeText+', getCurrentDisplayLang())">🔊 듣기</button></div></div>';
+           + '<button class="tl-speak" onclick="speakBubble(this)">🔊 듣기</button></div></div>';
     }
     return '';
   }).join('');
+  forceTranslate();
 }
 
 function escapeHTML(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
@@ -1573,6 +1782,7 @@ function renderHostTimeline(messages) {
     }
     return '';
   }).join('');
+  forceTranslate();
 }
 
 function renderHostPendingList(messages) {
@@ -1639,6 +1849,7 @@ function showDetailTab(tab, btn) {
   });
   document.getElementById('detail-save-btn').style.display = (tab==='profile')?'block':'none';
   if (tab === 'counsel') loadDetailCounselThreads();
+  if (tab === 'profile') setTimeout(loadVoiceOptions, 150);
   retranslateNow(200);
 }
 
@@ -1652,7 +1863,7 @@ function showHostTab(tab, btn) {
   if (tab === 'notice') loadNoticeTab();
   if (tab === 'schedule') loadHostSchedule();
   if (tab === 'groups') loadGroups();
-  if (tab === 'settings') loadHostSettings();
+  if (tab === 'settings') { loadHostSettings(); setTimeout(loadVoiceOptions, 150); }
   retranslateNow(200);
 }
 
@@ -1736,6 +1947,28 @@ document.addEventListener('visibilitychange', () => {
     if (lang && lang !== 'ko') setTimeout(() => { try { translateDOM(lang); } catch(e){} }, 100);
   }
 });
+
+// DOM 변경 자동 감지 → 자동 번역 (동적으로 추가된 스레드/카드 등)
+let _translationLock = false;
+let _mutationDebounce = null;
+const _mutationObserver = new MutationObserver(() => {
+  if (_translationLock) return;
+  const lang = getCurrentDisplayLang();
+  if (!lang || lang === 'ko') return;
+  clearTimeout(_mutationDebounce);
+  _mutationDebounce = setTimeout(() => {
+    _translationLock = true;
+    try { translateDOM(lang); } catch(e){}
+    translateDataElements(lang).catch(()=>{}).finally(() => {
+      try { translateDOM(lang); } catch(e){}
+      setTimeout(() => { _translationLock = false; }, 150);
+    });
+  }, 350);
+});
+// 초기 렌더링 끝난 뒤 observer 시작
+setTimeout(() => {
+  try { _mutationObserver.observe(document.body, { childList: true, subtree: true }); } catch(e){}
+}, 2000);
 </script>
 </body>
 </html>
