@@ -558,11 +558,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
   <div class="content">
     <div class="warn"><p>🔒 상담자 전용 구역입니다.</p></div>
-    <div class="field"><label>비밀번호 / Password</label><input type="password" id="host-pw" placeholder="호스트 비밀번호" /></div>
+    <div class="field"><label id="host-pw-label">비밀번호 / Password</label><input type="password" id="host-pw" placeholder="호스트 비밀번호" /></div>
     <div class="error-msg" id="host-error">비밀번호가 올바르지 않습니다.</div>
     <div class="spacer"></div>
-    <button class="btn primary" onclick="hostLogin()">로그인</button>
-    <button class="btn ghost" onclick="window.open(window.location.origin,'_blank')">내담자 화면 (새 탭)</button>
+    <button class="btn primary" id="host-login-btn" onclick="hostLogin()">로그인</button>
+    <button class="btn ghost" id="host-client-btn" onclick="window.open(window.location.origin,'_blank')">내담자 화면 (새 탭)</button>
   </div>
 </div>
 
@@ -966,6 +966,243 @@ function _updateMicBtn(targetId, on) {
 }
 
 
+
+// ===== 포괄적 DOM 번역 시스템 (구글 없음, 완전 보안) =====
+
+// 주요 한국어 UI 텍스트 → 다국어 번역 맵
+const KO_TRANSLATIONS = {
+  en: {
+    // 공통
+    '로그인': 'Login', '로그아웃': 'Logout', '저장': 'Save', '취소': 'Cancel',
+    '확인': 'Confirm', '삭제': 'Delete', '수정': 'Edit', '추가': 'Add',
+    '완료': 'Done', '다음': 'Next', '이전': 'Back', '닫기': 'Close',
+    '전송': 'Send', '입력': 'Enter', '선택': 'Select', '검색': 'Search',
+    // 내담자 화면
+    '시작하기 →': 'Get Started →', '← 뒤로': '← Back', '← 홈으로': '← Home',
+    '이메일 로그인': 'Email Login', '초대코드 (첫 방문)': 'Invite Code (First Visit)',
+    '이메일': 'Email', '비밀번호': 'Password', '비밀번호 확인': 'Confirm Password',
+    '계정 만들기': 'Sign Up', '계정 만들기 →': 'Sign Up →',
+    '이메일 주소': 'Email address', '이메일 또는 초대코드': 'Email or invite code',
+    '안녕하세요': 'Hello', '이번 주 진행률': 'Progress This Week',
+    '교육 세션': 'Education Sessions', '세션 시간 약속': 'Session Schedule',
+    '개인 상담': 'Personal Counseling', '상담 내용 작성하기': 'Write Counseling',
+    '교육': 'Education', '상담': 'Counseling', '홈': 'Home',
+    '⊙ 홈 화면': '⊙ Home', '◈ 교육 세션': '◈ Education', '✉ 개인 상담': '✉ Counseling',
+    '상담가 답변 확인': "Counselor's Answer", '📌 답변을 확인하면 화면에서 사라집니다.': '📌 This answer will disappear once confirmed.',
+    '상담가 답변': "Counselor's Answer", '확인했습니다': 'I have confirmed',
+    '🔊 듣기': '🔊 Listen', '확인 가능한 답변이 없습니다.': 'No answer available.',
+    '상담 답변이 도착했습니다': 'A counseling reply has arrived',
+    '확인하기 →': 'Check →', '전송 완료': 'Sent', '상담 내용이 전송되었습니다.': 'Your counseling has been sent.',
+    '상담 작성': 'Write Counseling',
+    '상담 내용을 자유롭게 작성해 주세요.': 'Please write freely.',
+    '내용을 입력해주세요.': 'Please enter content.',
+    '세션 일정': 'Session Schedule', '일정 없음': 'No schedule',
+    '다음 세션': 'Next session', '확정': 'Confirmed', '대기 중': 'Pending',
+    '가능': 'Available', '다음 →': 'Next →',
+    // 호스트 로그인
+    '호스트 로그인': 'Host Login', '🔒 상담자 전용 구역입니다.': '🔒 Counselor-only area.',
+    '비밀번호 / Password': 'Password', '호스트 비밀번호': 'Host password',
+    '상담자 전용 / HOST ONLY': 'Counselor Only / HOST ONLY',
+    '내담자 화면 (새 탭)': 'Client Screen (new tab)',
+    // 호스트 대시보드
+    '내담자': 'Client', '내담자 목록': 'Client List', '내담자 추가': 'Add Client',
+    '내담자 상세': 'Client Detail', '내담자 없음': 'No clients',
+    '그룹': 'Group', '그룹 목록': 'Group List', '그룹 미지정': 'Unassigned',
+    '그룹 없음 — 아래에서 생성하세요': 'No groups — create one below',
+    '교육과정': 'Curriculum', '공통 교육 모듈': 'Common Modules',
+    '일정': 'Schedule', '설정': 'Settings',
+    '대기 중인 요청': 'Pending Requests', '확정된 세션': 'Confirmed Sessions',
+    '답변 작성': 'Write Reply', '답변 완료': 'Replied', '미답변': 'Pending',
+    '상담 내역': 'Counseling History', '상담 내역 없음': 'No counseling history',
+    '저장되었습니다.': 'Saved.', '저장 실패': 'Save failed',
+    '전송 실패': 'Send failed', '생성 실패': 'Creation failed',
+    '로드 실패': 'Load failed', '배정 실패': 'Assignment failed',
+    '변경 실패': 'Change failed', '확정 실패': 'Confirmation failed',
+    '로딩 중...': 'Loading...', '...': '...',
+    '프로필': 'Profile', '모듈': 'Modules', '일정 탭': 'Schedule',
+    '이름': 'Name', '별명 (내부용)': 'Nickname (internal)', '나이': 'Age',
+    '이메일 주소 (선택)': 'Email (optional)',
+    '언어': 'Language', '주 세션 횟수': 'Sessions per week',
+    '프로그램 시작일': 'Program start date',
+    '특성/주요 이슈': 'Characteristics/Issues', '메모': 'Notes',
+    '초대 코드': 'Invite Code', '내담자에게 이 코드를 전달하세요': 'Share this code with the client',
+    '배정된 모듈 없음': 'No modules assigned', '배정 가능한 모듈 없음': 'No modules available',
+    '배정': 'Assign', '+ 배정': '+ Assign',
+    '비활성화': 'Deactivate', '활성화': 'Activate',
+    '기존 답변': 'Previous reply',
+    '진행 상황, 특이사항 등': 'Progress, notes, etc.',
+    '그룹 이름 (예: A기업, 가족상담팀)': 'Group name (e.g. Company A)',
+    '계약 기간 (개월)': 'Contract (months)',
+    '총 모듈 수': 'Total modules', '주 세션 수': 'Sessions per week',
+    '그룹이 생성되었습니다.': 'Group created.',
+    '랜딩 소개 문구': 'Landing page text',
+    '회사/기관명': 'Organization name', '프로그램명': 'Program name',
+    '저장': 'Save', '설정이 저장되었습니다.': 'Settings saved.',
+    '+ 객관식 추가': '+ Add multiple choice', '+ 주관식 추가': '+ Add open-ended',
+    '객관식': 'Multiple choice', '주관식': 'Open-ended',
+    '선택지 (한 줄에 하나)': 'Options (one per line)',
+    '질문': 'Question', '저장 완료': 'Saved',
+    '확정하기': 'Confirm', '확정되었습니다.': 'Confirmed.',
+    '내담자 교육 답변 확인': 'View Client Answers',
+    '아직 답변이 없습니다.': 'No answers yet.',
+    '원문 보기 ▾': 'View original ▾',
+    '이 모듈을 제거할까요?': 'Remove this module?',
+    '이 질문을 삭제할까요?': 'Delete this question?',
+    '주': 'week(s)', '회': 'session(s)', '개월': 'month(s)', '모듈': 'module(s)',
+    // 설명서
+    '사용설명서 보기': 'View Manual', '📖 사용설명서 보기': '📖 View Manual',
+    '❓ 자주 묻는 질문': '❓ FAQ',
+    '내면 교육 프로그램': 'Inner Education Program',
+    'Peace-In Practice™ 이용 안내': 'Peace-In Practice™ User Guide',
+  },
+  ja: {
+    '로그인': 'ログイン', '로그아웃': 'ログアウト', '저장': '保存', '취소': 'キャンセル',
+    '확인': '確認', '삭제': '削除', '수정': '編集', '추가': '追加',
+    '완료': '完了', '다음': '次へ', '이전': '前へ', '닫기': '閉じる',
+    '시작하기 →': '始める →', '← 뒤로': '← 戻る', '← 홈으로': '← ホーム',
+    '이메일 로그인': 'メールログイン', '초대코드 (첫 방문)': '招待コード（初回）',
+    '이메일': 'メール', '비밀번호': 'パスワード',
+    '계정 만들기': '会員登録', '계정 만들기 →': '登録する →',
+    '안녕하세요': 'こんにちは', '이번 주 진행률': '今週の進捗',
+    '교육 세션': '教育セッション', '세션 시간 약속': 'セッションスケジュール',
+    '개인 상담': '個人カウンセリング', '상담 내용 작성하기': '相談内容を書く',
+    '교육': '教育', '상담': '相談', '홈': 'ホーム',
+    '상담가 답변 확인': 'カウンセラーの返答確認',
+    '확인했습니다': '確認しました', '🔊 듣기': '🔊 聴く',
+    '호스트 로그인': 'ホストログイン',
+    '🔒 상담자 전용 구역입니다.': '🔒 カウンセラー専用エリアです。',
+    '비밀번호 / Password': 'パスワード', '호스트 비밀번호': 'ホストパスワード',
+    '내담자 화면 (새 탭)': 'クライアント画面（新タブ）',
+    '내담자': 'クライアント', '그룹': 'グループ', '일정': 'スケジュール', '설정': '設定',
+    '대기 중': '待機中', '확정': '確定', '가능': '利用可能',
+    '로딩 중...': '読込中...',
+    '사용설명서 보기': 'マニュアルを見る', '📖 사용설명서 보기': '📖 マニュアルを見る',
+  },
+  zh: {
+    '로그인': '登录', '로그아웃': '退出', '저장': '保存', '취소': '取消',
+    '확인': '确认', '삭제': '删除', '수정': '编辑', '추가': '添加',
+    '완료': '完成', '다음': '下一步', '이전': '上一步', '닫기': '关闭',
+    '시작하기 →': '开始 →', '← 뒤로': '← 返回', '← 홈으로': '← 主页',
+    '이메일 로그인': '邮箱登录', '초대코드 (첫 방문)': '邀请码（首次）',
+    '이메일': '邮箱', '비밀번호': '密码',
+    '계정 만들기': '注册', '계정 만들기 →': '注册 →',
+    '안녕하세요': '你好', '이번 주 진행률': '本周进度',
+    '교육 세션': '教育课程', '세션 시간 약속': '课程安排',
+    '개인 상담': '个人咨询', '상담 내용 작성하기': '写咨询内容',
+    '교육': '教育', '상담': '咨询', '홈': '主页',
+    '상담가 답변 확인': '咨询师回答确认',
+    '확인했습니다': '我已确认', '🔊 듣기': '🔊 听',
+    '호스트 로그인': '主机登录',
+    '🔒 상담자 전용 구역입니다.': '🔒 仅限咨询师区域。',
+    '비밀번호 / Password': '密码', '호스트 비밀번호': '主机密码',
+    '내담자 화면 (새 탭)': '客户端画面（新标签）',
+    '내담자': '客户', '그룹': '组', '일정': '日程', '설정': '设置',
+    '대기 중': '等待中', '확정': '已确认', '가능': '可用',
+    '로딩 중...': '加载中...',
+    '사용설명서 보기': '查看说明书', '📖 사용설명서 보기': '📖 查看说明书',
+  },
+  es: {
+    '로그인': 'Iniciar sesión', '로그아웃': 'Cerrar sesión', '저장': 'Guardar',
+    '확인': 'Confirmar', '삭제': 'Eliminar', '수정': 'Editar',
+    '완료': 'Listo', '닫기': 'Cerrar',
+    '시작하기 →': 'Comenzar →', '← 뒤로': '← Volver', '← 홈으로': '← Inicio',
+    '이메일 로그인': 'Correo electrónico', '초대코드 (첫 방문)': 'Código de invitación',
+    '이메일': 'Correo', '비밀번호': 'Contraseña',
+    '계정 만들기': 'Registrarse',
+    '안녕하세요': 'Hola', '이번 주 진행률': 'Progreso esta semana',
+    '교육 세션': 'Sesiones educativas', '개인 상담': 'Consejería personal',
+    '상담 내용 작성하기': 'Escribir consejería',
+    '교육': 'Educación', '상담': 'Consejería', '홈': 'Inicio',
+    '상담가 답변 확인': 'Respuesta del consejero',
+    '확인했습니다': 'He confirmado', '🔊 듣기': '🔊 Escuchar',
+    '호스트 로그인': 'Inicio de host',
+    '🔒 상담자 전용 구역입니다.': '🔒 Área solo para consejeros.',
+    '비밀번호 / Password': 'Contraseña', '호스트 비밀번호': 'Contraseña del host',
+    '내담자 화면 (새 탭)': 'Pantalla cliente (nueva pestaña)',
+    '내담자': 'Cliente', '그룹': 'Grupo', '일정': 'Horario', '설정': 'Configuración',
+    '대기 중': 'Pendiente', '확정': 'Confirmado', '가능': 'Disponible',
+    '로딩 중...': 'Cargando...',
+  },
+  fr: {
+    '로그인': 'Se connecter', '저장': 'Enregistrer', '확인': 'Confirmer',
+    '완료': 'Terminé', '닫기': 'Fermer',
+    '시작하기 →': 'Commencer →', '← 뒤로': '← Retour', '← 홈으로': '← Accueil',
+    '이메일 로그인': 'Email', '초대코드 (첫 방문)': "Code d'invitation",
+    '이메일': 'Email', '비밀번호': 'Mot de passe',
+    '계정 만들기': "S'inscrire",
+    '안녕하세요': 'Bonjour', '이번 주 진행률': 'Progrès cette semaine',
+    '교육 세션': "Sessions d'éducation", '개인 상담': 'Conseil personnel',
+    '상담 내용 작성하기': 'Écrire un conseil',
+    '교육': 'Éducation', '상담': 'Conseil', '홈': 'Accueil',
+    '상담가 답변 확인': 'Réponse du conseiller',
+    '확인했습니다': "J'ai confirmé", '🔊 듣기': '🔊 Écouter',
+    '호스트 로그인': 'Connexion hôte',
+    '🔒 상담자 전용 구역입니다.': '🔒 Zone réservée aux conseillers.',
+    '비밀번호 / Password': 'Mot de passe', '호스트 비밀번호': 'Mot de passe hôte',
+    '내담자 화면 (새 탭)': 'Écran client (nouvel onglet)',
+    '내담자': 'Client', '그룹': 'Groupe', '일정': 'Planning', '설정': 'Paramètres',
+    '대기 중': 'En attente', '확정': 'Confirmé', '가능': 'Disponible',
+    '로딩 중...': 'Chargement...',
+  },
+  de: {
+    '로그인': 'Anmelden', '저장': 'Speichern', '확인': 'Bestätigen',
+    '완료': 'Fertig', '닫기': 'Schließen',
+    '시작하기 →': 'Starten →', '← 뒤로': '← Zurück', '← 홈으로': '← Startseite',
+    '이메일 로그인': 'E-Mail', '초대코드 (첫 방문)': 'Einladungscode',
+    '이메일': 'E-Mail', '비밀번호': 'Passwort',
+    '계정 만들기': 'Registrieren',
+    '안녕하세요': 'Hallo', '이번 주 진행률': 'Fortschritt diese Woche',
+    '교육 세션': 'Bildungssitzungen', '개인 상담': 'Persönliche Beratung',
+    '상담 내용 작성하기': 'Beratung schreiben',
+    '교육': 'Bildung', '상담': 'Beratung', '홈': 'Startseite',
+    '상담가 답변 확인': 'Antwort des Beraters',
+    '확인했습니다': 'Ich habe bestätigt', '🔊 듣기': '🔊 Hören',
+    '호스트 로그인': 'Host-Anmeldung',
+    '🔒 상담자 전용 구역입니다.': '🔒 Nur für Berater.',
+    '비밀번호 / Password': 'Passwort', '호스트 비밀번호': 'Host-Passwort',
+    '내담자 화면 (새 탭)': 'Client-Bildschirm (neuer Tab)',
+    '내담자': 'Klient', '그룹': 'Gruppe', '일정': 'Zeitplan', '설정': 'Einstellungen',
+    '대기 중': 'Ausstehend', '확정': 'Bestätigt', '가능': 'Verfügbar',
+    '로딩 중...': 'Laden...',
+  }
+};
+
+// DOM 전체 순회하며 번역 적용 (메인 번역 엔진)
+function translateDOM(lang) {
+  const lc = (lang||'ko').split('-')[0];
+  const key = lc==='zh' ? 'zh' : (KO_TRANSLATIONS[lang] ? lang : (KO_TRANSLATIONS[lc] ? lc : 'en'));
+  const map = KO_TRANSLATIONS[key];
+  if (!map) return;
+  
+  function walk(node) {
+    if (!node) return;
+    if (node.nodeType === 3) { // TEXT_NODE
+      const txt = node.textContent;
+      if (txt && txt.trim()) {
+        const trimmed = txt.trim();
+        if (map[trimmed]) {
+          node.textContent = txt.replace(trimmed, map[trimmed]);
+        }
+      }
+    } else if (node.nodeType === 1) { // ELEMENT_NODE
+      const tag = node.tagName;
+      if (tag==='SCRIPT'||tag==='STYLE'||tag==='NOSCRIPT') return;
+      if (node.classList && node.classList.contains('notranslate')) return;
+      // placeholder 번역
+      if (node.placeholder && map[node.placeholder]) {
+        node.placeholder = map[node.placeholder];
+      }
+      // title 번역
+      if (node.title && map[node.title]) {
+        node.title = map[node.title];
+      }
+      node.childNodes.forEach(walk);
+    }
+  }
+  
+  walk(document.body);
+}
+
 // ===== 번역 딕셔너리 (외부 API 없음, 완전 보안) =====
 const LANDING_TR = {
   ko: {quote:'"내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."', desc:'Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.', notice:'<strong>⚠ 중요 안내</strong><br><br>본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong>'},
@@ -978,13 +1215,13 @@ const LANDING_TR = {
 };
 
 const UI_TR = {
-  ko:{startBtn:'시작하기 →',loginBtn:'로그인',homeGreeting:'안녕하세요',navEdu:'교육',navCounsel:'상담',counselBtn:'상담 내용 작성하기',replyTitle:'상담가 답변 확인',replyBtn:'확인했습니다',listenBtn:'🔊 듣기',hostLogin:'호스트 로그인'},
-  en:{startBtn:'Get Started →',loginBtn:'Login',homeGreeting:'Hello',navEdu:'Education',navCounsel:'Counseling',counselBtn:'Write Counseling',replyTitle:"Counselor's Answer",replyBtn:'I have confirmed',listenBtn:'🔊 Listen',hostLogin:'Host Login'},
-  ja:{startBtn:'始める →',loginBtn:'ログイン',homeGreeting:'こんにちは',navEdu:'教育',navCounsel:'相談',counselBtn:'相談内容を書く',replyTitle:'カウンセラーの返答確認',replyBtn:'確認しました',listenBtn:'🔊 聴く',hostLogin:'ホストログイン'},
-  zh:{startBtn:'开始 →',loginBtn:'登录',homeGreeting:'你好',navEdu:'教育',navCounsel:'咨询',counselBtn:'写咨询内容',replyTitle:'咨询师的回答确认',replyBtn:'我已确认',listenBtn:'🔊 听',hostLogin:'主机登录'},
-  es:{startBtn:'Comenzar →',loginBtn:'Iniciar sesión',homeGreeting:'Hola',navEdu:'Educación',navCounsel:'Consejería',counselBtn:'Escribir consejería',replyTitle:'Respuesta del consejero',replyBtn:'He confirmado',listenBtn:'🔊 Escuchar',hostLogin:'Inicio de host'},
-  fr:{startBtn:'Commencer →',loginBtn:'Se connecter',homeGreeting:'Bonjour',navEdu:'Éducation',navCounsel:'Conseil',counselBtn:'Écrire un conseil',replyTitle:'Réponse du conseiller',replyBtn:"J'ai confirmé",listenBtn:'🔊 Écouter',hostLogin:'Connexion hôte'},
-  de:{startBtn:'Starten →',loginBtn:'Anmelden',homeGreeting:'Hallo',navEdu:'Bildung',navCounsel:'Beratung',counselBtn:'Beratung schreiben',replyTitle:'Antwort des Beraters',replyBtn:'Ich habe bestätigt',listenBtn:'🔊 Hören',hostLogin:'Host-Anmeldung'}
+  ko:{startBtn:'시작하기 →',loginBtn:'로그인',homeGreeting:'안녕하세요',navEdu:'교육',navCounsel:'상담',counselBtn:'상담 내용 작성하기',replyTitle:'상담가 답변 확인',replyBtn:'확인했습니다',listenBtn:'🔊 듣기',hostLogin:'호스트 로그인',hostOnly:'🔒 상담자 전용 구역입니다.',hostPwLabel:'비밀번호 / Password',hostPwPlaceholder:'호스트 비밀번호',hostLoginBtn:'로그인',hostClientBtn:'내담자 화면 (새 탭)'},
+  en:{startBtn:'Get Started →',loginBtn:'Login',homeGreeting:'Hello',navEdu:'Education',navCounsel:'Counseling',counselBtn:'Write Counseling',replyTitle:"Counselor's Answer",replyBtn:'I have confirmed',listenBtn:'🔊 Listen',hostLogin:'Host Login',hostOnly:'🔒 Counselor-only area.',hostPwLabel:'Password',hostPwPlaceholder:'Host password',hostLoginBtn:'Login',hostClientBtn:'Client Screen (new tab)'},
+  ja:{startBtn:'始める →',loginBtn:'ログイン',homeGreeting:'こんにちは',navEdu:'教育',navCounsel:'相談',counselBtn:'相談内容を書く',replyTitle:'カウンセラーの返答確認',replyBtn:'確認しました',listenBtn:'🔊 聴く',hostLogin:'ホストログイン',hostOnly:'🔒 カウンセラー専用エリア。',hostPwLabel:'パスワード',hostPwPlaceholder:'ホストパスワード',hostLoginBtn:'ログイン',hostClientBtn:'クライアント画面（新タブ）'},
+  zh:{startBtn:'开始 →',loginBtn:'登录',homeGreeting:'你好',navEdu:'教育',navCounsel:'咨询',counselBtn:'写咨询内容',replyTitle:'咨询师的回答确认',replyBtn:'我已确认',listenBtn:'🔊 听',hostLogin:'主机登录',hostOnly:'🔒 仅限咨询师区域。',hostPwLabel:'密码',hostPwPlaceholder:'主机密码',hostLoginBtn:'登录',hostClientBtn:'客户端画面（新标签）'},
+  es:{startBtn:'Comenzar →',loginBtn:'Iniciar sesión',homeGreeting:'Hola',navEdu:'Educación',navCounsel:'Consejería',counselBtn:'Escribir consejería',replyTitle:'Respuesta del consejero',replyBtn:'He confirmado',listenBtn:'🔊 Escuchar',hostLogin:'Inicio de host',hostOnly:'🔒 Área solo para consejeros.',hostPwLabel:'Contraseña',hostPwPlaceholder:'Contraseña del host',hostLoginBtn:'Iniciar sesión',hostClientBtn:'Pantalla cliente (nueva pestaña)'},
+  fr:{startBtn:'Commencer →',loginBtn:'Se connecter',homeGreeting:'Bonjour',navEdu:'Éducation',navCounsel:'Conseil',counselBtn:'Écrire un conseil',replyTitle:'Réponse du conseiller',replyBtn:"J'ai confirmé",listenBtn:'🔊 Écouter',hostLogin:'Connexion hôte',hostOnly:'🔒 Zone réservée aux conseillers.',hostPwLabel:'Mot de passe',hostPwPlaceholder:'Mot de passe hôte',hostLoginBtn:'Se connecter',hostClientBtn:'Écran client (nouvel onglet)'},
+  de:{startBtn:'Starten →',loginBtn:'Anmelden',homeGreeting:'Hallo',navEdu:'Bildung',navCounsel:'Beratung',counselBtn:'Beratung schreiben',replyTitle:'Antwort des Beraters',replyBtn:'Ich habe bestätigt',listenBtn:'🔊 Hören',hostLogin:'Host-Anmeldung',hostOnly:'🔒 Nur für Berater.',hostPwLabel:'Passwort',hostPwPlaceholder:'Host-Passwort',hostLoginBtn:'Anmelden',hostClientBtn:'Client-Bildschirm (neuer Tab)'}
 };
 
 function applyPageTranslation(lang) {
@@ -1000,27 +1237,24 @@ function applyPageTranslation(lang) {
 function applyFullTranslation(lang) {
   if (!lang || lang === 'ko') return;
   applyPageTranslation(lang);
+  
+  // DOM 전체 번역 (정적 UI 텍스트)
+  translateDOM(lang);
+  
+  // 개별 ID 기반 추가 번역 (동적 생성 요소 대비)
   const lc=(lang||'ko').split('-')[0];
   const key = lc==='zh' ? 'zh' : (UI_TR[lang] ? lang : (UI_TR[lc] ? lc : 'en'));
   const t = UI_TR[key] || UI_TR.en;
   const s=(id,txt)=>{const e=document.getElementById(id);if(e&&txt)e.textContent=txt;};
-  // 공통 UI
-  s('home-greeting',t.homeGreeting);
-  s('nav-edu',t.navEdu);
-  s('nav-counsel',t.navCounsel);
-  s('btn-counsel',t.counselBtn);
-  s('reply-page-title',t.replyTitle);
-  s('reply-confirm-btn',t.replyBtn);
-  // 랜딩 시작 버튼
+  s('home-greeting',t.homeGreeting); s('nav-edu',t.navEdu); s('nav-counsel',t.navCounsel);
+  s('btn-counsel',t.counselBtn); s('reply-page-title',t.replyTitle); s('reply-confirm-btn',t.replyBtn);
   const startBtn=document.querySelector('#screen-landing .btn.primary');
   if(startBtn) startBtn.textContent=t.startBtn;
-  // 듣기 버튼
   const listenBtn=document.querySelector('#screen-reply .notranslate');
   if(listenBtn) listenBtn.textContent=t.listenBtn;
-  // 호스트 로그인 제목
-  const hostLoginTitle=document.querySelector('#screen-host-login .pip-title');
-  if(hostLoginTitle) hostLoginTitle.textContent=t.hostLogin||'Host Login';
-  console.log('[PIP] applyFullTranslation 완료:', lang, key);
+  const hostPwInput = document.getElementById('host-pw');
+  if(hostPwInput && t.hostPwPlaceholder) hostPwInput.placeholder = t.hostPwPlaceholder;
+  console.log('[PIP] 번역 완료:', lang);
 }
 
 // ===== 화면 전환 =====
@@ -1029,6 +1263,16 @@ function goScreen(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.add('active');
+  // 화면 전환 시 자동 번역
+  const isHostScreen = id.startsWith('screen-host')||id.startsWith('screen-client')||id.startsWith('screen-detail')||id.startsWith('screen-module');
+  const isClientScreen = !isHostScreen;
+  if (isHostScreen) {
+    const hl=localStorage.getItem('pip_host_lang_pref')||'ko';
+    if(hl!=='ko') setTimeout(()=>translateDOM(hl), 50);
+  } else {
+    const cl=localStorage.getItem('pip_client_lang_pref')||'ko';
+    if(cl!=='ko') setTimeout(()=>translateDOM(cl), 50);
+  }
   if (id==='screen-home') loadHome();
   if (id==='screen-edu-list') loadEduList();
   if (id==='screen-host') loadHostDashboard();
@@ -1413,6 +1657,9 @@ function hostLogout(){localStorage.removeItem('pip_token');localStorage.removeIt
 
 async function loadHostDashboard(){
   loadGroups();
+  // 로드 완료 후 번역 적용
+  const hl = localStorage.getItem('pip_host_lang_pref')||'ko';
+  if (hl !== 'ko') setTimeout(()=>translateDOM(hl), 100);
   try{const clients=await api('/api/host/clients');document.getElementById('stat-clients').textContent=clients.length;document.getElementById('stat-pending').textContent=clients.filter(c=>c.hasPending).length;document.getElementById('client-list').innerHTML=clients.map(c=>{const dn=c.email||c.name||'내담자',ini=dn.substring(0,2).toUpperCase();return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar">'+ini+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+dn+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">'+(c.hasPending?'💬 상담 대기 중':'미답변 없음')+' · 주'+(c.session_frequency||2)+'회</div><div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 '+(c.invite_code||'-')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join('');}
   catch(e){document.getElementById('client-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">로드 실패</p>';}
   try{const modules=await api('/api/host/modules');document.getElementById('host-module-list').innerHTML=modules.length>0?modules.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1;cursor:pointer" onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')"><div style="font-size:14px;font-weight:500">'+m.title+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">클릭하여 질문 편집</div></div><button onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';}
@@ -1420,7 +1667,7 @@ async function loadHostDashboard(){
   loadHostSchedule();
 }
 
-async function openClientDetail(clientId){currentDetailClientId=clientId;goScreen('screen-client-detail');showDetailTab('profile',document.getElementById('dtab-profile'));await loadClientDetail();}
+async function openClientDetail(clientId){currentDetailClientId=clientId;goScreen('screen-client-detail');showDetailTab('profile',document.getElementById('dtab-profile'));await loadClientDetail();const hl=localStorage.getItem('pip_host_lang_pref')||'ko';if(hl!=='ko')setTimeout(()=>translateDOM(hl),200);}
 
 async function loadClientDetail(){
   try{
