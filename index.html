@@ -1486,10 +1486,13 @@ function translateDOM(lang) {
   const key = lc==='zh' ? 'zh' : (KO_TRANSLATIONS[lang] ? lang : (KO_TRANSLATIONS[lc] ? lc : 'en'));
   const map = KO_TRANSLATIONS[key];
   if (!map) return;
-  // 완료 후 강제 repaint (모바일 렌더링 갱신)
+  // 강제 repaint
   const _forceRepaint = () => {
-    document.body.style.zIndex = '0';
-    requestAnimationFrame(() => { document.body.style.zIndex = ''; });
+    requestAnimationFrame(() => {
+      document.body.offsetHeight; // layout 강제 계산
+      document.body.style.transform = 'translateZ(0)';
+      requestAnimationFrame(() => { document.body.style.transform = ''; });
+    });
   };
   
   // 패턴 기반 번역 (숫자+단위, 이모지+텍스트 등)
@@ -2009,11 +2012,17 @@ function setLang(lang, el) {
   document.getElementById('langMenu').classList.remove('open');
   localStorage.setItem('pip_lang_display', LANG_NAMES[lang]||lang);
   localStorage.setItem('pip_client_lang_pref', lang);
+  sessionStorage.setItem('pip_lang_manually_set', '1'); // 수동 선택 기록
   const langEl=document.getElementById('langSelected'); if(langEl) langEl.textContent=LANG_NAMES[lang]||lang;
   if (lang === 'ko') {
-    location.reload(); // 한국어 복원은 리로드가 가장 정확
+    location.reload();
   } else {
     applyFullTranslation(lang);
+    // 현재 화면 데이터 새로고침 (날짜 등 재포맷)
+    setTimeout(() => {
+      const activeScreen = document.querySelector('.screen.active');
+      if (activeScreen && activeScreen.id === 'screen-home') loadHome();
+    }, 100);
   }
 }
 
@@ -2029,12 +2038,18 @@ function setHostLang(lang, el) {
   if(document.getElementById('hostLoginLangMenu'))document.getElementById('hostLoginLangMenu').classList.remove('open');
   localStorage.setItem('pip_host_lang_display', LANG_NAMES[lang]||lang);
   localStorage.setItem('pip_host_lang_pref', lang);
+  sessionStorage.setItem('pip_lang_manually_set', '1'); // 수동 선택 기록
   const hEl=document.getElementById('hostLangSelected'); if(hEl) hEl.textContent=LANG_NAMES[lang]||lang;
   const hlEl=document.getElementById('hostLoginLangSelected'); if(hlEl) hlEl.textContent=LANG_NAMES[lang]||lang;
   if (lang === 'ko') {
-    location.reload(); // 한국어 복원은 리로드
+    location.reload();
   } else {
     applyFullTranslation(lang);
+    // 현재 화면 데이터 새로고침
+    setTimeout(() => {
+      const activeScreen = document.querySelector('.screen.active');
+      if (activeScreen && activeScreen.id === 'screen-host') loadHostDashboard();
+    }, 100);
   }
 }
 
@@ -2400,35 +2415,43 @@ window.addEventListener('load', () => {
 });
 
 window.onload = function() {
-  // 브라우저 언어 감지
+  // 브라우저 언어 감지 (항상)
   const _bl = (navigator.language||navigator.userLanguage||'ko').toLowerCase();
   const _blc = _bl.split('-')[0];
   const _lm = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
-  let _detected = _lm[_blc]; 
+  let _detected = _lm[_blc];
   if(_blc==='zh') _detected=(_bl.includes('tw')||_bl.includes('hk'))?'zh-TW':'zh-CN';
   const _browserLang = _detected || 'ko';
   
   const isHost2 = location.hash==='#host'||location.hash==='#/host';
   
-  // 저장된 언어가 없으면 브라우저 언어로 설정
-  if (!isHost2 && !localStorage.getItem('pip_client_lang_pref')) {
-    localStorage.setItem('pip_client_lang_pref', _browserLang);
-    const _el = document.getElementById('langSelected');
-    if(_el) _el.textContent = LANG_NAMES[_browserLang]||'한국어';
+  // 브라우저 언어를 무조건 기본값으로 설정 (이전 선택이 있어도 덮어씀)
+  // 단, 이번 세션에서 직접 선택한 경우는 유지 (sessionStorage 체크)
+  const _sessionSet = sessionStorage.getItem('pip_lang_manually_set');
+  if (!_sessionSet) {
+    // 수동 선택 아닌 경우: 브라우저 언어로 초기화
+    if (!isHost2) {
+      localStorage.setItem('pip_client_lang_pref', _browserLang);
+    } else {
+      localStorage.setItem('pip_host_lang_pref', _browserLang);
+      localStorage.setItem('pip_host_lang_display', LANG_NAMES[_browserLang]||_browserLang);
+    }
   }
-  if (isHost2 && !localStorage.getItem('pip_host_lang_pref')) {
-    localStorage.setItem('pip_host_lang_pref', _browserLang);
-    localStorage.setItem('pip_host_lang_display', LANG_NAMES[_browserLang]||_browserLang);
-  }
+  
+  // 언어 버튼 표시
+  const _langKey = isHost2
+    ? (localStorage.getItem('pip_host_lang_pref')||_browserLang)
+    : (localStorage.getItem('pip_client_lang_pref')||_browserLang);
+  const _elLang = document.getElementById(isHost2?'hostLoginLangSelected':'langSelected');
+  if(_elLang) _elLang.textContent = LANG_NAMES[_langKey]||'한국어';
+  const _elHost = document.getElementById('hostLangSelected');
+  if(_elHost) _elHost.textContent = LANG_NAMES[_langKey]||'한국어';
   
   initApp(); // DOM 보여주기
   
-  // 저장된 언어로 번역
-  const savedLang2 = isHost2
-    ? (localStorage.getItem('pip_host_lang_pref')||'ko')
-    : (localStorage.getItem('pip_client_lang_pref')||'ko');
-  if (savedLang2 && savedLang2 !== 'ko') {
-    applyFullTranslation(savedLang2);
+  // 선택 언어로 번역 시작
+  if (_langKey && _langKey !== 'ko') {
+    applyFullTranslation(_langKey);
   }
 };
 
