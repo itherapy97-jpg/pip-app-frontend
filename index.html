@@ -1609,9 +1609,9 @@ function getCurrentDisplayLang() {
 
 
 // 호스트 현재 표시 언어 감지
-function getHostDisplayLang() {
-  return localStorage.getItem('pip_host_lang_pref') || 'ko';
-}
+
+
+
 
 function toggleLangMenu(){document.getElementById('langMenu').classList.toggle('open');}
 function setLang(lang, el) {
@@ -2092,19 +2092,19 @@ async function saveAllQuestions(){
   catch(e){alert('저장 실패');}
 }
 
-function openDetailReply(counselId,message,reply,sentAt,status,translatedMsg){
-  currentDetailCounselId=counselId;_originalCounselMsg=message;
-  const displayMsg=translatedMsg||message;
-  const el=document.getElementById('detail-counsel-msg');
-  el.textContent=displayMsg;
-  if(translatedMsg&&translatedMsg!==message){el.innerHTML=displayMsg+translateBadge()+'<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="showOriginalMsg()">원문 보기 ▾</div>';}
-  document.getElementById('detail-reply-date').textContent=sentAt?new Date(sentAt).toLocaleDateString('ko-KR'):'';
-  document.getElementById('detail-reply-text').value='';
-  if(reply){document.getElementById('detail-reply-existing').style.display='block';document.getElementById('detail-reply-prev').textContent=reply;}
-  else{document.getElementById('detail-reply-existing').style.display='none';}
-  document.getElementById('detail-reply-success').classList.remove('show');
-  goScreen('screen-detail-reply');
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function sendDetailReply(){
   const reply=document.getElementById('detail-reply-text').value.trim();if(!reply||!currentDetailCounselId)return;
