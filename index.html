@@ -558,7 +558,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
   <div class="content">
     <div class="warn"><p>🔒 상담자 전용 구역입니다.</p></div>
-    <div class="field"><label id="host-pw-label">비밀번호 / Password</label><input type="password" id="host-pw" placeholder="호스트 비밀번호" /></div>
+    <div class="field"><label id="host-pw-label">비밀번호 / Password</label><input type="password" id="host-pw" class="notranslate" placeholder="호스트 비밀번호" autocomplete="current-password" /></div>
     <div class="error-msg" id="host-error">비밀번호가 올바르지 않습니다.</div>
     <div class="spacer"></div>
     <button class="btn primary" id="host-login-btn" onclick="hostLogin()">로그인</button>
@@ -1567,7 +1567,7 @@ function translateDOM(lang){
         if(p)node.textContent=txt.replace(tr,p);
       }
     }else if(node.nodeType===1){
-      if(['SCRIPT','STYLE','NOSCRIPT','INPUT','TEXTAREA'].includes(node.tagName))return;
+      if(['SCRIPT','STYLE','NOSCRIPT','INPUT','TEXTAREA'].includes(node.tagName))return; // input/textarea는 번역 안 함
       if(node.classList&&node.classList.contains('notranslate'))return;
       if(node.placeholder&&map[node.placeholder])node.placeholder=map[node.placeholder];
       node.childNodes.forEach(walk);
@@ -1611,12 +1611,7 @@ function applyFullTranslation(lang){
   const cta=document.getElementById('counsel-text');if(cta)cta.placeholder=KO_TRANSLATIONS[key]?.['여기에 작성하세요...']||'Write here...';
   const csb=document.querySelector('#screen-counsel .btn.primary');if(csb)csb.textContent=KO_TRANSLATIONS[key]?.['암호화하여 전송하기']||'Send Encrypted';
   const mic=document.getElementById('mic-counsel-text');if(mic)mic.textContent=KO_TRANSLATIONS[key]?.['🎤 음성 입력']||'🎤 Voice Input';
-  // 현재 화면 데이터 새로고침 (날짜 등)
-  const active=document.querySelector('.screen.active');
-  if(active){
-    if(active.id==='screen-home')setTimeout(loadHome,100);
-    if(active.id==='screen-host')setTimeout(loadHostDashboard,100);
-  }
+  // (화면 데이터 새로고침은 setLang에서만)
   // DeepL로 DB 데이터 번역 (6초 후, rate limit 방지)
   setTimeout(()=>translateDataElements(lang),6000);
 }
@@ -2040,11 +2035,14 @@ function setLang(lang, el) {
     location.reload();
   } else {
     applyFullTranslation(lang);
-    // 현재 화면 데이터 새로고침 (날짜 등 재포맷)
+    // 날짜 재포맷 (세션 일정 등)
     setTimeout(() => {
       const activeScreen = document.querySelector('.screen.active');
-      if (activeScreen && activeScreen.id === 'screen-home') loadHome();
-    }, 100);
+      if (activeScreen) {
+        if (activeScreen.id === 'screen-home') loadHome();
+        if (activeScreen.id === 'screen-schedule') loadSchedule && loadSchedule();
+      }
+    }, 200);
   }
 }
 
@@ -2393,7 +2391,31 @@ function showHostTab(tab,btn){
   if(tab==='settings')loadHostSettings();if(tab==='schedule')loadHostSchedule();if(tab==='groups')loadGroups();
 }
 
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);if(el)el.classList.add('active');
+}
+
+// goScreen = showScreen + 번역 적용 + 데이터 로드
+function goScreen(id){
+  showScreen(id);
+  // 데이터 로드
+  if(id==='screen-home')loadHome();
+  if(id==='screen-host')loadHostDashboard();
+  if(id==='screen-edu-list')loadEduList&&loadEduList();
+  if(id==='screen-reply')loadReply&&loadReply();
+  if(id==='screen-schedule')loadSchedule&&loadSchedule();
+  if(id==='screen-client-detail')loadClientDetail&&loadClientDetail();
+  // 현재 언어로 번역
+  const isHostScreen=id.startsWith('screen-host')||id.startsWith('screen-client-detail');
+  const activeLang=isHostScreen
+    ?(localStorage.getItem('pip_host_lang_pref')||'ko')
+    :(localStorage.getItem('pip_client_lang_pref')||'ko');
+  if(activeLang!=='ko'){
+    if(!_pollInterval)startAutoTranslation(activeLang);
+    else{try{translateDOM(activeLang);}catch(e){}}
+  }
+}
 
 function initApp(){
   try{
