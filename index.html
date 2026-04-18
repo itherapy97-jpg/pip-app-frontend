@@ -828,17 +828,14 @@ function googleTranslateElementInit() {
 <script>
 // ★ 최우선 실행: Google Translate가 쿠키 읽기 전에 올바른 언어 적용
 (function applyCorrectLangCookie() {
+  // 토큰/롤 체크 없이 URL 해시만으로 호스트/내담자 구분
+  // (로그인 전이어도 #host URL이면 호스트 언어 적용)
   const isHost = location.hash === '#host' || location.hash === '#/host';
-  const role = localStorage.getItem('pip_role');
-  const token = localStorage.getItem('pip_token');
   
-  // 원하는 언어 결정
-  let wantedLang;
-  if (isHost && token && role === 'host') {
-    wantedLang = localStorage.getItem('pip_host_lang_pref') || 'ko';
-  } else {
-    wantedLang = localStorage.getItem('pip_client_lang_pref') || 'ko';
-  }
+  // 각자의 저장 언어 읽기 (완전히 독립)
+  const wantedLang = isHost
+    ? (localStorage.getItem('pip_host_lang_pref') || 'ko')
+    : (localStorage.getItem('pip_client_lang_pref') || 'ko');
   
   // 현재 쿠키 확인
   const cookie = document.cookie.split(';').find(c => c.trim().startsWith('googtrans='));
@@ -847,7 +844,7 @@ function googleTranslateElementInit() {
   
   if (currentVal === wantedVal) return; // 이미 올바름 → 리로드 불필요
   
-  // 쿠키 수정
+  // 쿠키 수정 후 1회 리로드
   if (wantedLang === 'ko') {
     document.cookie = 'googtrans=; path=/; expires=' + new Date(0).toUTCString();
     document.cookie = 'googtrans=; path=/; domain=' + location.hostname + '; expires=' + new Date(0).toUTCString();
@@ -857,7 +854,7 @@ function googleTranslateElementInit() {
     document.cookie = 'googtrans=' + wantedVal + '; path=/; domain=' + location.hostname;
     document.cookie = 'googtrans=' + wantedVal + '; path=/; domain=.' + location.hostname;
   }
-  location.reload(); // 쿠키 변경 → 1회 리로드 (이후 위 조건에서 return)
+  location.reload();
 })();
 
 const API = 'https://pip-app-backend-production.up.railway.app';
@@ -1375,8 +1372,21 @@ function setHostLang(lang,el){
 
 function applyHostLang(){
   const pref=localStorage.getItem('pip_host_lang_pref')||'ko';
-  if(pref==='ko'){document.cookie='googtrans=; path=/; expires='+new Date(0).toUTCString();document.cookie='googtrans=; path=/; domain='+location.hostname+'; expires='+new Date(0).toUTCString();document.cookie='googtrans=; path=/; domain=.'+location.hostname+'; expires='+new Date(0).toUTCString();}
-  else{const val='/ko/'+pref;document.cookie='googtrans='+val+'; path=/';document.cookie='googtrans='+val+'; path=/; domain='+location.hostname;document.cookie='googtrans='+val+'; path=/; domain=.'+location.hostname;}
+  const cookie=document.cookie.split(';').find(c=>c.trim().startsWith('googtrans='));
+  const currentVal=cookie?cookie.trim().replace('googtrans=',''):'';
+  const wantedVal=pref==='ko'?'':'/ko/'+pref;
+  if(currentVal===wantedVal)return; // 이미 올바름 → 리로드 불필요
+  if(pref==='ko'){
+    document.cookie='googtrans=; path=/; expires='+new Date(0).toUTCString();
+    document.cookie='googtrans=; path=/; domain='+location.hostname+'; expires='+new Date(0).toUTCString();
+    document.cookie='googtrans=; path=/; domain=.'+location.hostname+'; expires='+new Date(0).toUTCString();
+  }else{
+    const val='/ko/'+pref;
+    document.cookie='googtrans='+val+'; path=/';
+    document.cookie='googtrans='+val+'; path=/; domain='+location.hostname;
+    document.cookie='googtrans='+val+'; path=/; domain=.'+location.hostname;
+  }
+  location.reload(); // 쿠키 변경 → 리로드
 }
 
 window.addEventListener('load',()=>{
