@@ -1054,6 +1054,54 @@ const KO_TRANSLATIONS = {
     '❓ 자주 묻는 질문': '❓ FAQ',
     '내면 교육 프로그램': 'Inner Education Program',
     'Peace-In Practice™ 이용 안내': 'Peace-In Practice™ User Guide',
+    // 호스트 패널 전체
+    '호스트': 'Host', '패널': 'Panel', '호스트 패널': 'Host Panel',
+    '전체 내담자': 'All Clients', '교육과정': 'Curriculum',
+    '그룹 목록': 'Group List', '새 그룹 만들기': 'Create New Group',
+    '+ 그룹 생성': '+ Create Group', '+ 내담자 추가 (초대 코드 생성)': '+ Add Client (Generate Code)',
+    '+ 추가': '+ Add', '그룹 이름 (예: A기업, 가족상담팀)': 'Group name (e.g. Company A)',
+    '계약 기간 (개월)': 'Contract (months)', '총 모듈 수': 'Total modules',
+    '상담 빈도 (주 N회)': 'Sessions per week', '그룹이 생성되었습니다.': 'Group created.',
+    '설명 (선택)': 'Description (optional)', '그룹 이름 입력': 'Enter group name',
+    '공통 교육 모듈': 'Common Modules', '새 모듈 추가': 'Add Module',
+    '모듈이 생성되었습니다.': 'Module created.', '모든 내담자에게 공통으로 사용할 교육 모듈을 만들고 질문을 편집하세요.': 'Create common modules and edit questions for all clients.',
+    '세션 요청 대기 중': 'Session Requests', '확정된 세션': 'Confirmed Sessions',
+    '앱 소개 글 수정': 'Edit App Description', '랜딩 소개 문구': 'Landing text',
+    '회사명': 'Organization', '프로그램 이름': 'Program name',
+    '저장하기': 'Save', '저장되었습니다.': 'Saved.',
+    '설정': 'Settings', '활성 내담자': 'Active Clients',
+    '미답변 상담': 'Pending Counseling',
+    '내담자 목록': 'Client List', '내담자 추가': 'Add Client',
+    '로그아웃': 'Logout', '로딩 중...': 'Loading...',
+    '목소리 목록 로딩 중...': 'Loading voices...',
+    '▶ 현재 언어로 미리 듣기': '▶ Preview in current language',
+    '🔊 언어별 목소리 설정': '🔊 Voice settings by language',
+    // 호스트 로그인
+    '호스트': 'Host', '상담자 전용 / Host Only': 'Counselor Only / Host Only',
+    '🔒 상담자 전용 구역입니다.': '🔒 Counselor-only area.',
+    '비밀번호가 올바르지 않습니다.': 'Incorrect password.',
+    '한국어 (원본)': 'Korean (original)',
+    // 내담자 정보 화면
+    '내담자 이름 (내부용)': 'Client name (internal)',
+    '별명': 'Nickname', '나이': 'Age', '프로그램 시작일': 'Program start date',
+    '특성/주요 이슈': 'Characteristics/Issues', '메모': 'Notes',
+    '초대 코드': 'Invite Code', '내담자에게 이 코드를 전달하세요': 'Share this code with the client',
+    '진행 상황, 특이사항 등': 'Notes (progress, issues, etc.)',
+    '배정된 모듈 없음': 'No modules assigned', '상담 내역 없음': 'No counseling history',
+    '일정 없음': 'No schedule', '다음 세션': 'Next session',
+    '답변 작성': 'Write Reply', '답변 완료': 'Replied', '미답변': 'Pending',
+    '기존 답변': 'Previous reply', '원문 보기 ▾': 'View original ▾',
+    '+ 배정': '+ Assign', '비활성화': 'Deactivate', '활성화': 'Activate',
+    '확정하기': 'Confirm', '확정되었습니다.': 'Confirmed.',
+    '이 모듈을 제거할까요?': 'Remove this module?',
+    '이 질문을 삭제할까요?': 'Delete this question?',
+    '내담자 교육 답변 확인': 'View Client Answers',
+    '아직 답변이 없습니다.': 'No answers yet.',
+    '+ 객관식 추가': '+ Add multiple choice', '+ 주관식 추가': '+ Add open-ended',
+    '객관식/주관식 질문 편집': 'Edit Questions',
+    '선택지 (한 줄에 하나)': 'Options (one per line)',
+    '주': 'week', '회': 'session(s)', '개월': 'month(s)',
+    '미배정 내담자': 'Unassigned Clients',
   },
   ja: {
     '로그인': 'ログイン', '로그아웃': 'ログアウト', '저장': '保存', '취소': 'キャンセル',
@@ -1232,20 +1280,10 @@ function translateDOM(lang) {
       const txt = node.textContent;
       if (txt && txt.trim()) {
         const trimmed = txt.trim();
+        // 정확한 전체 텍스트 매칭만 (부분 매칭 제거 - 오번역 방지)
         if (map[trimmed]) {
           node.textContent = txt.replace(trimmed, map[trimmed]);
-          return;
         }
-        // 부분 매칭 - 텍스트에 포함된 키 검색
-        let newTxt = txt;
-        let changed = false;
-        Object.keys(map).forEach(k => {
-          if (k.length > 1 && newTxt.includes(k)) {
-            newTxt = newTxt.split(k).join(map[k]);
-            changed = true;
-          }
-        });
-        if (changed) node.textContent = newTxt;
       }
     } else if (node.nodeType === 1) { // ELEMENT_NODE
       const tag = node.tagName;
