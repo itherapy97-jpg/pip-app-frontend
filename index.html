@@ -744,22 +744,28 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div class="field-label">프로그램 시작일</div><input type="date" id="dp-startdate" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;margin-bottom:8px" />
     <div class="field-label">특징 / 메모</div><textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="내담자 특징, 주의사항 등"></textarea>
     <div class="field-label">상담 메모 (호스트 전용)</div><textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);outline:none;resize:vertical;margin-bottom:8px" placeholder="진행 상황, 특이사항 등"></textarea>
-    <!-- ★ 목소리 페르소나 -->
+    <!-- ★ 목소리 페르소나 (실제 목소리 직접 선택) -->
     <div class="field-label" style="margin-top:14px">🔊 TTS 목소리 설정 (내담자용)</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
-      <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">성별</div>
-        <select id="vp-gender" style="width:100%;padding:8px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none">
-          <option value="auto">🔀 자동</option><option value="female">👩 여성</option><option value="male">👨 남성</option>
-        </select></div>
-      <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">나이대</div>
-        <select id="vp-age" style="width:100%;padding:8px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none">
-          <option value="auto">🔀 자동</option><option value="child">🧒 어린이</option><option value="youth">🧑 청년</option><option value="adult">👨‍💼 중년</option><option value="senior">👴 노년</option>
-        </select></div>
-      <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">톤</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">상담자 기기에서 미리 듣기 용도. 목소리는 기기마다 다를 수 있습니다.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">언어 (목소리 필터)</div>
+        <select id="vp-lang" onchange="loadPersonaVoiceList(this.value,'')" style="width:100%;padding:8px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none">
+          <option value="ko">한국어</option><option value="en">English</option><option value="ja">日本語</option>
+          <option value="zh">中文</option><option value="es">Español</option><option value="fr">Français</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">톤</div>
         <select id="vp-tone" style="width:100%;padding:8px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none">
           <option value="auto">🔀 자동</option><option value="calm">🌙 차분</option><option value="bright">☀️ 밝음</option><option value="warm">🌱 따뜻</option>
-        </select></div>
+        </select>
+      </div>
     </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">목소리 선택 (👩 여성 / 👨 남성 / ⭐고품질 / 💾기기설치)</div>
+    <select id="vp-voice" style="width:100%;padding:9px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:var(--white);color:var(--text);outline:none;margin-bottom:8px">
+      <option value="">로딩 중...</option>
+    </select>
     <button onclick="testPersonaVoice()" style="width:100%;padding:9px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">▶ 선택한 목소리 미리 듣기</button>
     <div class="success-msg" id="profile-save-success" style="margin-top:8px">저장되었습니다.</div>
     <div class="spacer"></div>
@@ -941,115 +947,93 @@ function getBestVoice(langCode) {
 }
 
 // ===== 보이스 설정 함수 =====
-// ===== 내담자별 목소리 페르소나 시스템 =====
-const VOICE_PERSONA_OPTIONS = {
-  gender: {
-    auto:   {label:'🔀 자동', keys:[]},
-    female: {label:'👩 여성', keys:['female','woman','fiona','victoria','karen','samantha','sora','yuna','na-young','seon-hi','hyun-soo']},
-    male:   {label:'👨 남성', keys:['male','man','daniel','thomas','alex','fred','oliver','jun-su','google uk english male']}
-  },
-  age: {
-    auto:   {label:'🔀 자동',  keys:[]},
-    child:  {label:'🧒 어린이', keys:['child','junior','young','kid']},
-    youth:  {label:'🧑 청년',  keys:['neural','natural','enhanced','premium']},
-    adult:  {label:'👨‍💼 중년',  keys:['standard','default','classic']},
-    senior: {label:'👴 노년',  keys:['senior','old','deep','bass']}
-  },
-  tone: {
-    auto:   {label:'🔀 자동',   rate:0,     pitch:0},
-    calm:   {label:'🌙 차분',   rate:-0.12, pitch:-0.15},
-    bright: {label:'☀️ 밝음',   rate:+0.1,  pitch:+0.15},
-    warm:   {label:'🌱 따뜻',   rate:-0.05, pitch:+0.05}
-  }
+// ===== 내담자별 목소리 페르소나 시스템 (실제 목소리 직접 선택) =====
+const TONE_PRESETS = {
+  auto:   {rate: 0,     pitch: 0},
+  calm:   {rate:-0.12,  pitch:-0.15},
+  bright: {rate:+0.10,  pitch:+0.15},
+  warm:   {rate:-0.05,  pitch:+0.05}
 };
 
 function getClientPersona(clientId) {
   if (!clientId) return null;
   try { return JSON.parse(localStorage.getItem('pip_persona_' + clientId) || 'null'); } catch(e) { return null; }
 }
-
 function saveClientPersona(clientId, persona) {
   if (!clientId) return;
   localStorage.setItem('pip_persona_' + clientId, JSON.stringify(persona));
 }
 
-function getVoiceByPersona(langCode, persona) {
-  const voices = speechSynthesis.getVoices();
-  if (!voices.length) return getBestVoice(langCode);
-  const lc = (langCode||'ko').toLowerCase().split('-')[0];
-  let pool = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
-  if (!pool.length) pool = voices;
-  if (!persona) return getBestVoice(langCode);
+function guessGender(name) {
+  if (/female|woman|fiona|victoria|karen|samantha|sora|yuna|na-young|seon-hi|alice|aria|jenny|nova|shimmer/i.test(name)) return '👩';
+  if (/male|man|daniel|thomas|alex|fred|oliver|echo|onyx|ryan/i.test(name)) return '👨';
+  return '🔊';
+}
+function guessQuality(v) {
+  if (/neural|premium|enhanced|wavenet|natural/i.test(v.name)) return '⭐';
+  if (v.localService) return '💾';
+  return '🌐';
+}
 
-  // 성별 필터
-  const gKeys = VOICE_PERSONA_OPTIONS.gender[persona.gender||'auto']?.keys || [];
-  if (gKeys.length) {
-    const gf = pool.filter(v => gKeys.some(k => v.name.toLowerCase().includes(k)));
-    if (gf.length) pool = gf;
-  }
-  // 나이 필터
-  const aKeys = VOICE_PERSONA_OPTIONS.age[persona.age||'auto']?.keys || [];
-  if (aKeys.length) {
-    const af = pool.filter(v => aKeys.some(k => v.name.toLowerCase().includes(k)));
-    if (af.length) pool = af;
-  }
-  // 로컬 고품질 우선
-  const hq = pool.filter(v => /neural|premium|enhanced|wavenet|natural/i.test(v.name) && v.localService);
-  if (hq.length) return hq[0];
-  const hq2 = pool.filter(v => /neural|premium|enhanced|wavenet|natural/i.test(v.name));
-  if (hq2.length) return hq2[0];
-  const local = pool.filter(v => v.localService);
-  if (local.length) return local[0];
-  return pool[0] || getBestVoice(langCode);
+function loadPersonaUI(clientId) {
+  const persona = getClientPersona(clientId) || {voiceName:'', lang:'ko', tone:'auto'};
+  const langSel = document.getElementById('vp-lang');
+  const toneSel = document.getElementById('vp-tone');
+  if (langSel) langSel.value = persona.lang || 'ko';
+  if (toneSel) toneSel.value = persona.tone || 'auto';
+  loadPersonaVoiceList(persona.lang || 'ko', persona.voiceName);
+}
+
+function loadPersonaVoiceList(lang, selectedName) {
+  const sel = document.getElementById('vp-voice');
+  if (!sel) return;
+  const voices = speechSynthesis.getVoices();
+  const lc = (lang||'ko').toLowerCase().split('-')[0];
+  const byLang = voices.filter(v => v.lang.toLowerCase().startsWith(lc));
+  sel.innerHTML = '<option value="">🔀 기기 최적 자동 선택</option>';
+  byLang.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.name;
+    opt.textContent = guessGender(v.name) + ' ' + guessQuality(v) + ' ' + v.name;
+    if (v.name === selectedName) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  if (!byLang.length) sel.innerHTML = '<option value="">이 언어 목소리 없음 (기기 설치 필요)</option>';
 }
 
 function speakWithPersona(text, lang, clientId) {
   if (!text || !window.speechSynthesis) return;
   speechSynthesis.cancel();
-  const persona = getClientPersona(clientId);
+  const persona = clientId ? getClientPersona(clientId) : null;
   const targetLang = lang || getCurrentDisplayLang();
   const utter = new SpeechSynthesisUtterance(text);
-  utter.voice = persona ? getVoiceByPersona(targetLang, persona) : getBestVoice(targetLang);
+  if (persona?.voiceName) {
+    const saved = speechSynthesis.getVoices().find(v => v.name === persona.voiceName);
+    utter.voice = saved || getBestVoice(targetLang);
+  } else {
+    utter.voice = getBestVoice(targetLang);
+  }
   utter.lang = targetLang;
-  const tone = VOICE_PERSONA_OPTIONS.tone[persona?.tone||'auto'];
-  utter.rate = Math.max(0.5, Math.min(1.5, 0.92 + (tone?.rate||0)));
-  utter.pitch = Math.max(0, Math.min(2, 1.0 + (tone?.pitch||0)));
+  const tone = TONE_PRESETS[persona?.tone||'auto'] || TONE_PRESETS.auto;
+  utter.rate = Math.max(0.5, Math.min(1.5, 0.92 + tone.rate));
+  utter.pitch = Math.max(0, Math.min(2, 1.0 + tone.pitch));
   speechSynthesis.speak(utter);
 }
 
 function testPersonaVoice() {
-  const gender = document.getElementById('vp-gender')?.value || 'auto';
-  const age = document.getElementById('vp-age')?.value || 'auto';
+  const voiceName = document.getElementById('vp-voice')?.value || '';
   const tone = document.getElementById('vp-tone')?.value || 'auto';
-  const lang = getHostDisplayLang() || 'ko';
-  const testTexts = {
-    ko:'안녕하세요. 오늘 어떻게 지내셨나요?',
-    en:'Hello. How are you feeling today?',
-    ja:'こんにちは。今日はどんな気分ですか?',
-    zh:'你好。今天感觉怎么样?'
-  };
-  speakWithPersona(testTexts[lang]||testTexts.ko, lang, null);
-  // 현재 선택된 페르소나로 임시 재생
-  const tmpPersona = {gender, age, tone};
-  const voices = speechSynthesis.getVoices();
+  const lang = document.getElementById('vp-lang')?.value || 'ko';
+  const testTexts = {ko:'안녕하세요. 오늘 어떻게 지내셨나요?', en:'Hello. How are you feeling today?', ja:'こんにちは。今日はどんな気分ですか?', zh:'你好。今天感觉怎么样?'};
   speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(testTexts[lang]||testTexts.ko);
-  utter.voice = getVoiceByPersona(lang, tmpPersona);
+  const utter = new SpeechSynthesisUtterance(testTexts[lang]||testTexts.en);
+  if (voiceName) { const v = speechSynthesis.getVoices().find(vv => vv.name === voiceName); if (v) utter.voice = v; }
+  else utter.voice = getBestVoice(lang);
   utter.lang = lang;
-  const toneOpts = VOICE_PERSONA_OPTIONS.tone[tone];
-  utter.rate = Math.max(0.5, 0.92 + (toneOpts?.rate||0));
-  utter.pitch = Math.max(0, 1.0 + (toneOpts?.pitch||0));
+  const toneOpts = TONE_PRESETS[tone] || TONE_PRESETS.auto;
+  utter.rate = Math.max(0.5, 0.92 + toneOpts.rate);
+  utter.pitch = Math.max(0, 1.0 + toneOpts.pitch);
   speechSynthesis.speak(utter);
-}
-
-function loadPersonaUI(clientId) {
-  const persona = getClientPersona(clientId) || {gender:'auto', age:'auto', tone:'auto'};
-  const g = document.getElementById('vp-gender');
-  const a = document.getElementById('vp-age');
-  const t = document.getElementById('vp-tone');
-  if (g) g.value = persona.gender || 'auto';
-  if (a) a.value = persona.age || 'auto';
-  if (t) t.value = persona.tone || 'auto';
 }
 
 function loadVoiceList(lang) {
@@ -1459,7 +1443,24 @@ async function sendCounsel(){
 
 async function loadReply(){
   document.getElementById('reply-view-section').style.display='block';document.getElementById('reply-confirmed-section').style.display='none';
-  try{const res=await api('/api/counsel/reply');if(res.hasReply){currentCounselId=res.counselId;document.getElementById('reply-content').textContent=res.reply;}else{document.getElementById('reply-content').textContent='확인 가능한 답변이 없습니다.';}}catch(e){}
+  try{
+    const res=await api('/api/counsel/reply');
+    if(res.hasReply){
+      currentCounselId=res.counselId;
+      let replyText=res.reply||'';
+      // ★ 내담자 현재 언어로 번역
+      const clientLang=getCurrentDisplayLang();
+      if(clientLang && clientLang!=='ko' && replyText){
+        try{
+          const translated=await translateText(replyText, clientLang, 'auto');
+          if(translated && translated!==replyText) replyText=translated;
+        }catch(e){}
+      }
+      document.getElementById('reply-content').textContent=replyText;
+    }else{
+      document.getElementById('reply-content').textContent='확인 가능한 답변이 없습니다.';
+    }
+  }catch(e){}
 }
 
 async function confirmReply(){
@@ -1605,8 +1606,8 @@ async function loadClientDetail(){
     const assigned=data.modules||[];
     document.getElementById('detail-module-list').innerHTML=assigned.length>0?assigned.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1"><div style="font-size:14px;font-weight:500">'+(m.modules?.title||'모듈')+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+(m.completed?'✅ 완료':(m.is_active?'🟢 진행 중':'⏸ 대기'))+'</div></div><div style="display:flex;gap:6px;align-items:center"><button onclick="openModuleEditor(\''+m.module_id+'\',\''+((m.modules?.title||'모듈').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button><button onclick="toggleModule(\''+m.module_id+'\','+!m.is_active+')" style="background:'+(m.is_active?'#FDF3E7':'#EDF4EE')+';color:'+(m.is_active?'#8B5E2A':'var(--sage-dark)')+';border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">'+(m.is_active?'비활성화':'활성화')+'</button><button onclick="removeModule(\''+m.module_id+'\')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button></div></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
     const answersBtn=document.getElementById('detail-answers-btn');if(answersBtn)answersBtn.style.display='block';
-    // 목소리 페르소나 UI 복원
-    loadPersonaUI(currentDetailClientId);
+    // 목소리 페르소나 UI 복원 (getVoices 준비 대기)
+    setTimeout(() => loadPersonaUI(currentDetailClientId), 400);
     allModules=await api('/api/host/modules');
     const assignedIds=assigned.map(m=>m.module_id);
     document.getElementById('detail-all-modules').innerHTML=allModules.filter(m=>!assignedIds.includes(m.id)).map(m=>'<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule(\''+m.id+'\')"><div class="card-row"><div style="font-size:14px">'+m.title+'</div><span style="color:var(--sage);font-size:12px">+ 배정</span></div></div>').join('')||'<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
@@ -1681,11 +1682,11 @@ function showDetailTab(tab,btn){
 }
 
 async function saveClientProfile(){
-  // 목소리 페르소나 저장
+  // 목소리 페르소나 저장 (실제 목소리 이름 + 톤)
   const persona = {
-    gender: document.getElementById('vp-gender')?.value || 'auto',
-    age:    document.getElementById('vp-age')?.value    || 'auto',
-    tone:   document.getElementById('vp-tone')?.value   || 'auto'
+    voiceName: document.getElementById('vp-voice')?.value || '',
+    lang:      document.getElementById('vp-lang')?.value  || 'ko',
+    tone:      document.getElementById('vp-tone')?.value  || 'auto'
   };
   if (currentDetailClientId) saveClientPersona(currentDetailClientId, persona);
   const data={name:document.getElementById('dp-name').value,nickname:document.getElementById('dp-nickname').value,age:parseInt(document.getElementById('dp-age').value)||null,email:document.getElementById('dp-email').value,language:document.getElementById('dp-language').value,session_frequency:parseInt(document.getElementById('dp-frequency').value)||2,program_start_date:document.getElementById('dp-startdate').value||null,characteristics:document.getElementById('dp-characteristics').value,memo:document.getElementById('dp-memo').value};
