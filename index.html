@@ -973,7 +973,7 @@ function _updateMicBtn(targetId, on) {
 const KO_TRANSLATIONS = {
   en: {
     // 공통
-    '로그인': 'Login', '로그아웃': 'Logout', '저장': 'Save', '취소': 'Cancel',
+    '호스트': 'Host', '로그인': 'Login', '로그아웃': 'Logout', '저장': 'Save', '취소': 'Cancel',
     '확인': 'Confirm', '삭제': 'Delete', '수정': 'Edit', '추가': 'Add',
     '완료': 'Done', '다음': 'Next', '이전': 'Back', '닫기': 'Close',
     '전송': 'Send', '입력': 'Enter', '선택': 'Select', '검색': 'Search',
@@ -1182,17 +1182,26 @@ function translateDOM(lang) {
         const trimmed = txt.trim();
         if (map[trimmed]) {
           node.textContent = txt.replace(trimmed, map[trimmed]);
+          return;
         }
+        // 부분 매칭 - 텍스트에 포함된 키 검색
+        let newTxt = txt;
+        let changed = false;
+        Object.keys(map).forEach(k => {
+          if (k.length > 1 && newTxt.includes(k)) {
+            newTxt = newTxt.split(k).join(map[k]);
+            changed = true;
+          }
+        });
+        if (changed) node.textContent = newTxt;
       }
     } else if (node.nodeType === 1) { // ELEMENT_NODE
       const tag = node.tagName;
       if (tag==='SCRIPT'||tag==='STYLE'||tag==='NOSCRIPT') return;
       if (node.classList && node.classList.contains('notranslate')) return;
-      // placeholder 번역
       if (node.placeholder && map[node.placeholder]) {
         node.placeholder = map[node.placeholder];
       }
-      // title 번역
       if (node.title && map[node.title]) {
         node.title = map[node.title];
       }
@@ -1235,7 +1244,8 @@ function applyPageTranslation(lang) {
 }
 
 function applyFullTranslation(lang) {
-  if (!lang || lang === 'ko') return;
+  if (!lang) return;
+  if (lang === 'ko') { location.reload(); return; }
   applyPageTranslation(lang);
   
   // DOM 전체 번역 (정적 UI 텍스트)
@@ -1607,7 +1617,11 @@ function setLang(lang, el) {
   localStorage.setItem('pip_lang_display', LANG_NAMES[lang]||lang);
   localStorage.setItem('pip_client_lang_pref', lang);
   const langEl=document.getElementById('langSelected'); if(langEl) langEl.textContent=LANG_NAMES[lang]||lang;
-  applyFullTranslation(lang);
+  if (lang === 'ko') {
+    location.reload(); // 한국어 복원은 리로드가 가장 정확
+  } else {
+    applyFullTranslation(lang);
+  }
 }
 
 function toggleHostLangMenu(){
@@ -1624,7 +1638,11 @@ function setHostLang(lang, el) {
   localStorage.setItem('pip_host_lang_pref', lang);
   const hEl=document.getElementById('hostLangSelected'); if(hEl) hEl.textContent=LANG_NAMES[lang]||lang;
   const hlEl=document.getElementById('hostLoginLangSelected'); if(hlEl) hlEl.textContent=LANG_NAMES[lang]||lang;
-  applyFullTranslation(lang);
+  if (lang === 'ko') {
+    location.reload(); // 한국어 복원은 리로드
+  } else {
+    applyFullTranslation(lang);
+  }
 }
 
 function applyHostLang(){
