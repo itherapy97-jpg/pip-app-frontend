@@ -933,8 +933,12 @@ function speakText(text, lang) {
   speechSynthesis.speak(utter);
 }
 function stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); }
-if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
-  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+// ★ TTS 목소리 미리 로드 (페이지 시작 시)
+if (window.speechSynthesis) {
+  speechSynthesis.getVoices(); // 초기 로드 트리거
+  speechSynthesis.onvoiceschanged = () => {
+    speechSynthesis.getVoices(); // 목소리 로드 완료 시 캐시
+  };
 }
 
 // ===== STT (장문 음성 입력) =====
@@ -1174,18 +1178,14 @@ function renderVoiceItem(v, selectedName, lc, list) {
 // 목소리 미리 듣기
 function testClientVoice(voiceName, lang) {
   const tests = {ko:'안녕하세요. 오늘 어떻게 지내셨나요?',en:'Hello. How are you feeling today?',ja:'こんにちは。今日はどんな気分ですか？',zh:'你好，今天感觉怎么样？',es:'Hola. ¿Cómo te sientes hoy?',fr:"Bonjour. Comment vous sentez-vous aujourd'hui?"};
+  if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
-  const run = () => {
-    const utter = new SpeechSynthesisUtterance(tests[lang] || tests.en);
-    const v = speechSynthesis.getVoices().find(vv => vv.name === voiceName);
-    if (v) utter.voice = v;
-    utter.lang = lang;
-    utter.rate = 0.92;
-    speechSynthesis.speak(utter);
-  };
-  const voices = speechSynthesis.getVoices();
-  if (voices.length > 0) { run(); }
-  else { speechSynthesis.onvoiceschanged = () => { speechSynthesis.onvoiceschanged = null; run(); }; }
+  const utter = new SpeechSynthesisUtterance(tests[lang] || tests.en);
+  const v = speechSynthesis.getVoices().find(vv => vv.name === voiceName);
+  if (v) utter.voice = v;
+  utter.lang = lang;
+  utter.rate = 0.92;
+  try { speechSynthesis.speak(utter); } catch(e) {}
 }
 
 // 목소리 선택 저장
@@ -1215,45 +1215,35 @@ function loadPersonaUI(clientId) {
 }
 
 // TTS 재생 - 내담자별 언어별 설정 목소리 사용
-function _executeSpeak(text, targetLang, voiceName) {
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = targetLang;
-  utter.rate = 0.92;
-  utter.pitch = 1.0;
-  if (voiceName) {
-    const v = speechSynthesis.getVoices().find(vv => vv.name === voiceName);
-    if (v) utter.voice = v;
-  }
-  speechSynthesis.speak(utter);
-}
-
+// ★ speakWithPersona - 반드시 사용자 클릭 이벤트에서 직접 호출
+// Chrome 보안정책: setTimeout/onvoiceschanged 내부 호출 시 차단됨
 function speakWithPersona(text, lang, clientId) {
-  if (!text || !window.speechSynthesis) return;
+  if (!text) return;
+  if (!window.speechSynthesis) { alert('이 브라우저는 TTS를 지원하지 않습니다.'); return; }
+  
   speechSynthesis.cancel();
+  
   const targetLang = lang || getCurrentDisplayLang() || 'ko';
   const lc = targetLang.split('-')[0];
   const persona = clientId ? getClientPersona(clientId) : null;
   const savedVoiceName = (persona?.voices||{})[lc] || localStorage.getItem('pip_voice_for_'+lc) || null;
-  console.log('[PIP TTS] lang:', targetLang, 'clientId:', clientId, 'persona:', persona, 'voice:', savedVoiceName);
-
-  // Chrome에서 첫 호출 시 getVoices()가 빈 배열 반환하는 문제 해결
-  const voices = speechSynthesis.getVoices();
-  if (voices.length > 0) {
-    _executeSpeak(text, targetLang, savedVoiceName);
-  } else {
-    // 목소리 로드 완료 이벤트 대기
-    const handler = () => {
-      speechSynthesis.onvoiceschanged = null;
-      _executeSpeak(text, targetLang, savedVoiceName);
-    };
-    speechSynthesis.onvoiceschanged = handler;
-    // 최대 1초 대기 fallback
-    setTimeout(() => { 
-      if (speechSynthesis.onvoiceschanged === handler) {
-        speechSynthesis.onvoiceschanged = null;
-        _executeSpeak(text, targetLang, savedVoiceName);
-      }
-    }, 1000);
+  
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = targetLang;
+  utter.rate = 0.92;
+  utter.pitch = 1.0;
+  
+  // 저장된 목소리 적용
+  if (savedVoiceName) {
+    const v = speechSynthesis.getVoices().find(vv => vv.name === savedVoiceName);
+    if (v) { utter.voice = v; }
+  }
+  
+  // 사용자 클릭 컨텍스트에서 직접 호출 (Chrome 보안 요건)
+  try {
+    speechSynthesis.speak(utter);
+  } catch(e) {
+    console.error('[PIP TTS] speak 오류:', e);
   }
 }
 
