@@ -507,7 +507,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
       <div class="card">
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
           상담가 답변
-          <button onclick="speakText(document.getElementById('reply-content').textContent)" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0" title="음성으로 듣기">🔊</button>
+          <button onclick="speakWithPersona(document.getElementById('reply-content').textContent, getCurrentDisplayLang(), localStorage.getItem('pip_client_id'))" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0" title="음성으로 듣기">🔊</button>
         </div>
         <p style="font-size:14px;line-height:1.8" id="reply-content">로딩 중...</p>
       </div>
@@ -1102,16 +1102,16 @@ function speakText(text, lang) {
 // 번역 후 읽기 (원문이 다른 언어일 때 - 교육 질문 등)
 async function speakTextAuto(originalText, sourceLang) {
   if (!originalText) return;
-  const targetLang = getCurrentDisplayLang();
+  const targetLang = getCurrentDisplayLang() || 'ko';
   let textToSpeak = originalText;
-  // 현재 표시 언어가 원문과 다르면 번역 후 읽기
-  if (targetLang !== (sourceLang||'ko') && targetLang !== 'auto') {
-    try {
-      const translated = await translateText(originalText, targetLang, sourceLang||'ko');
-      if (translated && translated !== originalText) textToSpeak = translated;
-    } catch(e) {}
-  }
-  speakText(textToSpeak, targetLang);
+  // 항상 번역 시도 (같은 언어면 원문 그대로 반환됨)
+  try {
+    const translated = await translateText(originalText, targetLang, sourceLang||'ko');
+    if (translated && translated.trim() && translated !== originalText) textToSpeak = translated;
+  } catch(e) {}
+  // 내담자 페르소나 적용
+  const clientId = localStorage.getItem('pip_client_id');
+  speakWithPersona(textToSpeak, targetLang, clientId);
 }
 function stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); }
 if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
@@ -1202,13 +1202,32 @@ function switchLoginTab(tab) {
   else { es.style.display='none'; is.style.display='block'; ib.style.background='var(--sage)'; ib.style.color='white'; eb.style.background='var(--white)'; eb.style.color='var(--text-muted)'; }
 }
 
+// JWT에서 clientId 추출 (서버 검증 없이 payload만 디코딩)
+function extractClientId(jwtToken) {
+  try {
+    const payload = jwtToken.split('.')[1];
+    const padded = payload + '='.repeat((4-payload.length%4)%4);
+    const decoded = JSON.parse(atob(padded));
+    return decoded.clientId || decoded.id || decoded.sub || null;
+  } catch(e) { return null; }
+}
+
 async function clientEmailLogin() {
   const email=document.getElementById('login-email').value.trim(), password=document.getElementById('login-password').value;
   const errEl=document.getElementById('login-error'); errEl.classList.remove('show');
   if (!email||!password) { errEl.textContent='이메일과 비밀번호를 입력해주세요.'; errEl.classList.add('show'); return; }
   try {
     const data = await api('/api/auth/client/login','POST',{email,password});
-    if (data.token) { token=data.token; localStorage.setItem('pip_token',token); localStorage.setItem('pip_lang',data.language||userLang); userLang=data.language||userLang; applyLang(); showScreen('screen-home'); loadHome(); }
+    if (data.token) {
+      token=data.token;
+      localStorage.setItem('pip_token',token);
+      localStorage.setItem('pip_lang',data.language||userLang);
+      // ★ clientId 추출하여 저장 (페르소나 연결용)
+      const cid = extractClientId(token);
+      if (cid) localStorage.setItem('pip_client_id', cid);
+      userLang=data.language||userLang;
+      applyLang(); showScreen('screen-home'); loadHome();
+    }
     else { errEl.textContent=data.error||'로그인 실패'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
 }
@@ -1221,7 +1240,7 @@ async function checkInviteCode() {
   try {
     const data = await api('/api/auth/client/login','POST',{inviteCode:code});
     if (data.needsRegister) { pendingInviteCode=code; showScreen('screen-register'); }
-    else if (data.token) { token=data.token; localStorage.setItem('pip_token',token); applyLang(); showScreen('screen-home'); loadHome(); }
+    else if (data.token) { token=data.token; localStorage.setItem('pip_token',token); const cid=extractClientId(token); if(cid) localStorage.setItem('pip_client_id',cid); applyLang(); showScreen('screen-home'); loadHome(); }
     else { errEl.textContent=data.error||'유효하지 않은 초대코드입니다.'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
 }
@@ -1234,7 +1253,7 @@ async function registerClient() {
   if (pw!==pw2) { errEl.textContent='비밀번호가 일치하지 않습니다.'; errEl.classList.add('show'); return; }
   try {
     const data = await api('/api/auth/client/register','POST',{inviteCode:pendingInviteCode,email,password:pw,language:userLang});
-    if (data.token) { token=data.token; localStorage.setItem('pip_token',token); localStorage.setItem('pip_lang',data.language||userLang); userLang=data.language||userLang; applyLang(); showScreen('screen-home'); loadHome(); }
+    if (data.token) { token=data.token; localStorage.setItem('pip_token',token); const cid=extractClientId(token); if(cid) localStorage.setItem('pip_client_id',cid); localStorage.setItem('pip_lang',data.language||userLang); userLang=data.language||userLang; applyLang(); showScreen('screen-home'); loadHome(); }
     else { errEl.textContent=data.error||'가입 실패'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
 }
@@ -1448,13 +1467,13 @@ async function loadReply(){
     if(res.hasReply){
       currentCounselId=res.counselId;
       let replyText=res.reply||'';
-      // ★ 내담자 현재 언어로 번역
-      const clientLang=getCurrentDisplayLang();
-      if(clientLang && clientLang!=='ko' && replyText){
+      // ★ 항상 번역 시도 (내담자 언어가 ko여도 원문이 영어일 수 있으므로)
+      const clientLang=getCurrentDisplayLang()||'ko';
+      if(replyText){
         try{
           const translated=await translateText(replyText, clientLang, 'auto');
-          if(translated && translated!==replyText) replyText=translated;
-        }catch(e){}
+          if(translated && translated.trim() && translated!==replyText) replyText=translated;
+        }catch(e){ console.log('번역 실패, 원문 사용:', e); }
       }
       document.getElementById('reply-content').textContent=replyText;
     }else{
