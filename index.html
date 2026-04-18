@@ -1167,6 +1167,58 @@ const KO_TRANSLATIONS = {
   }
 };
 
+// ===== MutationObserver - DOM 변경 시 자동 재번역 =====
+let _activeTranslationLang = null;
+let _translationTimer = null;
+let _isTranslating = false;
+let _observer = null;
+
+function startAutoTranslation(lang) {
+  if (!lang || lang === 'ko') { stopAutoTranslation(); return; }
+  _activeTranslationLang = lang;
+  
+  // 이미 옵저버가 있으면 중지 후 재시작
+  stopAutoTranslation();
+  
+  _observer = new MutationObserver((mutations) => {
+    if (_isTranslating) return; // 번역 중 재귀 방지
+    let hasNewText = false;
+    for (const m of mutations) {
+      if (m.addedNodes.length > 0) { hasNewText = true; break; }
+    }
+    if (!hasNewText) return;
+    
+    // 디바운스 - 연속 변경 시 마지막 것만 처리
+    clearTimeout(_translationTimer);
+    _translationTimer = setTimeout(() => {
+      if (_activeTranslationLang && _activeTranslationLang !== 'ko') {
+        _isTranslating = true;
+        translateDOM(_activeTranslationLang);
+        _isTranslating = false;
+      }
+    }, 150);
+  });
+  
+  _observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: false,
+    attributes: false
+  });
+  
+  // 즉시 한 번 번역
+  setTimeout(() => {
+    _isTranslating = true;
+    translateDOM(lang);
+    _isTranslating = false;
+  }, 50);
+}
+
+function stopAutoTranslation() {
+  if (_observer) { _observer.disconnect(); _observer = null; }
+  clearTimeout(_translationTimer);
+}
+
 // DOM 전체 순회하며 번역 적용 (메인 번역 엔진)
 function translateDOM(lang) {
   const lc = (lang||'ko').split('-')[0];
@@ -1248,8 +1300,8 @@ function applyFullTranslation(lang) {
   if (lang === 'ko') { location.reload(); return; }
   applyPageTranslation(lang);
   
-  // DOM 전체 번역 (정적 UI 텍스트)
-  translateDOM(lang);
+  // MutationObserver로 동적 콘텐츠 자동 번역 시작
+  startAutoTranslation(lang);
   
   // 개별 ID 기반 추가 번역 (동적 생성 요소 대비)
   const lc=(lang||'ko').split('-')[0];
@@ -1273,15 +1325,15 @@ function goScreen(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.add('active');
-  // 화면 전환 시 자동 번역
+  // 화면 전환 시 언어 설정 유지
   const isHostScreen = id.startsWith('screen-host')||id.startsWith('screen-client')||id.startsWith('screen-detail')||id.startsWith('screen-module');
-  const isClientScreen = !isHostScreen;
-  if (isHostScreen) {
-    const hl=localStorage.getItem('pip_host_lang_pref')||'ko';
-    if(hl!=='ko') setTimeout(()=>translateDOM(hl), 50);
-  } else {
-    const cl=localStorage.getItem('pip_client_lang_pref')||'ko';
-    if(cl!=='ko') setTimeout(()=>translateDOM(cl), 50);
+  const activeLang = isHostScreen
+    ? (localStorage.getItem('pip_host_lang_pref')||'ko')
+    : (localStorage.getItem('pip_client_lang_pref')||'ko');
+  if (activeLang !== 'ko') {
+    // MutationObserver가 이미 실행 중이면 건드리지 않음
+    if (_activeTranslationLang !== activeLang) startAutoTranslation(activeLang);
+    else setTimeout(()=>{ _isTranslating=true; translateDOM(activeLang); _isTranslating=false; }, 100);
   }
   if (id==='screen-home') loadHome();
   if (id==='screen-edu-list') loadEduList();
@@ -1675,9 +1727,7 @@ function hostLogout(){localStorage.removeItem('pip_token');localStorage.removeIt
 
 async function loadHostDashboard(){
   loadGroups();
-  // 로드 완료 후 번역 적용
-  const hl = localStorage.getItem('pip_host_lang_pref')||'ko';
-  if (hl !== 'ko') setTimeout(()=>translateDOM(hl), 100);
+
   try{const clients=await api('/api/host/clients');document.getElementById('stat-clients').textContent=clients.length;document.getElementById('stat-pending').textContent=clients.filter(c=>c.hasPending).length;document.getElementById('client-list').innerHTML=clients.map(c=>{const dn=c.email||c.name||'내담자',ini=dn.substring(0,2).toUpperCase();return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar">'+ini+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+dn+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">'+(c.hasPending?'💬 상담 대기 중':'미답변 없음')+' · 주'+(c.session_frequency||2)+'회</div><div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 '+(c.invite_code||'-')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join('');}
   catch(e){document.getElementById('client-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">로드 실패</p>';}
   try{const modules=await api('/api/host/modules');document.getElementById('host-module-list').innerHTML=modules.length>0?modules.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1;cursor:pointer" onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')"><div style="font-size:14px;font-weight:500">'+m.title+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">클릭하여 질문 편집</div></div><button onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';}
@@ -1976,12 +2026,12 @@ window.addEventListener('load', () => {
 
 window.onload = function() {
   initApp(); // DOM 보여주기
-  // DOM 준비 완료 후 번역 적용
+  // 저장된 언어로 자동 번역 시작
   const isHost2 = location.hash==='#host'||location.hash==='#/host';
   const savedLang2 = isHost2
     ? (localStorage.getItem('pip_host_lang_pref')||'ko')
     : (localStorage.getItem('pip_client_lang_pref')||'ko');
-  if (savedLang2 !== 'ko') {
+  if (savedLang2 && savedLang2 !== 'ko') {
     applyFullTranslation(savedLang2);
   }
 };
