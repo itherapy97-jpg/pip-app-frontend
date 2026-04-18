@@ -231,6 +231,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <p class="sec-label" style="margin-top:8px" id="lbl-counsel">개인 상담</p>
     <button class="btn" onclick="goScreen('screen-counsel')" id="btn-counsel">상담 내용 작성하기</button>
     <button class="btn" onclick="goScreen('screen-threads')" id="btn-threads" style="background:#EDF4EE;border-color:var(--sage-light);color:var(--sage-dark)">💬 내 상담 스레드 보기</button>
+    <button class="btn" onclick="openVoiceSettings('screen-home')" id="btn-voice-home" style="background:#FDF8F0;border-color:#E8C99A;color:#7A4F1A">🔊 내 기기 음성 설정</button>
     <div class="spacer"></div>
     <div style="display:flex;gap:10px">
       <button onclick="goScreen('screen-home')" style="flex:1;padding:14px 6px;border:1px solid var(--warm);border-radius:10px;background:var(--sage);color:white;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="font-size:18px">⊙</span><span id="nav-home-lbl">홈</span></button>
@@ -467,36 +468,70 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div class="spacer"></div>
     <button class="btn primary" onclick="saveSettings()">저장하기</button>
     <div class="success-msg" id="settings-success">저장되었습니다.</div>
+    <div class="divider"></div>
+    <button class="btn" onclick="openVoiceSettings('screen-host')" style="background:#FDF8F0;border-color:#E8C99A;color:#7A4F1A">🔊 내 기기 음성 설정 →</button>
+  </div>
+</div>
+
+<!-- ========== 🔊 음성 설정 (내담자/호스트 공용) ========== -->
+<div class="screen" id="screen-voice-settings">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goBackFromVoice()">← 뒤로</button>
+    <div class="top-bar-title"><h2>🔊 음성 설정</h2><p>이 기기에서 들을 목소리 선택</p></div>
+  </div>
+  <div class="content">
+    <div class="notice"><p>💡 이 설정은 <strong>이 기기에만 저장</strong>됩니다.<br>각자 자기 휴대폰/컴퓨터에서 좋아하는 목소리를 선택하세요.<br>⭐ Microsoft / 🍎 Apple / 🔵 Google 음성이 자동 감지됩니다.</p></div>
+
+    <p class="sec-label">🎤 음성 입력 상태</p>
+    <div id="stt-status" style="padding:12px 14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;margin-bottom:14px">확인 중...</div>
 
     <div class="divider"></div>
-    <p class="sec-label">🔊 음성(TTS) 설정</p>
-    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.7">호스트가 🔊 듣기 버튼을 누를 때 사용할 음성입니다.<br>⭐ Microsoft 음성 우선 표시 (Windows / Edge / Chrome)<br>💡 이 기기에만 저장됩니다.</p>
+    <p class="sec-label">🔊 음성 출력 (TTS)</p>
 
     <div class="field-label">🇰🇷 한국어 음성</div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
-      <select id="host-voice-ko" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="vs-voice-ko" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
       <button onclick="testVoice('ko')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 테스트</button>
     </div>
 
     <div class="field-label">🇺🇸 English Voice</div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
-      <select id="host-voice-en" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="vs-voice-en" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
       <button onclick="testVoice('en')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
     </div>
 
     <div class="field-label">🇯🇵 日本語 音声</div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
-      <select id="host-voice-ja" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="vs-voice-ja" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
       <button onclick="testVoice('ja')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 テスト</button>
     </div>
 
     <div class="field-label">🇨🇳 中文语音</div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
-      <select id="host-voice-zh" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="vs-voice-zh" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
       <button onclick="testVoice('zh')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 测试</button>
     </div>
 
-    <div id="host-voice-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:8px 12px;background:var(--cream);border-radius:6px"></div>
+    <div class="field-label">🇪🇸 Voz en Español</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="vs-voice-es" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('es')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Prueba</button>
+    </div>
+
+    <div class="field-label">🇫🇷 Voix Française</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="vs-voice-fr" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('fr')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+    </div>
+
+    <div class="field-label">🇩🇪 Deutsche Stimme</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="vs-voice-de" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
+      <button onclick="testVoice('de')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+    </div>
+
+    <div id="vs-voice-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:8px 12px;background:var(--cream);border-radius:6px"></div>
+    <div class="spacer"></div>
   </div>
 </div>
 
@@ -543,54 +578,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div class="field-label">특징 / 메모</div><textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;margin-bottom:8px"></textarea>
     <div class="field-label">상담 메모 (호스트 전용)</div><textarea id="dp-memo" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;margin-bottom:8px"></textarea>
     <div class="success-msg" id="profile-save-success">저장되었습니다.</div>
-
-    <div class="divider"></div>
-    <p class="sec-label">🔊 음성(TTS) 설정</p>
-    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.7">🔊 듣기 버튼에서 사용할 음성입니다.<br>⭐ Microsoft 음성 우선 표시 (Windows / Edge / Chrome)<br>💡 선택한 음성은 이 기기에만 저장됩니다.</p>
-
-    <div class="field-label">🇰🇷 한국어 음성</div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <select id="voice-ko" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('ko')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 테스트</button>
-    </div>
-
-    <div class="field-label">🇺🇸 English Voice</div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <select id="voice-en" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('en')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
-    </div>
-
-    <div class="field-label">🇯🇵 日本語 音声</div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <select id="voice-ja" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('ja')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 テスト</button>
-    </div>
-
-    <div class="field-label">🇨🇳 中文语音</div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <select id="voice-zh" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('zh')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 测试</button>
-    </div>
-
-    <div class="field-label">🇪🇸 Voz en Español</div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <select id="voice-es" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('es')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Prueba</button>
-    </div>
-
-    <div class="field-label">🇫🇷 Voix Française</div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <select id="voice-fr" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('fr')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
-    </div>
-
-    <div class="field-label">🇩🇪 Deutsche Stimme</div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <select id="voice-de" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('de')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
-    </div>
-
-    <div id="voice-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:8px 12px;background:var(--cream);border-radius:6px"></div>
     <div class="spacer"></div>
   </div>
   <div id="detail-tab-modules" class="content" style="display:none;overflow-y:auto">
@@ -902,6 +889,17 @@ function getCurrentDisplayLang() {
   return localStorage.getItem('pip_client_lang_pref') || 'ko';
 }
 
+// 동적 문자열을 즉시 번역 (코드에서 textContent 설정 시 사용)
+function tr(koText) {
+  if (!koText) return '';
+  const lang = getCurrentDisplayLang();
+  if (lang === 'ko') return koText;
+  const lc = lang.split('-')[0];
+  const key = lc==='zh' ? 'zh' : (KO_TRANSLATIONS[lang] ? lang : (KO_TRANSLATIONS[lc] ? lc : 'en'));
+  const map = KO_TRANSLATIONS[key] || {};
+  return map[koText] || koText;
+}
+
 function translateDOM(lang) {
   const lc = (lang||'ko').split('-')[0];
   const key = lc==='zh' ? 'zh' : (KO_TRANSLATIONS[lang] ? lang : (KO_TRANSLATIONS[lc] ? lc : 'en'));
@@ -1072,9 +1070,18 @@ document.addEventListener('click', (e) => {
 // ============================================================
 function startVoiceInput(targetId, lang) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { alert('Chrome 브라우저에서 음성 입력이 가능합니다.'); return; }
   const el = document.getElementById(targetId);
   if (!el) return;
+  // iPhone/Mac Safari 감지 - Web Speech 미지원 → 키보드 마이크 유도
+  if (!SR) {
+    el.focus();
+    try { el.scrollIntoView({behavior:'smooth', block:'center'}); } catch(e){}
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
+    if (isIOS) showToast('📱 iPhone 키보드 하단 <strong>🎙 버튼</strong>을 눌러서<br>음성으로 받아쓰기 하세요');
+    else showToast('💻 Mac에서 <strong>Fn 키를 두 번</strong> 누르면<br>음성 입력이 시작됩니다');
+    return;
+  }
   if (_sttRunning) { stopVoiceInput(targetId); return; }
   _recognition = new SR();
   const dl = getCurrentDisplayLang();
@@ -1137,13 +1144,11 @@ function speakText(text, lang) {
 if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
   speechSynthesis.onvoiceschanged = () => {
     speechSynthesis.getVoices();
-    // 음성 설정 UI가 열려 있으면 자동 재로드
-    if (document.getElementById('voice-ko') || document.getElementById('host-voice-ko')) {
+    if (document.getElementById('vs-voice-ko')) {
       try { loadVoiceOptions(); } catch(e){}
     }
   };
 }
-// 즉시 한 번 트리거 (일부 브라우저는 호출해야 voices 로드됨)
 if (window.speechSynthesis) { try { speechSynthesis.getVoices(); } catch(e){} }
 
 // 버블 안의 현재 "화면에 보이는" 텍스트를 읽기 (번역됐으면 번역된 걸로)
@@ -1171,61 +1176,104 @@ async function forceTranslate() {
 }
 
 // ============================================================
-// 음성(TTS) 선택 UI
+// 음성(TTS) 선택 UI - 전용 화면
 // ============================================================
+let _voicePrevScreen = 'screen-home';
+
+function openVoiceSettings(fromScreen) {
+  _voicePrevScreen = fromScreen || 'screen-home';
+  goScreen('screen-voice-settings');
+  setTimeout(loadVoiceOptions, 150);
+  setTimeout(updateSTTStatus, 100);
+}
+
+function goBackFromVoice() {
+  goScreen(_voicePrevScreen || 'screen-home');
+}
+
+function showToast(msg) {
+  const old = document.getElementById('__pip_toast'); if (old) old.remove();
+  const d = document.createElement('div');
+  d.id = '__pip_toast';
+  d.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(74,107,77,0.95);color:white;padding:12px 20px;border-radius:24px;font-size:13px;z-index:99999;max-width:85%;text-align:center;line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,0.2)';
+  d.innerHTML = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 5000);
+}
+
+function updateSTTStatus() {
+  const el = document.getElementById('stt-status');
+  if (!el) return;
+  const hasSTT = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isMacSafari = /Safari/.test(ua) && /Macintosh/.test(ua) && !/Chrome|Edg/.test(ua);
+  if (hasSTT) {
+    el.innerHTML = '✅ <strong style="color:var(--sage-dark)">음성 입력 지원됨</strong><br>🎤 버튼을 누르면 받아쓰기가 시작됩니다.';
+  } else if (isIOS || isMacSafari) {
+    el.innerHTML = '📱 <strong style="color:#7A4F1A">iPhone/Mac Safari 감지됨</strong><br>이 브라우저는 앱의 🎤 버튼이 작동하지 않습니다.<br><br><strong>✅ 대신 키보드의 🎙 마이크 버튼을 사용하세요:</strong><br>• iPhone/iPad: 키보드 하단 🎙<br>• Mac: Fn 키를 두 번 누르기';
+  } else {
+    el.innerHTML = '⚠ 이 브라우저는 Web Speech API를 지원하지 않습니다. Chrome 또는 Edge를 권장합니다.';
+  }
+}
+
+function detectVoiceVendor(voice) {
+  const n = (voice.name||'').toLowerCase();
+  if (n.includes('microsoft')) return {tag:'⭐', label:'Microsoft'};
+  if (n.includes('google')) return {tag:'🔵', label:'Google'};
+  const appleNames = ['yuna','samantha','kyoko','siri','daniel','karen','moira','tessa','veena','fiona','victoria','alex','fred','aaron','albert','allison','ava','susan','tom','zosia'];
+  if (appleNames.some(a => n.includes(a))) return {tag:'🍎', label:'Apple'};
+  return {tag:'🔶', label:'Other'};
+}
+
 function loadVoiceOptions() {
   const voices = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
-  if (voices.length === 0) {
-    // 아직 로드 안 됨 - 500ms 후 재시도
-    setTimeout(loadVoiceOptions, 500);
-    return;
-  }
+  if (voices.length === 0) { setTimeout(loadVoiceOptions, 500); return; }
   const langs = ['ko','en','ja','zh','es','fr','de'];
-  // 내담자 프로필 탭용 + 호스트 설정 탭용 두 세트 모두 채움
-  ['voice-','host-voice-'].forEach(prefix => {
-    langs.forEach(l => {
-      const sel = document.getElementById(prefix+l);
-      if (!sel) return;
-      const matches = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(l));
-      // Microsoft 음성 우선 정렬
-      matches.sort((a,b) => {
-        const aMs = /microsoft/i.test(a.name||'');
-        const bMs = /microsoft/i.test(b.name||'');
-        if (aMs && !bMs) return -1;
-        if (!aMs && bMs) return 1;
-        return (a.name||'').localeCompare(b.name||'');
-      });
-      if (matches.length === 0) {
-        sel.innerHTML = '<option value="">(사용 가능한 음성 없음)</option>';
-        sel.disabled = true;
-        return;
-      }
-      sel.disabled = false;
-      const saved = localStorage.getItem('pip_voice_'+l);
-      sel.innerHTML = '<option value="">(자동 선택)</option>' +
-        matches.map(v => {
-          const isMs = /microsoft/i.test(v.name||'');
-          const label = (isMs?'⭐ ':'')+v.name+' · '+v.lang;
-          const uri = (v.voiceURI||'').replace(/"/g,'&quot;');
-          const selected = (saved === v.voiceURI) ? ' selected' : '';
-          return '<option value="'+uri+'"'+selected+'>'+label+'</option>';
-        }).join('');
-      sel.onchange = function() {
-        if (sel.value) localStorage.setItem('pip_voice_'+l, sel.value);
-        else localStorage.removeItem('pip_voice_'+l);
-        // 두 개 드롭다운 동기화
-        const otherId = (prefix === 'voice-') ? ('host-voice-'+l) : ('voice-'+l);
-        const other = document.getElementById(otherId);
-        if (other) { try { other.value = sel.value; } catch(e){} }
+  langs.forEach(l => {
+    const sel = document.getElementById('vs-voice-'+l);
+    if (!sel) return;
+    const matches = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(l));
+    matches.sort((a,b) => {
+      const rank = (v) => {
+        const n = (v.name||'').toLowerCase();
+        if (n.includes('microsoft')) return 0;
+        const appleNames = ['yuna','samantha','kyoko','siri','daniel','karen','moira','tessa','veena','fiona','victoria','alex','fred'];
+        if (appleNames.some(a => n.includes(a))) return 1;
+        if (n.includes('google')) return 2;
+        return 3;
       };
+      return rank(a) - rank(b);
     });
+    if (matches.length === 0) {
+      sel.innerHTML = '<option value="">(이 기기에 사용 가능한 음성 없음)</option>';
+      sel.disabled = true; return;
+    }
+    sel.disabled = false;
+    const saved = localStorage.getItem('pip_voice_'+l);
+    sel.innerHTML = '<option value="">(자동 선택)</option>' +
+      matches.map(v => {
+        const vendor = detectVoiceVendor(v);
+        const label = vendor.tag+' '+v.name+' · '+v.lang;
+        const uri = (v.voiceURI||'').replace(/"/g,'&quot;');
+        const selected = (saved === v.voiceURI) ? ' selected' : '';
+        return '<option value="'+uri+'"'+selected+'>'+label+'</option>';
+      }).join('');
+    sel.onchange = function() {
+      if (sel.value) localStorage.setItem('pip_voice_'+l, sel.value);
+      else localStorage.removeItem('pip_voice_'+l);
+    };
   });
-  // 상태 표시
-  const msCount = voices.filter(v => /microsoft/i.test(v.name||'')).length;
-  const totalCount = voices.length;
-  const statusText = '🎙 브라우저에서 감지된 음성: 총 '+totalCount+'개 (Microsoft '+msCount+'개)';
-  const s1 = document.getElementById('voice-status'); if (s1) s1.textContent = statusText;
-  const s2 = document.getElementById('host-voice-status'); if (s2) s2.textContent = statusText;
+  const counts = { ms:0, apple:0, google:0, other:0 };
+  voices.forEach(v => {
+    const vendor = detectVoiceVendor(v);
+    if (vendor.label==='Microsoft') counts.ms++;
+    else if (vendor.label==='Apple') counts.apple++;
+    else if (vendor.label==='Google') counts.google++;
+    else counts.other++;
+  });
+  const s = document.getElementById('vs-voice-status');
+  if (s) s.textContent = '🎙 총 '+voices.length+'개: ⭐MS '+counts.ms+' · 🍎Apple '+counts.apple+' · 🔵Google '+counts.google+' · 🔶Other '+counts.other;
 }
 
 function testVoice(langCode) {
@@ -1315,7 +1363,7 @@ async function loadHome() {
       return '<div class="card" style="cursor:pointer;'+(m.completed?'opacity:0.7':'')+'" onclick="'+(m.completed?'':("startModule('"+m.id+"','"+(m.title||'').replace(/'/g,"\\\'")+"')"))+'">'
         +'<div class="card-row"><div><div style="font-size:11px;color:var(--sage);margin-bottom:2px">'+mLbl+'</div>'
         +'<div style="font-size:14px;font-weight:500">'+m.title+'</div></div>'
-        +'<span class="badge '+(m.completed?'green':'amber')+'">'+(m.completed?'완료':'진행')+'</span></div></div>';
+        +'<span class="badge '+(m.completed?'green':'amber')+'">'+(m.completed?tr('완료'):tr('진행'))+'</span></div></div>';
     }).join('');
   } catch(e){document.getElementById('module-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">모듈 로드 실패</p>';}
   try {
@@ -1323,10 +1371,10 @@ async function loadHome() {
     if(schedules&&schedules.length>0){
       const s=schedules[0]; let t=s.confirmed_time||s.requested_time;
       try{if(t&&t.includes('T'))t=formatSlotForTZ(new Date(t),Intl.DateTimeFormat().resolvedOptions().timeZone);}catch(e){}
-      document.getElementById('schedule-text').textContent='다음 세션: '+t;
-      document.getElementById('schedule-badge').textContent=s.status==='confirmed'?'확정':'대기 중';
+      document.getElementById('schedule-text').textContent=tr('다음 세션')+': '+t;
+      document.getElementById('schedule-badge').textContent=s.status==='confirmed'?tr('확정'):tr('대기 중');
     } else {
-      document.getElementById('schedule-text').textContent='일정 없음 — 새 세션 요청하기';
+      document.getElementById('schedule-text').textContent=tr('일정 없음 — 새 세션 요청하기');
       document.getElementById('schedule-badge').textContent='→';
     }
   } catch(e){}
@@ -1761,6 +1809,95 @@ async function loadDetailCounselThreads() {
   } catch(e) { el.innerHTML = '<p style="color:var(--danger)">로드 실패</p>'; }
 }
 
+// ============================================================
+// [신규] 호스트 - 내담자 상세: 모듈 탭 로드
+// ============================================================
+async function loadClientDetailModules() {
+  const assignedEl = document.getElementById('detail-module-list');
+  const allEl = document.getElementById('detail-all-modules');
+  if (assignedEl) assignedEl.innerHTML = '<div class="loading">로딩 중...</div>';
+  if (allEl) allEl.innerHTML = '<div class="loading">로딩 중...</div>';
+  try {
+    const [clientData, allModules] = await Promise.all([
+      api('/api/host/clients/'+currentDetailClientId),
+      api('/api/host/modules')
+    ]);
+    const assignedModules = (clientData && clientData.modules) || [];
+    const assignedIds = new Set(assignedModules.map(m => m.id));
+    if (assignedModules.length === 0) {
+      assignedEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
+    } else {
+      assignedEl.innerHTML = assignedModules.map(m => {
+        const completed = m.completed ? '✅' : '⏳';
+        const completedLabel = m.completed ? tr('완료') : tr('진행');
+        return '<div class="card" style="margin-bottom:8px">'
+          + '<div class="card-row"><div><div style="font-size:14px;font-weight:500">'+completed+' '+(m.title||'제목 없음')+'</div>'
+          + '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+completedLabel+'</div></div>'
+          + '<button onclick="unassignModule(\''+m.id+'\')" style="background:none;border:1px solid var(--warm);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text-muted);cursor:pointer">해제</button></div></div>';
+      }).join('');
+    }
+    const available = (allModules || []).filter(m => !assignedIds.has(m.id));
+    if (available.length === 0) {
+      allEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
+    } else {
+      allEl.innerHTML = available.map(m => {
+        return '<div class="card" style="margin-bottom:8px">'
+          + '<div class="card-row"><div style="font-size:13px">'+(m.title||'제목 없음')+'</div>'
+          + '<button onclick="assignModule(\''+m.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">+ 배정</button></div></div>';
+      }).join('');
+    }
+    retranslateNow(200);
+  } catch(e) {
+    console.error(e);
+    if (assignedEl) assignedEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>';
+    if (allEl) allEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>';
+  }
+}
+
+async function assignModule(moduleId) {
+  try {
+    await api('/api/host/clients/'+currentDetailClientId+'/modules', 'POST', { moduleId });
+    loadClientDetailModules();
+  } catch(e) { alert('모듈 배정 실패 - API가 미지원일 수 있습니다'); }
+}
+
+async function unassignModule(moduleId) {
+  if (!confirm('이 모듈을 해제하시겠습니까?')) return;
+  try {
+    await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId, 'DELETE');
+    loadClientDetailModules();
+  } catch(e) { alert('모듈 해제 실패'); }
+}
+
+// ============================================================
+// [신규] 호스트 - 내담자 상세: 일정 탭 로드
+// ============================================================
+async function loadClientDetailSchedule() {
+  const el = document.getElementById('detail-schedule-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">로딩 중...</div>';
+  try {
+    const pending = await api('/api/schedule/host/pending').catch(() => []);
+    const confirmed = await api('/api/schedule/host/confirmed').catch(() => []);
+    const combined = [...(confirmed||[]), ...(pending||[])];
+    const clientSchedules = combined.filter(s => s.client_id === currentDetailClientId);
+    if (clientSchedules.length === 0) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
+      return;
+    }
+    el.innerHTML = clientSchedules.map(s => {
+      let t = s.confirmed_time || s.requested_time;
+      try { if (t && t.includes('T')) t = new Date(t).toLocaleString('ko-KR'); } catch(e){}
+      const statusLabel = s.status === 'confirmed' ? tr('확정') : (s.status === 'pending' ? tr('대기 중') : s.status);
+      const badgeClass = s.status === 'confirmed' ? 'green' : 'amber';
+      return '<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="font-size:13px">'+t+'</div><span class="badge '+badgeClass+'">'+statusLabel+'</span></div></div>';
+    }).join('');
+    retranslateNow(200);
+  } catch(e) {
+    el.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>';
+  }
+}
+
 let currentHostThreadRootId = null;
 let currentHostThreadMessages = [];
 let currentReplyTargetId = null;
@@ -1874,7 +2011,8 @@ function showDetailTab(tab, btn) {
   });
   document.getElementById('detail-save-btn').style.display = (tab==='profile')?'block':'none';
   if (tab === 'counsel') loadDetailCounselThreads();
-  if (tab === 'profile') setTimeout(loadVoiceOptions, 150);
+  if (tab === 'modules') loadClientDetailModules();
+  if (tab === 'schedule') loadClientDetailSchedule();
   retranslateNow(200);
 }
 
@@ -1888,7 +2026,7 @@ function showHostTab(tab, btn) {
   if (tab === 'notice') loadNoticeTab();
   if (tab === 'schedule') loadHostSchedule();
   if (tab === 'groups') loadGroups();
-  if (tab === 'settings') { loadHostSettings(); setTimeout(loadVoiceOptions, 150); }
+  if (tab === 'settings') loadHostSettings();
   retranslateNow(200);
 }
 
