@@ -818,10 +818,31 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 </div>
 
 <!-- Google Translate 스크립트 -->
-<!-- Google Translate 제거됨 (보안) -->
+<!-- DeepL 기반 번역 사용 (보안) -->
 
 <script>
-// IIFE 제거됨 (Google Translate 제거로 불필요)
+// Google Translate 제거됨 - 딕셔너리 기반 번역 사용
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const API = 'https://pip-app-backend-production.up.railway.app';
 let token = localStorage.getItem('pip_token');
@@ -1578,10 +1599,14 @@ async function confirmReply(){
 // ===== 호스트 언어 =====
 const LANG_NAMES={'en':'English','zh-CN':'中文（简体）','zh-TW':'中文（繁體）','ja':'日本語','hi':'हिन्दी','es':'Español','fr':'Français','de':'Deutsch','ar':'العربية','pt':'Português','ru':'Русский','vi':'Tiếng Việt','th':'ภาษาไทย','id':'Bahasa Indonesia','ko':'한국어'};
 
-// ★ 현재 표시 언어 감지 (localStorage 기반 - Google Translate 제거됨)
+// ★ 현재 표시 언어 감지 (localStorage 기반)
 function getCurrentDisplayLang() {
   return localStorage.getItem('pip_client_lang_pref') || 'ko';
 }
+
+
+
+
 
 // 호스트 현재 표시 언어 감지
 function getHostDisplayLang() {
@@ -1595,7 +1620,8 @@ function setLang(lang, el) {
   localStorage.setItem('pip_client_lang_pref', lang);
   const langEl = document.getElementById('langSelected');
   if (langEl) langEl.textContent = LANG_NAMES[lang] || lang;
-  applyPageTranslation(lang);
+  // 전체 페이지 번역 적용 (딕셔너리 기반)
+  applyFullTranslation(lang);
 }
 
 // ★ 내장 번역 딕셔너리 (API 호출 없음, 완전 보안)
@@ -1644,6 +1670,169 @@ const LANDING_TRANSLATIONS = {
   }
 };
 
+// ★ 전체 UI 번역 딕셔너리 (Google Translate 없이 완전 보안)
+const UI_TRANSLATIONS = {
+  ko: {
+    startBtn:'시작하기 →', manualLink:'📖 사용설명서 보기',
+    loginTitle:'로그인', loginBack:'← 뒤로',
+    emailTab:'이메일 로그인', inviteTab:'초대코드 (첫 방문)',
+    emailLabel:'이메일', pwLabel:'비밀번호', loginBtn:'로그인',
+    regTitle:'회원가입', regEmail:'이메일', regPw:'비밀번호', regPw2:'비밀번호 확인', regBtn:'가입하기',
+    homeGreeting:'안녕하세요', homeProgress:'이번 주 진행률', homeSessions:'교육 세션',
+    homeSchedule:'세션 시간 약속', homeCounsel:'개인 상담', homeCounselBtn:'상담 내용 작성하기',
+    navEdu:'교육', navCounsel:'상담',
+    counselTitle:'상담 작성', counselLabel:'상담 내용을 자유롭게 작성해 주세요.',
+    replyTitle:'상담가 답변 확인', replyNotice:'📌 답변을 확인하면 화면에서 사라집니다.',
+    replyLabel:'상담가 답변', replyBtn:'확인했습니다', replyListen:'🔊 듣기',
+    noReply:'확인 가능한 답변이 없습니다.',
+    notifText:'상담 답변이 도착했습니다', notifLink:'확인하기 →',
+    sentTitle:'전송 완료', sentMsg:'상담 내용이 전송되었습니다.',
+    scheduleTitle:'세션 일정',
+  },
+  en: {
+    startBtn:"Get Started →", manualLink:"📖 View Manual",
+    loginTitle:"Login", loginBack:"← Back",
+    emailTab:"Email Login", inviteTab:"Invite Code (First Visit)",
+    emailLabel:"Email", pwLabel:"Password", loginBtn:"Login",
+    regTitle:"Sign Up", regEmail:"Email", regPw:"Password", regPw2:"Confirm Password", regBtn:"Sign Up",
+    homeGreeting:"Hello", homeProgress:"This Week's Progress", homeSessions:"Education Sessions",
+    homeSchedule:"Session Schedule", homeCounsel:"Personal Counseling", homeCounselBtn:"Write Counseling",
+    navEdu:"Education", navCounsel:"Counseling",
+    counselTitle:"Write Counseling", counselLabel:"Please write freely about your counseling.",
+    replyTitle:"Counselor's Answer", replyNotice:"📌 The answer will disappear once confirmed.",
+    replyLabel:"Counselor's Answer", replyBtn:"I have confirmed", replyListen:"🔊 Listen",
+    noReply:"No answer available.",
+    notifText:"A counseling reply has arrived", notifLink:"Check →",
+    sentTitle:"Sent", sentMsg:"Your counseling has been sent.",
+    scheduleTitle:"Session Schedule",
+  },
+  ja: {
+    startBtn:'始める →', manualLink:'📖 マニュアルを見る',
+    loginTitle:'ログイン', loginBack:'← 戻る',
+    emailTab:'メールログイン', inviteTab:'招待コード（初回）',
+    emailLabel:'メール', pwLabel:'パスワード', loginBtn:'ログイン',
+    regTitle:'会員登録', regEmail:'メール', regPw:'パスワード', regPw2:'パスワード確認', regBtn:'登録',
+    homeGreeting:'こんにちは', homeProgress:'今週の進捗', homeSessions:'教育セッション',
+    homeSchedule:'セッションスケジュール', homeCounsel:'個人カウンセリング', homeCounselBtn:'相談内容を書く',
+    navEdu:'教育', navCounsel:'相談',
+    counselTitle:'相談を書く', counselLabel:'自由に相談内容を書いてください。',
+    replyTitle:'カウンセラーの返答確認', replyNotice:'📌 確認すると画面から消えます。',
+    replyLabel:'カウンセラーの返答', replyBtn:'確認しました', replyListen:'🔊 聴く',
+    noReply:'確認できる回答がありません。',
+    notifText:'カウンセリングの返答が届きました', notifLink:'確認 →',
+    sentTitle:'送信完了', sentMsg:'相談内容が送信されました。',
+    scheduleTitle:'セッションスケジュール',
+  },
+  es: {
+    startBtn:'Comenzar →', manualLink:'📖 Ver Manual',
+    loginTitle:'Iniciar sesión', loginBack:'← Volver',
+    emailTab:'Correo electrónico', inviteTab:'Código de invitación',
+    emailLabel:'Correo', pwLabel:'Contraseña', loginBtn:'Iniciar sesión',
+    regTitle:'Registrarse', regEmail:'Correo', regPw:'Contraseña', regPw2:'Confirmar contraseña', regBtn:'Registrarse',
+    homeGreeting:'Hola', homeProgress:'Progreso de esta semana', homeSessions:'Sesiones de educación',
+    homeSchedule:'Horario de sesión', homeCounsel:'Consejería personal', homeCounselBtn:'Escribir consejería',
+    navEdu:'Educación', navCounsel:'Consejería',
+    counselTitle:'Escribir consejería', counselLabel:'Escriba libremente sobre su consejería.',
+    replyTitle:'Respuesta del consejero', replyNotice:'📌 La respuesta desaparecerá una vez confirmada.',
+    replyLabel:'Respuesta del consejero', replyBtn:'He confirmado', replyListen:'🔊 Escuchar',
+    noReply:'No hay respuesta disponible.',
+    notifText:'Ha llegado una respuesta de consejería', notifLink:'Ver →',
+    sentTitle:'Enviado', sentMsg:'Su consejería ha sido enviada.',
+    scheduleTitle:'Horario de sesión',
+  },
+  fr: {
+    startBtn:'Commencer →', manualLink:'📖 Voir le Manuel',
+    loginTitle:'Connexion', loginBack:'← Retour',
+    emailTab:'Email', inviteTab:"Code d'invitation",
+    emailLabel:'Email', pwLabel:'Mot de passe', loginBtn:'Se connecter',
+    regTitle:"S'inscrire", regEmail:'Email', regPw:'Mot de passe', regPw2:'Confirmer', regBtn:"S'inscrire",
+    homeGreeting:'Bonjour', homeProgress:'Progrès cette semaine', homeSessions:"Sessions d'éducation",
+    homeSchedule:'Planning de session', homeCounsel:'Conseil personnel', homeCounselBtn:'Écrire un conseil',
+    navEdu:'Éducation', navCounsel:'Conseil',
+    counselTitle:'Écrire un conseil', counselLabel:'Écrivez librement votre conseil.',
+    replyTitle:'Réponse du conseiller', replyNotice:'📌 La réponse disparaîtra une fois confirmée.',
+    replyLabel:'Réponse du conseiller', replyBtn:"J'ai confirmé", replyListen:'🔊 Écouter',
+    noReply:'Aucune réponse disponible.',
+    notifText:'Une réponse de conseil est arrivée', notifLink:'Voir →',
+    sentTitle:'Envoyé', sentMsg:'Votre conseil a été envoyé.',
+    scheduleTitle:'Planning de session',
+  },
+  de: {
+    startBtn:'Starten →', manualLink:'📖 Handbuch ansehen',
+    loginTitle:'Anmelden', loginBack:'← Zurück',
+    emailTab:'E-Mail', inviteTab:'Einladungscode',
+    emailLabel:'E-Mail', pwLabel:'Passwort', loginBtn:'Anmelden',
+    regTitle:'Registrieren', regEmail:'E-Mail', regPw:'Passwort', regPw2:'Bestätigen', regBtn:'Registrieren',
+    homeGreeting:'Hallo', homeProgress:'Fortschritt diese Woche', homeSessions:'Bildungssitzungen',
+    homeSchedule:'Sitzungsplan', homeCounsel:'Persönliche Beratung', homeCounselBtn:'Beratung schreiben',
+    navEdu:'Bildung', navCounsel:'Beratung',
+    counselTitle:'Beratung schreiben', counselLabel:'Schreiben Sie frei über Ihre Beratung.',
+    replyTitle:'Antwort des Beraters', replyNotice:'📌 Die Antwort verschwindet nach Bestätigung.',
+    replyLabel:'Antwort des Beraters', replyBtn:'Ich habe bestätigt', replyListen:'🔊 Hören',
+    noReply:'Keine Antwort verfügbar.',
+    notifText:'Eine Beratungsantwort ist eingetroffen', notifLink:'Ansehen →',
+    sentTitle:'Gesendet', sentMsg:'Ihre Beratung wurde gesendet.',
+    scheduleTitle:'Sitzungsplan',
+  }
+};
+
+// 전체 화면 UI 번역 적용
+function applyFullTranslation(lang) {
+  const lc = (lang||'ko').split('-')[0];
+  const t = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS[lc] || UI_TRANSLATIONS.en;
+  const ko = UI_TRANSLATIONS.ko;
+  
+  // 랜딩 페이지 번역
+  applyPageTranslation(lang);
+  
+  // 헬퍼: ID로 텍스트 설정
+  const setText = (id, text) => { const el=document.getElementById(id); if(el&&text) el.textContent=text; };
+  const setHTML = (id, html) => { const el=document.getElementById(id); if(el&&html) el.innerHTML=html; };
+  const setPlaceholder = (id, text) => { const el=document.getElementById(id); if(el&&text) el.placeholder=text; };
+  
+  // 로그인 화면
+  setText('login-back-text', t.loginBack);
+  setText('tab-email-btn', t.emailTab);
+  setText('tab-invite-btn', t.inviteTab);
+  setPlaceholder('login-email', t.emailLabel);
+  setPlaceholder('login-password', t.pwLabel);
+  const loginBtn = document.querySelector('#screen-login .btn.primary');
+  if (loginBtn) loginBtn.textContent = t.loginBtn;
+  
+  // 홈 화면
+  setText('home-greeting', t.homeGreeting);
+  setText('lbl-progress', t.homeProgress);
+  setText('lbl-sessions', t.homeSessions);
+  setText('lbl-schedule', t.homeSchedule);
+  setText('lbl-counsel', t.homeCounsel);
+  setText('btn-counsel', t.homeCounselBtn);
+  setText('nav-edu', t.navEdu);
+  setText('nav-counsel', t.navCounsel);
+  
+  // 알림 배너
+  setText('notif-text', t.notifText);
+  const notifLink = document.querySelector('.notif-link');
+  if (notifLink) notifLink.textContent = t.notifLink;
+  
+  // 상담 화면
+  setText('counsel-title', t.counselTitle);
+  setText('counsel-label', t.counselLabel);
+  
+  // 답변 확인 화면
+  setText('reply-page-title', t.replyTitle);
+  const replyNoticeEl = document.querySelector('#screen-reply .notice p');
+  if (replyNoticeEl) replyNoticeEl.innerHTML = t.replyNotice;
+  setText('reply-label-text', t.replyLabel);
+  const replyConfirmBtn = document.getElementById('reply-confirm-btn');
+  if (replyConfirmBtn) replyConfirmBtn.textContent = t.replyBtn;
+  const listenBtn = document.querySelector('#screen-reply .notranslate');
+  if (listenBtn) listenBtn.textContent = t.replyListen;
+  
+  // 전송 완료 화면
+  setText('sent-title', t.sentTitle);
+  setText('sent-msg', t.sentMsg);
+}
+
 function applyPageTranslation(lang) {
   const lc = lang.split('-')[0];
   const t = LANDING_TRANSLATIONS[lang] || LANDING_TRANSLATIONS[lc] || LANDING_TRANSLATIONS.en;
@@ -1670,16 +1859,20 @@ function toggleHostLangMenu(){
 function setHostLang(lang,el){
   if(document.getElementById('hostLangMenu'))document.getElementById('hostLangMenu').classList.remove('open');
   if(document.getElementById('hostLoginLangMenu'))document.getElementById('hostLoginLangMenu').classList.remove('open');
-  // Google Translate 제거됨
-  localStorage.setItem('pip_host_lang_pref', lang);
-  localStorage.setItem('pip_host_lang_display',LANG_NAMES[lang]||lang);
   localStorage.setItem('pip_host_lang_pref',lang);
-  location.reload();
+  localStorage.setItem('pip_host_lang_display',LANG_NAMES[lang]||lang);
+  const hostEl=document.getElementById('hostLangSelected');if(hostEl)hostEl.textContent=LANG_NAMES[lang]||lang;
+  const hostLoginEl=document.getElementById('hostLoginLangSelected');if(hostLoginEl)hostLoginEl.textContent=LANG_NAMES[lang]||lang;
+  applyFullTranslation(lang);
 }
 
-function applyHostLang(){}
+function applyHostLang(){} // Google Translate 제거됨
 
-window.addEventListener('load',()=>{
+
+
+
+
+
   // Language 버튼 표시 (localStorage 기반)
   const savedClientLang = localStorage.getItem('pip_client_lang_pref') || 'ko';
   const el = document.getElementById('langSelected');
@@ -1699,12 +1892,352 @@ window.addEventListener('load',()=>{
     const finalLang = target || 'ko';
     localStorage.setItem('pip_client_lang_pref', finalLang);
     if (el) el.textContent = LANG_NAMES[finalLang] || '한국어';
-    if (finalLang !== 'ko') applyPageTranslation(finalLang);
+    if (finalLang !== 'ko') applyFullTranslation(finalLang);
   }
   
   // Google Translate 제거됨 - DeepL 백엔드 사용
   const savedLang = localStorage.getItem('pip_client_lang_pref');
-  if (savedLang && savedLang !== 'ko' && !isHost) applyPageTranslation(savedLang);
+  if (savedLang && savedLang !== 'ko' && !isHost) applyFullTranslation(savedLang);
+
+
+
+
+
+
+
+
+
+
+document.addEventListener('click',(e)=>{
+  if(!e.target.closest('.lang-selector-wrap')){
+    const m=document.getElementById('langMenu');if(m)m.classList.remove('open');
+    const hm=document.getElementById('hostLangMenu');if(hm)hm.classList.remove('open');
+    const lm=document.getElementById('hostLoginLangMenu');if(lm)lm.classList.remove('open');
+  }
+  // Google Translate 툴팁 클릭 시 제거
+  const tooltip = document.querySelector('.goog-te-tooltip');
+  if (tooltip) tooltip.style.display = 'none';
+});
+
+
+
+// ===== 호스트 =====
+async function hostLogin(){
+  const pw=document.getElementById('host-pw').value;document.getElementById('host-error').classList.remove('show');
+  try{const data=await api('/api/auth/host/login','POST',{password:pw});if(data.token){token=data.token;localStorage.setItem('pip_token',token);localStorage.setItem('pip_role','host');applyHostLang();goScreen('screen-host');}else{document.getElementById('host-error').classList.add('show');}}
+  catch(e){document.getElementById('host-error').classList.add('show');}
+}
+function hostLogout(){localStorage.removeItem('pip_token');localStorage.removeItem('pip_role');token=null;goScreen('screen-host-login');}
+
+async function loadHostDashboard(){
+  loadGroups();
+  try{const clients=await api('/api/host/clients');document.getElementById('stat-clients').textContent=clients.length;document.getElementById('stat-pending').textContent=clients.filter(c=>c.hasPending).length;document.getElementById('client-list').innerHTML=clients.map(c=>{const dn=c.email||c.name||'내담자',ini=dn.substring(0,2).toUpperCase();return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar">'+ini+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+dn+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">'+(c.hasPending?'💬 상담 대기 중':'미답변 없음')+' · 주'+(c.session_frequency||2)+'회</div><div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 '+(c.invite_code||'-')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join('');}
+  catch(e){document.getElementById('client-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">로드 실패</p>';}
+  try{const modules=await api('/api/host/modules');document.getElementById('host-module-list').innerHTML=modules.length>0?modules.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1;cursor:pointer" onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')"><div style="font-size:14px;font-weight:500">'+m.title+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">클릭하여 질문 편집</div></div><button onclick="openModuleEditor(\''+m.id+'\',\''+((m.title||'').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';}
+  catch(e){}
+  loadHostSchedule();
+}
+
+async function openClientDetail(clientId){currentDetailClientId=clientId;goScreen('screen-client-detail');showDetailTab('profile',document.getElementById('dtab-profile'));await loadClientDetail();}
+
+async function loadClientDetail(){
+  try{
+    const data=await api('/api/host/clients/'+currentDetailClientId);const c=data.client;
+    document.getElementById('detail-client-name').textContent=c.name+(c.nickname?' · '+c.nickname:'');
+    document.getElementById('detail-client-sub').textContent=(c.language==='ko'?'한국어':'English')+' · 주'+(c.session_frequency||2)+'회';
+    document.getElementById('dp-name').value=c.name||'';document.getElementById('dp-nickname').value=c.nickname||'';
+    document.getElementById('dp-age').value=c.age||'';document.getElementById('dp-email').value=c.email||'';
+    document.getElementById('dp-language').value=c.language||'ko';
+    currentClientLang=c.language||'ko';
+    document.getElementById('dp-invite-code').textContent=c.invite_code||'-';
+    document.getElementById('dp-frequency').value=c.session_frequency||2;
+    document.getElementById('dp-startdate').value=c.program_start_date||'';
+    document.getElementById('dp-characteristics').value=c.characteristics||'';
+    document.getElementById('dp-memo').value=c.memo||'';
+    const assigned=data.modules||[];
+    document.getElementById('detail-module-list').innerHTML=assigned.length>0?assigned.map(m=>'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="flex:1"><div style="font-size:14px;font-weight:500">'+(m.modules?.title||'모듈')+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+(m.completed?'✅ 완료':(m.is_active?'🟢 진행 중':'⏸ 대기'))+'</div></div><div style="display:flex;gap:6px;align-items:center"><button onclick="openModuleEditor(\''+m.module_id+'\',\''+((m.modules?.title||'모듈').replace(/'/g,"\\\'"))+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✏️ 편집</button><button onclick="toggleModule(\''+m.module_id+'\','+!m.is_active+')" style="background:'+(m.is_active?'#FDF3E7':'#EDF4EE')+';color:'+(m.is_active?'#8B5E2A':'var(--sage-dark)')+';border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">'+(m.is_active?'비활성화':'활성화')+'</button><button onclick="removeModule(\''+m.module_id+'\')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button></div></div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
+    const answersBtn=document.getElementById('detail-answers-btn');if(answersBtn)answersBtn.style.display='block';
+    allModules=await api('/api/host/modules');
+    const assignedIds=assigned.map(m=>m.module_id);
+    document.getElementById('detail-all-modules').innerHTML=allModules.filter(m=>!assignedIds.includes(m.id)).map(m=>'<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="assignModule(\''+m.id+'\')"><div class="card-row"><div style="font-size:14px">'+m.title+'</div><span style="color:var(--sage);font-size:12px">+ 배정</span></div></div>').join('')||'<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
+    const counsels=data.counseling||[];
+    _counselList=counsels;
+    document.getElementById('detail-counsel-list').innerHTML=counsels.length>0?counsels.map((c,ci)=>{
+      const dateStr=c.sent_at?new Date(c.sent_at).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      const statusColor=c.status==='replied'?'var(--sage-dark)':'var(--danger)';
+      const statusLabel=c.status==='replied'?'답변완료':'미답변';
+      const preview=(c.message||'').substring(0,80)+((c.message||'').length>80?'...':'');
+      const replyHtml=c.reply?'<div style="background:#EDF4EE;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--sage-dark);line-height:1.6">💬 '+(c.reply||'').substring(0,60)+((c.reply||'').length>60?'...':'')+'</div>':'';
+      const replyBtn=!c.reply?'<button onclick="openDetailReplyByIdx('+ci+')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:6px">답변 작성</button>':'';
+      return '<div class="card" style="margin-bottom:8px;" id="counsel-card-'+c.id+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+        +'<div style="font-size:11px;color:var(--text-muted)">'+dateStr+'</div>'
+        +'<span style="font-size:11px;color:'+statusColor+'">● '+statusLabel+'</span></div>'
+        +'<p style="font-size:13px;line-height:1.6;color:var(--text);cursor:pointer" id="counsel-preview-'+c.id+'" onclick="openDetailReplyByIdx('+ci+')">'+preview+'</p>'
+        +replyHtml+replyBtn+'</div>';
+    }).join(''):'<p style="font-size:13px;color:var(--text-muted)">상담 내역 없음</p>';
+    // 상담 메시지 자동 번역
+    translateCounselList(counsels);
+    const schedules=data.schedules||[];
+    document.getElementById('detail-schedule-list').innerHTML=schedules.length>0?schedules.map(s=>{let t=s.confirmed_time||s.requested_time||'시간 미정';try{if(t.includes('T'))t=formatDateForHost(t);}catch(e){}const cb=s.status!=='confirmed'?'<button onclick="confirmSchedule(\''+s.id+'\',\''+(s.confirmed_time||s.requested_time)+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;margin-top:8px;width:100%">✓ 확정하기</button>':'';return'<div class="card" style="margin-bottom:8px"><div class="card-row"><div style="font-size:14px">'+t+'</div><span class="badge '+(s.status==='confirmed'?'green':'amber')+'">'+(s.status==='confirmed'?'확정':'대기')+'</span></div>'+cb+'</div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
+  }catch(e){console.error(e);}
+}
+
+// 인덱스로 상담 열기
+function openDetailReplyByIdx(idx){const c=_counselList[idx];if(!c)return;openDetailReply(c.id,c.message||'',c.reply||'',c.sent_at||'',c.status||'');}
+
+// 상담 자동 번역
+async function translateCounselList(counsels){
+  const hostLang=getHostDisplayLang();
+  for(let i=0;i<counsels.length;i++){
+    const c=counsels[i];if(!c.message)continue;
+    const translated=await translateText(c.message,hostLang,'auto');
+    if(!translated||translated===c.message)continue;
+    const msgEl=document.getElementById('counsel-preview-'+c.id);
+    if(msgEl){
+      const preview=translated.substring(0,80)+(translated.length>80?'...':'');
+      msgEl.innerHTML=preview+translateBadge();
+      const tMsg=translated,origMsg=c.message;
+      msgEl.onclick=()=>openDetailReply(c.id,origMsg,c.reply||'',c.sent_at||'',c.status||'',tMsg);
+    }
+    const card=document.getElementById('counsel-card-'+c.id);
+    if(card){const btn=card.querySelector('button');if(btn&&btn.textContent==='답변 작성'){const tMsg=translated,origMsg=c.message;btn.onclick=()=>openDetailReply(c.id,origMsg,c.reply||'',c.sent_at||'',c.status||'',tMsg);}}
+  }
+}
+
+function showOriginalMsg(){const el=document.getElementById('detail-counsel-msg');if(el)el.textContent=_originalCounselMsg;}
+
+function openDetailReply(counselId,message,reply,sentAt,status,translatedMsg){
+  currentDetailCounselId=counselId;
+  _originalCounselMsg=message;
+  const displayMsg=translatedMsg||message;
+  const el=document.getElementById('detail-counsel-msg');
+  el.textContent=displayMsg;
+  if(translatedMsg&&translatedMsg!==message){
+    el.innerHTML=displayMsg+translateBadge()+'<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="showOriginalMsg()">원문 보기 ▾</div>';
+  }
+  document.getElementById('detail-reply-date').textContent=sentAt?new Date(sentAt).toLocaleDateString('ko-KR'):'';
+  document.getElementById('detail-reply-text').value='';
+  if(reply){document.getElementById('detail-reply-existing').style.display='block';document.getElementById('detail-reply-prev').textContent=reply;}
+  else{document.getElementById('detail-reply-existing').style.display='none';}
+  document.getElementById('detail-reply-success').classList.remove('show');
+  goScreen('screen-detail-reply');
+}
+
+function showDetailTab(tab,btn){
+  document.querySelectorAll('#screen-client-detail .host-tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
+  ['profile','modules','counsel','schedule'].forEach(t=>{const el=document.getElementById('detail-tab-'+t);if(el)el.style.display=t===tab?'block':'none';});
+  const saveBtn=document.getElementById('detail-save-btn');if(saveBtn)saveBtn.style.display=tab==='profile'?'block':'none';
+}
+
+async function saveClientProfile(){
+  const data={name:document.getElementById('dp-name').value,nickname:document.getElementById('dp-nickname').value,age:parseInt(document.getElementById('dp-age').value)||null,email:document.getElementById('dp-email').value,language:document.getElementById('dp-language').value,session_frequency:parseInt(document.getElementById('dp-frequency').value)||2,program_start_date:document.getElementById('dp-startdate').value||null,characteristics:document.getElementById('dp-characteristics').value,memo:document.getElementById('dp-memo').value};
+  try{await api('/api/host/clients/'+currentDetailClientId,'PUT',data);const suc=document.getElementById('profile-save-success');suc.classList.add('show');setTimeout(()=>suc.classList.remove('show'),2000);document.getElementById('detail-client-name').textContent=data.name+(data.nickname?' · '+data.nickname:'');}
+  catch(e){alert('저장 실패');}
+}
+
+async function assignModule(moduleId){try{await api('/api/host/clients/'+currentDetailClientId+'/modules/assign','POST',{moduleId,orderNum:1});await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('배정 실패');}}
+
+async function loadClientAnswers(){
+  const listEl=document.getElementById('detail-answers-list'),btn=document.getElementById('detail-answers-btn');
+  if(listEl.style.display==='block'){listEl.style.display='none';btn.textContent='📋 내담자 교육 답변 확인';return;}
+  listEl.style.display='block';btn.textContent='📋 답변 숨기기';listEl.innerHTML='<div class="loading">로딩 중...</div>';
+  try{
+    const answers=await api('/api/host/clients/'+currentDetailClientId+'/answers');
+    if(!answers||answers.length===0){listEl.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0">아직 답변이 없습니다.</p>';return;}
+    listEl.innerHTML=answers.map((a,ai)=>{
+      const answerDisplay=a.questions?.type==='text'?(a.text_value||'(입력 없음)'):(a.choice_label?a.choice_label:(a.choice_value||'-'));
+      const dateStr=a.answered_at?new Date(a.answered_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      return'<div class="card" style="margin-bottom:8px;padding:12px 14px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+dateStr+' · <span style="color:'+(a.questions?.type==='text'?'#8B5E2A':'var(--sage-dark)')+'>'+(a.questions?.type==='text'?'주관식':'객관식')+'</span></div><p style="font-size:13px;color:var(--text-muted);margin-bottom:4px" id="ans-q-'+ai+'">'+(a.questions?.text||'질문')+'</p><p style="font-size:14px;color:var(--text);font-weight:500" id="ans-a-'+ai+'">'+answerDisplay+'</p></div>';
+    }).join('');
+    // 주관식 답변 자동 번역
+    const hostLang=getHostDisplayLang();
+    answers.forEach(async(a,ai)=>{
+      if(a.questions?.text){const tq=await translateText(a.questions.text,hostLang,'auto');const qEl=document.getElementById('ans-q-'+ai);if(qEl&&tq!==a.questions.text)qEl.innerHTML=tq+translateBadge();}
+      if(a.questions?.type==='text'&&a.text_value){const ta=await translateText(a.text_value,hostLang,'auto');const aEl=document.getElementById('ans-a-'+ai);if(aEl&&ta!==a.text_value)aEl.innerHTML=ta+translateBadge();}
+    });
+  }catch(e){listEl.innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
+}
+
+async function toggleModule(moduleId,isActive){try{await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId+'/toggle','PUT',{is_active:isActive});await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('변경 실패');}}
+async function removeModule(moduleId){if(!confirm('이 모듈을 제거할까요?'))return;try{await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId,'DELETE');await loadClientDetail();showDetailTab('modules',document.getElementById('dtab-modules'));}catch(e){alert('제거 실패');}}
+
+let currentEditorModuleId=null,editorQuestions=[];
+async function openModuleEditor(moduleId,title){
+  currentEditorModuleId=moduleId;document.getElementById('editor-module-title').textContent=title+' — 질문 편집';
+  document.getElementById('editor-save-success').classList.remove('show');document.getElementById('question-list').innerHTML='<div class="loading">질문 로딩 중...</div>';
+  goScreen('screen-module-editor');
+  try{const questions=await api('/api/host/modules/'+moduleId+'/questions');editorQuestions=questions.map(q=>({id:q.id,text:q.text||'',type:q.type||'choice',order_num:q.order_num||1,choices:(()=>{try{return typeof q.choices==='string'?JSON.parse(q.choices):(q.choices||[]);}catch(e){return [];}})()}));renderQuestionList();}
+  catch(e){document.getElementById('question-list').innerHTML='<p style="color:var(--danger)">질문 로드 실패</p>';}
+}
+
+function renderQuestionList(){
+  if(editorQuestions.length===0){document.getElementById('question-list').innerHTML='<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px">아직 질문이 없습니다.<br>위의 버튼으로 추가하세요.</p>';return;}
+  document.getElementById('question-list').innerHTML=editorQuestions.map((q,i)=>'<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;padding:3px 8px;border-radius:12px;background:'+(q.type==='choice'?'#EDF4EE':'#FDF8F0')+';color:'+(q.type==='choice'?'var(--sage-dark)':'#8B5E2A')+'">'+(q.type==='choice'?'객관식':'주관식')+'</span><div style="display:flex;gap:6px">'+(i>0?'<button onclick="moveQuestion('+i+',-1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↑</button>':'')+(i<editorQuestions.length-1?'<button onclick="moveQuestion('+i+',1)" style="background:none;border:1px solid var(--warm);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px">↓</button>':'')+'<button onclick="deleteQuestion('+i+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px 4px">✕</button></div></div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">질문 '+(i+1)+'</div><textarea id="q-text-'+i+'" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px;font-family:\'DM Sans\',sans-serif;resize:vertical;min-height:70px;outline:none;line-height:1.6">'+q.text+'</textarea>'+(q.type==='choice'?'<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">선택지 (한 줄에 하나)</div><textarea id="q-choices-'+i+'" style="width:100%;padding:8px 10px;border:1px solid var(--warm);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.8">'+(q.choices||[]).map(c=>c.label||c).join('\n')+'</textarea></div>':'<div style="margin-top:6px;padding:8px 10px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--text-muted)">💬 내담자가 직접 텍스트로 입력합니다</div>')+'</div>').join('');
+}
+
+async function createGlobalModule(){
+  const title=document.getElementById('new-module-title').value.trim();if(!title){document.getElementById('new-module-title').style.borderColor='var(--danger)';return;}
+  try{const res=await api('/api/host/modules','POST',{title,order_num:1});if(res.success||res.moduleId){document.getElementById('new-module-title').value='';document.getElementById('module-create-success').classList.add('show');setTimeout(()=>document.getElementById('module-create-success').classList.remove('show'),2000);loadHostDashboard();}}
+  catch(e){alert('생성 실패');}
+}
+
+function addQuestion(type){editorQuestions.push({text:'',type,order_num:editorQuestions.length+1,choices:type==='choice'?[{label:'선택지 1',value:'1'},{label:'선택지 2',value:'2'},{label:'선택지 3',value:'3'}]:[]});renderQuestionList();}
+function deleteQuestion(idx){if(!confirm('이 질문을 삭제할까요?'))return;editorQuestions.splice(idx,1);renderQuestionList();}
+function moveQuestion(idx,dir){const ni=idx+dir;if(ni<0||ni>=editorQuestions.length)return;[editorQuestions[idx],editorQuestions[ni]]=[editorQuestions[ni],editorQuestions[idx]];renderQuestionList();}
+
+async function saveAllQuestions(){
+  editorQuestions.forEach((q,i)=>{const te=document.getElementById('q-text-'+i);if(te)q.text=te.value.trim();if(q.type==='choice'){const ce=document.getElementById('q-choices-'+i);if(ce){const lines=ce.value.split('\n').filter(l=>l.trim());q.choices=lines.map((l,j)=>({label:l.trim(),value:String(j+1)}));}}q.order_num=i+1;});
+  try{await api('/api/host/modules/'+currentEditorModuleId+'/questions','POST',{questions:editorQuestions});const suc=document.getElementById('editor-save-success');suc.classList.add('show');setTimeout(()=>suc.classList.remove('show'),2000);const updated=await api('/api/host/modules/'+currentEditorModuleId+'/questions');editorQuestions=updated.map(q=>({id:q.id,text:q.text||'',type:q.type||'choice',order_num:q.order_num||1,choices:(()=>{try{return typeof q.choices==='string'?JSON.parse(q.choices):(q.choices||[]);}catch(e){return[];}})()}));renderQuestionList();}
+  catch(e){alert('저장 실패');}
+}
+
+function openDetailReply(counselId,message,reply,sentAt,status,translatedMsg){
+  currentDetailCounselId=counselId;_originalCounselMsg=message;
+  const displayMsg=translatedMsg||message;
+  const el=document.getElementById('detail-counsel-msg');
+  el.textContent=displayMsg;
+  if(translatedMsg&&translatedMsg!==message){el.innerHTML=displayMsg+translateBadge()+'<div style="font-size:11px;color:var(--text-muted);margin-top:6px;cursor:pointer" onclick="showOriginalMsg()">원문 보기 ▾</div>';}
+  document.getElementById('detail-reply-date').textContent=sentAt?new Date(sentAt).toLocaleDateString('ko-KR'):'';
+  document.getElementById('detail-reply-text').value='';
+  if(reply){document.getElementById('detail-reply-existing').style.display='block';document.getElementById('detail-reply-prev').textContent=reply;}
+  else{document.getElementById('detail-reply-existing').style.display='none';}
+  document.getElementById('detail-reply-success').classList.remove('show');
+  goScreen('screen-detail-reply');
+}
+
+async function sendDetailReply(){
+  const reply=document.getElementById('detail-reply-text').value.trim();if(!reply||!currentDetailCounselId)return;
+  try{const res=await api('/api/host/counsel/'+currentDetailCounselId+'/reply','POST',{reply});if(res.success){document.getElementById('detail-reply-success').classList.add('show');document.getElementById('detail-reply-text').value='';setTimeout(async()=>{await loadClientDetail();goScreen('screen-client-detail');showDetailTab('counsel',document.getElementById('dtab-counsel'));},1500);}}
+  catch(e){alert('전송 실패');}
+}
+
+function getClientDisplay(client){return{name:client?.email||client?.name||'내담자',group:client?.group_name||(client?.groups&&client.groups.name)||null};}
+
+async function loadHostSchedule(){
+  try{
+    document.getElementById('host-confirmed-schedule').innerHTML='<div class="loading">로딩 중...</div>';
+    const [pending,allClients]=await Promise.all([api('/api/schedule/host/pending'),api('/api/host/clients')]);
+    const clientMap={};allClients.forEach(c=>{clientMap[c.id]=c;});
+    const detailResults=await Promise.all(allClients.map(c=>api('/api/host/clients/'+c.id).then(d=>({client:c,schedules:d.schedules||[]})).catch(()=>({client:c,schedules:[]}))));
+    const allConfirmed=[];detailResults.forEach(({client,schedules})=>{schedules.filter(s=>s.status==='confirmed').forEach(s=>{allConfirmed.push({...s,_client:client});});});
+    allConfirmed.sort((a,b)=>(a.confirmed_time||a.requested_time||'').localeCompare(b.confirmed_time||b.requested_time||''));
+    document.getElementById('host-confirmed-schedule').innerHTML=allConfirmed.length>0?allConfirmed.map(s=>{const {name,group}=getClientDisplay(s._client);let t=s.confirmed_time||s.requested_time;try{if(t&&t.includes('T'))t=formatDateForHost(t);}catch(e){}return'<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:500;color:var(--text)">'+name+'</div>'+(group?'<div style="font-size:11px;color:var(--sage-dark);margin-top:1px">📂 '+group+'</div>':'<div style="font-size:11px;color:var(--text-muted);margin-top:1px">그룹 미지정</div>')+'<div style="font-size:12px;color:var(--text-muted);margin-top:4px">🕐 '+t+'</div></div><span class="badge green">확정</span></div></div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">확정된 세션 없음</p>';
+    document.getElementById('host-pending-schedule').innerHTML=pending.length>0?pending.map(s=>{const clientId=s.client_id||s.clients?.id,fullClient=clientMap[clientId]||s.clients||{},{name,group}=getClientDisplay(fullClient);let t=s.requested_time;try{if(t&&t.includes('T'))t=formatDateForHost(t);}catch(e){}return'<div class="card"><div style="margin-bottom:6px"><div style="font-size:14px;font-weight:500">'+name+'</div>'+(group?'<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">📂 '+group+'</div>':'')+'</div><div style="font-size:13px;color:var(--text);margin-bottom:6px">🕐 '+t+'</div>'+(s.clientTimezone?'<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">📍 '+s.clientTimezone+'</div>':'')+'<button class="btn primary" style="padding:8px" onclick="confirmSchedule(\''+s.id+'\',\''+s.requested_time+'\')">확정</button></div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">대기 중인 요청 없음</p>';
+  }catch(e){document.getElementById('host-confirmed-schedule').innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
+}
+
+async function confirmSchedule(id,time){
+  try{await api('/api/schedule/host/'+id+'/confirm','POST',{confirmedTime:time});alert('확정되었습니다.');loadHostSchedule();if(currentDetailClientId){await loadClientDetail();showDetailTab('schedule',document.getElementById('dtab-schedule'));}}
+  catch(e){alert('확정 실패');}
+}
+
+let currentClientId=null;
+async function loadHostReply(){
+  if(!currentClientId)return;
+  try{const counsels=await api('/api/host/counsel/'+currentClientId);if(counsels&&counsels.length>0){currentHostCounselId=counsels[0].id;document.getElementById('host-counsel-text').textContent=counsels[0].message;}else{document.getElementById('host-counsel-text').textContent='미답변 상담 없음';}}
+  catch(e){}
+}
+
+async function sendHostReply(){
+  const reply=document.getElementById('host-reply-text').value.trim();if(!reply||!currentHostCounselId)return;
+  try{const res=await api('/api/host/counsel/'+currentHostCounselId+'/reply','POST',{reply});if(res.success){document.getElementById('reply-success').classList.add('show');document.getElementById('host-reply-text').value='';setTimeout(()=>goScreen('screen-host'),1500);}}
+  catch(e){}
+}
+
+async function addClient(){
+  const name=document.getElementById('new-client-name').value.trim()||'내담자',lang=document.getElementById('new-client-lang').value,groupId=currentAddGroupId||null;
+  try{const res=await api('/api/host/clients/add','POST',{name,language:lang,group_id:groupId});if(res.inviteCode){document.getElementById('new-invite-code').textContent=res.inviteCode;document.getElementById('new-invite-result').style.display='block';currentAddGroupId=null;}}
+  catch(e){alert('추가 실패');}
+}
+
+async function loadGroups(){
+  try{
+    const [groups,clients]=await Promise.all([api('/api/host/groups'),api('/api/host/clients')]);
+    if(groups.length===0){document.getElementById('group-list').innerHTML='<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';return;}
+    document.getElementById('group-list').innerHTML=groups.map(g=>{
+      const gc=clients.filter(c=>c.group_id===g.id);
+      const ch=gc.length>0?gc.map(c=>{const dn=c.email||c.name||'내담자';return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar" style="width:34px;height:34px;font-size:10px">'+dn.substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:12px;font-weight:500">'+dn+'</div><div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+' · '+(c.hasPending?'💬 상담대기':'미답변없음')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join(''):'<p style="font-size:12px;color:var(--text-muted);padding:8px 0">내담자 없음</p>';
+      return'<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-size:15px;font-weight:500">'+g.name+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+(g.description||'')+'</div><div style="display:flex;gap:8px;margin-top:4px"><span style="font-size:11px;background:#EDF4EE;color:var(--sage-dark);padding:2px 8px;border-radius:10px">주 '+(g.session_frequency||3)+'회</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">'+(g.contract_months||6)+'개월</span><span style="font-size:11px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:10px">'+(g.total_modules||24)+'모듈</span></div></div><button onclick="addClientToGroup(\''+g.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">+ 내담자</button></div><div style="border-top:1px solid var(--warm);padding-top:8px">'+ch+'</div></div>';
+    }).join('');
+    const ungrouped=clients.filter(c=>!c.group_id);
+    if(ungrouped.length>0){document.getElementById('group-list').innerHTML+='<div class="card" style="margin-bottom:12px;border-style:dashed"><div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">📌 미배정 내담자</div>'+ungrouped.map(c=>'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar" style="width:34px;height:34px;font-size:11px">'+(c.name||'?').substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+c.name+'</div><div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+'</div></div></div>').join('')+'</div>';}
+  }catch(e){document.getElementById('group-list').innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
+}
+
+function addClientToGroup(groupId){currentAddGroupId=groupId;goScreen('screen-host-add');}
+let currentAddGroupId=null;
+
+async function createGroup(){
+  const name=document.getElementById('new-group-name').value.trim();if(!name){document.getElementById('new-group-name').style.borderColor='var(--danger)';return;}
+  const desc=document.getElementById('new-group-desc').value.trim(),freq=parseInt(document.getElementById('new-group-freq').value)||3,months=parseInt(document.getElementById('new-group-months').value)||6,modules=parseInt(document.getElementById('new-group-modules').value)||24;
+  try{const res=await api('/api/host/groups','POST',{name,description:desc,session_frequency:freq,contract_months:months,total_modules:modules});if(res.success){document.getElementById('new-group-name').value='';document.getElementById('new-group-desc').value='';document.getElementById('group-create-success').classList.add('show');setTimeout(()=>document.getElementById('group-create-success').classList.remove('show'),2000);loadGroups();}}
+  catch(e){alert('생성 실패');}
+}
+
+async function loadHostSettings(){
+  try{const s=await api('/api/host/settings');if(s){document.getElementById('landing-text').value=s.landing_text||'';document.getElementById('company-name').value=s.company_name||'';document.getElementById('program-name').value=s.program_name||'';}}catch(e){}
+  setTimeout(()=>buildLangVoiceSettings(), 400);
+}
+async function saveSettings(){const data={landing_text:document.getElementById('landing-text').value,company_name:document.getElementById('company-name').value,program_name:document.getElementById('program-name').value};try{await api('/api/host/settings','PUT',data);document.getElementById('settings-success').classList.add('show');setTimeout(()=>document.getElementById('settings-success').classList.remove('show'),2000);}catch(e){alert('저장 실패');}}
+
+function showHostTab(tab,btn){
+  document.querySelectorAll('.host-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  ['groups','clients','edu','schedule','settings'].forEach(t=>{const el=document.getElementById('host-tab-'+t);if(el)el.style.display=t===tab?'block':'none';});
+  if(tab==='settings')loadHostSettings();if(tab==='schedule')loadHostSchedule();if(tab==='groups')loadGroups();
+}
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}
+
+function initApp(){
+  try{
+    const hash=window.location.hash,isHost=hash==='#host'||hash==='#/host';
+    const savedRole=localStorage.getItem('pip_role'),savedToken=localStorage.getItem('pip_token');
+    token=savedToken||null;
+    if(isHost){
+      if(savedToken&&savedRole==='host'){showScreen('screen-host');loadHostDashboard();}
+      else{localStorage.removeItem('pip_token');localStorage.removeItem('pip_role');token=null;showScreen('screen-host-login');}
+    }else{
+      if(savedToken&&savedRole!=='host'){try{applyLang();}catch(e){}showScreen('screen-home');loadHome();}
+      else{showScreen('screen-landing');}
+    }
+  }catch(e){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-landing').classList.add('active');}
+}
+
+window.onload = function() {
+  initApp();
+};
+</script>
+</body>
+</htmlwindow.addEventListener('load', () => {
+  // Language 버튼 표시
+  const savedClientLang = localStorage.getItem('pip_client_lang_pref') || 'ko';
+  const el = document.getElementById('langSelected');
+  if (el) el.textContent = LANG_NAMES[savedClientLang] || '한국어';
+  const hostSaved = localStorage.getItem('pip_host_lang_display');
+  const hostEl = document.getElementById('hostLangSelected'); if(hostSaved&&hostEl) hostEl.textContent=hostSaved;
+  const hostLoginEl = document.getElementById('hostLoginLangSelected'); if(hostSaved&&hostLoginEl) hostLoginEl.textContent=hostSaved;
+  
+  // ★ 브라우저/폰 언어 자동 감지
+  const isHost = location.hash==='#host'||location.hash==='#/host';
+  if (!isHost && !localStorage.getItem('pip_client_lang_pref')) {
+    const browserLang = (navigator.language || navigator.userLanguage || 'ko').toLowerCase();
+    const lc = browserLang.split('-')[0];
+    const langMap = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
+    let target = langMap[lc];
+    if (lc==='zh') target = (browserLang.includes('tw')||browserLang.includes('hk'))?'zh-TW':'zh-CN';
+    const finalLang = target || 'ko';
+    localStorage.setItem('pip_client_lang_pref', finalLang);
+    if (el) el.textContent = LANG_NAMES[finalLang] || '한국어';
+    if (finalLang !== 'ko') applyFullTranslation(finalLang);
+  } else if (savedClientLang !== 'ko' && !isHost) {
+    applyFullTranslation(savedClientLang);
+  }
+  // 호스트 언어 적용
+  if (isHost && hostSaved && hostSaved !== '한국어') {
+    const hostLang = localStorage.getItem('pip_host_lang_pref') || 'ko';
+    if (hostLang !== 'ko') applyFullTranslation(hostLang);
+  }
 });
 
 document.addEventListener('click',(e)=>{
