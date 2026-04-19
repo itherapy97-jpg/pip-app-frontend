@@ -900,6 +900,83 @@ function tr(koText) {
   return map[koText] || koText;
 }
 
+// ============================================================
+// 언어별 긴 본문 HTML 사전 (랜딩/로그인 등)
+// DeepL API 호출 없이 즉시 번역 표시
+// ============================================================
+const LOCALIZED_HTML = {
+  'landing-quote': {
+    ko: '"내면의 평화는 고치는 것이 아니라,<br>이미 있는 것을 <em style="color:#4A6B4D">발견하는 것</em>입니다."',
+    en: '"Inner peace is not something to be fixed,<br>but <em style="color:#4A6B4D">discovered</em> in what already exists."',
+    ja: '「内なる平和は、直すものではなく、<br>すでにあるものを<em style="color:#4A6B4D">発見すること</em>です。」',
+    'zh-CN': '"内心的平静不是要去修复的,<br>而是要<em style="color:#4A6B4D">发现</em>已经存在的东西。"',
+    'zh-TW': '「內心的平靜不是要去修復的,<br>而是要<em style="color:#4A6B4D">發現</em>已經存在的事物。」',
+    es: '"La paz interior no es algo que reparar,<br>sino <em style="color:#4A6B4D">descubrir</em> en lo que ya existe."',
+    fr: '"La paix intérieure n\'est pas à réparer,<br>mais à <em style="color:#4A6B4D">découvrir</em> dans ce qui existe déjà."',
+    de: '"Innerer Frieden ist nichts zu reparieren,<br>sondern im bereits Vorhandenen zu <em style="color:#4A6B4D">entdecken</em>."',
+    pt: '"A paz interior não é algo a ser consertado,<br>mas <em style="color:#4A6B4D">descoberto</em> no que já existe."',
+    ru: '"Внутренний покой — не то, что нужно исправить,<br>а то, что нужно <em style="color:#4A6B4D">открыть</em> в уже существующем."',
+    ar: '"السلام الداخلي ليس شيئًا يجب إصلاحه،<br>بل <em style="color:#4A6B4D">اكتشافه</em> فيما هو موجود بالفعل."',
+    hi: '"आंतरिक शांति ठीक करने की चीज़ नहीं,<br>बल्कि जो पहले से है उसमें <em style="color:#4A6B4D">खोजने</em> की चीज़ है।"',
+    vi: '"Sự bình an nội tâm không phải để sửa chữa,<br>mà để <em style="color:#4A6B4D">khám phá</em> trong những gì đã có sẵn."',
+    th: '"ความสงบภายในไม่ใช่สิ่งที่ต้องแก้ไข<br>แต่ต้อง<em style="color:#4A6B4D">ค้นพบ</em>ในสิ่งที่มีอยู่แล้ว"',
+    id: '"Kedamaian batin bukanlah sesuatu untuk diperbaiki,<br>tetapi untuk <em style="color:#4A6B4D">ditemukan</em> dalam apa yang sudah ada."'
+  },
+  'landing-desc': {
+    ko: 'Peace-In Practice™는 기존 CBT(인지행동치료)와 정반대 방향에서 접근하는 <strong style="color:#4A6B4D">인류 최초의 독자적 내면 교육 방법론</strong>입니다.<br><br>전문 상담가가 창안한 이 프로그램은 교육 과정 안에 <strong style="color:#4A6B4D">1:1 실제 상담</strong>이 정기적으로 포함되어 있습니다.',
+    en: 'Peace-In Practice™ is <strong style="color:#4A6B4D">humanity\'s first unique inner education methodology</strong> that approaches in the opposite direction of existing CBT (Cognitive Behavioral Therapy).<br><br>Created by professional counselors, this program regularly includes <strong style="color:#4A6B4D">1:1 real counseling</strong> within the education process.',
+    ja: 'Peace-In Practice™は既存のCBT(認知行動療法)とは正反対の方向からアプローチする<strong style="color:#4A6B4D">人類初の独自の内面教育方法論</strong>です。<br><br>専門カウンセラーが創案したこのプログラムは、教育課程の中に<strong style="color:#4A6B4D">1対1の実際のカウンセリング</strong>が定期的に含まれています。',
+    'zh-CN': 'Peace-In Practice™是与现有CBT(认知行为疗法)相反方向的<strong style="color:#4A6B4D">人类首创独特内在教育方法论</strong>。<br><br>由专业咨询师创立,该项目在教育过程中定期包含<strong style="color:#4A6B4D">一对一真实咨询</strong>。',
+    'zh-TW': 'Peace-In Practice™是與現有CBT(認知行為療法)相反方向的<strong style="color:#4A6B4D">人類首創獨特內在教育方法論</strong>。<br><br>由專業諮商師創立,該項目在教育過程中定期包含<strong style="color:#4A6B4D">一對一真實諮商</strong>。',
+    es: 'Peace-In Practice™ es <strong style="color:#4A6B4D">la primera metodología única de educación interior de la humanidad</strong> que se aproxima en dirección opuesta a la CBT (Terapia Cognitivo-Conductual) existente.<br><br>Creado por consejeros profesionales, este programa incluye regularmente <strong style="color:#4A6B4D">consejería real 1:1</strong> dentro del proceso educativo.',
+    fr: 'Peace-In Practice™ est <strong style="color:#4A6B4D">la première méthodologie unique d\'éducation intérieure de l\'humanité</strong> qui approche dans la direction opposée de la TCC (Thérapie Cognitivo-Comportementale) existante.<br><br>Créé par des conseillers professionnels, ce programme inclut régulièrement des <strong style="color:#4A6B4D">séances de conseil 1:1</strong> dans le processus éducatif.',
+    de: 'Peace-In Practice™ ist <strong style="color:#4A6B4D">die erste einzigartige Methodik der inneren Bildung der Menschheit</strong>, die sich in entgegengesetzter Richtung zur bestehenden CBT (Kognitive Verhaltenstherapie) annähert.<br><br>Erstellt von professionellen Beratern, umfasst dieses Programm regelmäßig <strong style="color:#4A6B4D">1:1 echte Beratung</strong> im Bildungsprozess.',
+    pt: 'Peace-In Practice™ é <strong style="color:#4A6B4D">a primeira metodologia única de educação interior da humanidade</strong> que se aproxima na direção oposta da TCC (Terapia Cognitivo-Comportamental) existente.<br><br>Criado por conselheiros profissionais, este programa inclui regularmente <strong style="color:#4A6B4D">aconselhamento real 1:1</strong> no processo educacional.',
+    ru: 'Peace-In Practice™ — это <strong style="color:#4A6B4D">первая уникальная методология внутреннего образования человечества</strong>, которая подходит в противоположном направлении от существующей КПТ (когнитивно-поведенческой терапии).<br><br>Созданная профессиональными консультантами, эта программа регулярно включает <strong style="color:#4A6B4D">реальные индивидуальные консультации 1:1</strong> в процессе обучения.',
+    ar: 'Peace-In Practice™ هي <strong style="color:#4A6B4D">أول منهجية تعليم داخلي فريدة للبشرية</strong> تقترب في الاتجاه المعاكس للعلاج السلوكي المعرفي الموجود.<br><br>أنشأه مستشارون محترفون، ويتضمن هذا البرنامج بانتظام <strong style="color:#4A6B4D">استشارات حقيقية 1:1</strong> ضمن العملية التعليمية.',
+    hi: 'Peace-In Practice™ मानवता की <strong style="color:#4A6B4D">पहली अनूठी आंतरिक शिक्षा पद्धति</strong> है जो मौजूदा सीबीटी (संज्ञानात्मक व्यवहार चिकित्सा) के विपरीत दिशा में पहुँचती है।<br><br>पेशेवर परामर्शदाताओं द्वारा बनाया गया, यह कार्यक्रम शिक्षा प्रक्रिया में नियमित रूप से <strong style="color:#4A6B4D">1:1 वास्तविक परामर्श</strong> शामिल करता है।',
+    vi: 'Peace-In Practice™ là <strong style="color:#4A6B4D">phương pháp giáo dục nội tâm độc đáo đầu tiên của nhân loại</strong> tiếp cận theo hướng ngược lại với CBT (Liệu pháp Nhận thức Hành vi) hiện có.<br><br>Được tạo ra bởi các cố vấn chuyên nghiệp, chương trình này thường xuyên bao gồm <strong style="color:#4A6B4D">tư vấn thực 1:1</strong> trong quá trình giáo dục.',
+    th: 'Peace-In Practice™ คือ<strong style="color:#4A6B4D">ระเบียบวิธีการศึกษาภายในที่เป็นเอกลักษณ์ครั้งแรกของมนุษยชาติ</strong>ที่เข้าใกล้ในทิศทางตรงกันข้ามกับ CBT (การบำบัดพฤติกรรมทางปัญญา) ที่มีอยู่<br><br>สร้างโดยผู้ให้คำปรึกษามืออาชีพ โปรแกรมนี้รวม<strong style="color:#4A6B4D">การให้คำปรึกษาจริงแบบ 1:1</strong>เป็นประจำในกระบวนการศึกษา',
+    id: 'Peace-In Practice™ adalah <strong style="color:#4A6B4D">metodologi pendidikan batin unik pertama dari umat manusia</strong> yang mendekati dalam arah berlawanan dengan CBT (Terapi Perilaku Kognitif) yang ada.<br><br>Dibuat oleh konselor profesional, program ini secara teratur mencakup <strong style="color:#4A6B4D">konseling nyata 1:1</strong> dalam proses pendidikan.'
+  },
+  'landing-notice': {
+    ko: '<strong>⚠ 중요 안내</strong><br><br>본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. <strong>허가된 참여자만 접근 가능합니다.</strong>',
+    en: '<strong>⚠ Important Notice</strong><br><br>This program works effectively only under the guidance of professional counselors. <strong>Access is restricted to authorized participants only.</strong>',
+    ja: '<strong>⚠ 重要なお知らせ</strong><br><br>本プログラムは専門カウンセラーの指導の下でのみ効果的に機能します。<strong>許可された参加者のみアクセス可能です。</strong>',
+    'zh-CN': '<strong>⚠ 重要通知</strong><br><br>本项目仅在专业咨询师指导下才能有效运作。<strong>仅限授权参与者访问。</strong>',
+    'zh-TW': '<strong>⚠ 重要通知</strong><br><br>本項目僅在專業諮商師指導下才能有效運作。<strong>僅限授權參與者訪問。</strong>',
+    es: '<strong>⚠ Aviso Importante</strong><br><br>Este programa funciona efectivamente solo bajo la guía de consejeros profesionales. <strong>El acceso está restringido solo a participantes autorizados.</strong>',
+    fr: '<strong>⚠ Avis Important</strong><br><br>Ce programme fonctionne efficacement uniquement sous la direction de conseillers professionnels. <strong>L\'accès est limité aux participants autorisés uniquement.</strong>',
+    de: '<strong>⚠ Wichtiger Hinweis</strong><br><br>Dieses Programm funktioniert effektiv nur unter Anleitung professioneller Berater. <strong>Der Zugang ist auf autorisierte Teilnehmer beschränkt.</strong>',
+    pt: '<strong>⚠ Aviso Importante</strong><br><br>Este programa funciona efetivamente apenas sob orientação de conselheiros profissionais. <strong>O acesso é restrito apenas a participantes autorizados.</strong>',
+    ru: '<strong>⚠ Важное Уведомление</strong><br><br>Эта программа работает эффективно только под руководством профессиональных консультантов. <strong>Доступ ограничен только авторизованными участниками.</strong>',
+    ar: '<strong>⚠ إشعار مهم</strong><br><br>يعمل هذا البرنامج بفعالية فقط تحت إشراف مستشارين محترفين. <strong>الوصول مقتصر على المشاركين المصرح لهم فقط.</strong>',
+    hi: '<strong>⚠ महत्वपूर्ण सूचना</strong><br><br>यह कार्यक्रम पेशेवर परामर्शदाताओं के मार्गदर्शन में ही प्रभावी रूप से काम करता है। <strong>केवल अधिकृत प्रतिभागियों तक ही पहुँच सीमित है।</strong>',
+    vi: '<strong>⚠ Thông Báo Quan Trọng</strong><br><br>Chương trình này chỉ hoạt động hiệu quả dưới sự hướng dẫn của các cố vấn chuyên nghiệp. <strong>Quyền truy cập chỉ giới hạn cho những người tham gia được phép.</strong>',
+    th: '<strong>⚠ ประกาศสำคัญ</strong><br><br>โปรแกรมนี้ทำงานได้อย่างมีประสิทธิภาพภายใต้คำแนะนำของที่ปรึกษามืออาชีพเท่านั้น <strong>การเข้าถึงจำกัดเฉพาะผู้เข้าร่วมที่ได้รับอนุญาตเท่านั้น</strong>',
+    id: '<strong>⚠ Pemberitahuan Penting</strong><br><br>Program ini bekerja secara efektif hanya di bawah bimbingan konselor profesional. <strong>Akses terbatas hanya untuk peserta yang diizinkan.</strong>'
+  }
+};
+
+// 긴 HTML 본문을 언어별로 즉시 교체
+function renderLocalizedHTML(lang) {
+  const targetLang = lang || getCurrentDisplayLang() || 'ko';
+  Object.keys(LOCALIZED_HTML).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const langMap = LOCALIZED_HTML[id];
+    // 정확한 매치 → 언어 prefix 매치 → 영어 폴백 → 한국어 원문
+    let html = langMap[targetLang];
+    if (!html) {
+      const lc = targetLang.split('-')[0];
+      html = langMap[lc];
+    }
+    if (!html) html = langMap['en'];
+    if (!html) html = langMap['ko'];
+    if (html && el.innerHTML !== html) el.innerHTML = html;
+  });
+}
+
 function translateDOM(lang) {
   const lc = (lang||'ko').split('-')[0];
   const key = lc==='zh' ? 'zh' : (KO_TRANSLATIONS[lang] ? lang : (KO_TRANSLATIONS[lc] ? lc : 'en'));
@@ -1033,17 +1110,22 @@ function startAutoTranslation(lang) {
 
 function applyFullTranslation(lang) {
   if (!lang) return;
+  console.log('[PIP] applyFullTranslation called for:', lang);
   // 한국어로 돌아가려면 화면 새로고침 (번역된 DOM 복구)
   if (lang === 'ko') { location.reload(); return; }
   // lock 해제 - setLang 호출 시 바로 번역 실행되도록
   _translationLock = false;
   // data-translated 속성 전부 제거 - 다른 언어로 전환 시 재번역
   document.querySelectorAll('[data-translated]').forEach(el => el.removeAttribute('data-translated'));
+  // 1) 긴 본문은 사전에서 즉시 교체 (DeepL 호출 없이)
+  try { renderLocalizedHTML(lang); } catch(e) { console.warn('[PIP] renderLocalizedHTML error:', e); }
+  // 2) 정적 UI 사전 적용
   startAutoTranslation(lang);
-  // 즉시 + 지연 호출 3회로 동적 콘텐츠 커버
-  setTimeout(() => translateDataElements(lang).catch(()=>{}), 100);
+  // 3) 동적 데이터 번역 (호스트 메시지, 상담 내용 등)
+  setTimeout(() => translateDataElements(lang).catch(e=>console.warn('[PIP] translate error',e)), 100);
   setTimeout(() => translateDataElements(lang).catch(()=>{}), 800);
   setTimeout(() => translateDataElements(lang).catch(()=>{}), 2500);
+  console.log('[PIP] Translation pipeline triggered for:', lang);
 }
 
 // ============================================================
@@ -1058,6 +1140,7 @@ function toggleHostLangMenu() {
 }
 
 function setLang(lang) {
+  console.log('[PIP] setLang:', lang);
   const m=document.getElementById('langMenu'); if(m) m.classList.remove('open');
   localStorage.setItem('pip_client_lang_pref', lang);
   sessionStorage.setItem('pip_lang_manually_set', '1');
