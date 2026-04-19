@@ -358,7 +358,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
   </div>
   <div class="content">
     <div class="warn"><p>🔒 상담자 전용 구역입니다.</p></div>
-    <div class="field"><label>비밀번호 / Password</label><input type="password" id="host-pw" class="notranslate" placeholder="호스트 비밀번호" autocomplete="current-password" /></div>
+    <div class="field"><label>비밀번호 / Password</label><input type="password" id="host-pw" placeholder="호스트 비밀번호" autocomplete="current-password" /></div>
     <div class="error-msg" id="host-error">비밀번호가 올바르지 않습니다.</div>
     <div class="spacer"></div>
     <button class="btn primary" onclick="hostLogin()">로그인</button>
@@ -913,8 +913,13 @@ function translateDOM(lang) {
         node.textContent = txt.replace(txt.trim(), map[txt.trim()]);
       }
     } else if (node.nodeType === 1) {
-      if (['SCRIPT','STYLE','NOSCRIPT','TEXTAREA','INPUT'].includes(node.tagName)) return;
+      if (['SCRIPT','STYLE','NOSCRIPT'].includes(node.tagName)) return;
       if (node.classList && node.classList.contains('notranslate')) return;
+      // INPUT/TEXTAREA: placeholder만 번역하고 자식 노드 순회는 스킵
+      if (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA') {
+        if (node.placeholder && map[node.placeholder]) node.placeholder = map[node.placeholder];
+        return;
+      }
       if (node.placeholder && map[node.placeholder]) node.placeholder = map[node.placeholder];
       node.childNodes.forEach(walk);
     }
@@ -932,16 +937,23 @@ async function translateDataElements(lang) {
     if (!node) return;
     if (node.nodeType === 3) {
       const parent = node.parentElement;
-      // 이미 번역된 노드는 스킵
       if (parent && parent.getAttribute('data-translated') === lang) return;
       const txt = node.textContent.trim();
       if (txt && txt.length > 1 && txt.length < 1500 && /[가-힣]/.test(txt) && !staticMap[txt]) {
-        toTranslate.push({node, txt, parent});
+        toTranslate.push({node, txt, parent, isPlaceholder:false});
       }
     } else if (node.nodeType === 1) {
-      if (['SCRIPT','STYLE','INPUT','TEXTAREA'].includes(node.tagName)) return;
+      if (['SCRIPT','STYLE'].includes(node.tagName)) return;
       if (node.classList && node.classList.contains('notranslate')) return;
       if (node.getAttribute && node.getAttribute('data-translated') === lang) return;
+      // INPUT/TEXTAREA의 placeholder 동적 번역
+      if ((node.tagName === 'INPUT' || node.tagName === 'TEXTAREA') && node.placeholder) {
+        const ph = node.placeholder.trim();
+        if (ph && /[가-힣]/.test(ph) && !staticMap[ph]) {
+          toTranslate.push({node, txt:ph, parent:node, isPlaceholder:true});
+        }
+        return; // input의 자식은 안 봄
+      }
       node.childNodes.forEach(collect);
     }
   }
@@ -962,8 +974,11 @@ async function translateDataElements(lang) {
   for (const txt of uniqueTexts) {
     const ck = lang+'::'+txt;
     if (_translateCache[ck]) {
-      byText[txt].forEach(({node, parent}) => {
-        try { node.textContent = node.textContent.replace(txt, _translateCache[ck]); } catch(e){}
+      byText[txt].forEach(({node, parent, isPlaceholder}) => {
+        try {
+          if (isPlaceholder) { node.placeholder = _translateCache[ck]; }
+          else { node.textContent = node.textContent.replace(txt, _translateCache[ck]); }
+        } catch(e){}
         if (parent) parent.setAttribute('data-translated', lang);
       });
     } else {
@@ -980,8 +995,11 @@ async function translateDataElements(lang) {
         const translated = await translateText(txt, lang, 'auto');
         if (translated && translated !== txt && translated.trim()) {
           _translateCache[lang+'::'+txt] = translated;
-          byText[txt].forEach(({node, parent}) => {
-            try { node.textContent = node.textContent.replace(txt, translated); } catch(e){}
+          byText[txt].forEach(({node, parent, isPlaceholder}) => {
+            try {
+              if (isPlaceholder) { node.placeholder = translated; }
+              else { node.textContent = node.textContent.replace(txt, translated); }
+            } catch(e){}
             if (parent) parent.setAttribute('data-translated', lang);
           });
         }
@@ -1014,10 +1032,18 @@ function startAutoTranslation(lang) {
 }
 
 function applyFullTranslation(lang) {
-  if (!lang || lang === 'ko') { location.reload(); return; }
+  if (!lang) return;
+  // 한국어로 돌아가려면 화면 새로고침 (번역된 DOM 복구)
+  if (lang === 'ko') { location.reload(); return; }
+  // lock 해제 - setLang 호출 시 바로 번역 실행되도록
+  _translationLock = false;
+  // data-translated 속성 전부 제거 - 다른 언어로 전환 시 재번역
+  document.querySelectorAll('[data-translated]').forEach(el => el.removeAttribute('data-translated'));
   startAutoTranslation(lang);
-  setTimeout(() => translateDataElements(lang), 500);
-  setTimeout(() => translateDataElements(lang), 2500);
+  // 즉시 + 지연 호출 3회로 동적 콘텐츠 커버
+  setTimeout(() => translateDataElements(lang).catch(()=>{}), 100);
+  setTimeout(() => translateDataElements(lang).catch(()=>{}), 800);
+  setTimeout(() => translateDataElements(lang).catch(()=>{}), 2500);
 }
 
 // ============================================================
@@ -1038,11 +1064,15 @@ function setLang(lang) {
   const el1=document.getElementById('langSelected'); if(el1) el1.textContent=LANG_NAMES[lang]||lang;
   const el2=document.getElementById('langSelectedHome'); if(el2) el2.textContent=LANG_NAMES[lang]||lang;
   applyFullTranslation(lang);
+  // 화면 데이터 재로드 (tr()이 새 언어로 동적 문자열 생성하도록)
   setTimeout(() => {
     const s = document.querySelector('.screen.active');
-    if (s && s.id==='screen-home') loadHome();
-    if (s && s.id==='screen-threads') loadThreads();
-  }, 200);
+    if (s) {
+      if (s.id==='screen-home') loadHome();
+      else if (s.id==='screen-threads') loadThreads();
+      else if (s.id==='screen-schedule') loadSchedule();
+    }
+  }, 300);
 }
 
 function setHostLang(lang) {
@@ -1056,7 +1086,7 @@ function setHostLang(lang) {
   setTimeout(() => {
     const s = document.querySelector('.screen.active');
     if (s && s.id==='screen-host') loadHostDashboard();
-  }, 200);
+  }, 300);
 }
 
 document.addEventListener('click', (e) => {
@@ -1691,13 +1721,13 @@ async function addClient() {
 
 async function loadHostSchedule() {
   try {
-    const [pending,allClients]=await Promise.all([api('/api/schedule/host/pending'),api('/api/host/clients')]);
+    const [pending,allClients]=await Promise.all([api('/api/host/schedule/pending'),api('/api/host/clients')]);
     document.getElementById('host-pending-schedule').innerHTML=pending.length>0?pending.map(s=>{const name=(s.clients&&(s.clients.email||s.clients.name))||'?';let t=s.requested_time;try{if(t&&t.includes('T'))t=new Date(t).toLocaleString('ko-KR');}catch(e){}return'<div class="card"><div style="font-size:14px;font-weight:500">'+name+'</div><div style="font-size:13px;margin:6px 0">🕐 '+t+'</div><button onclick="confirmSchedule(\''+s.id+'\',\''+s.requested_time+'\')" class="btn primary" style="padding:8px">확정</button></div>';}).join(''):'<p style="font-size:13px;color:var(--text-muted)">대기 중인 요청 없음</p>';
   } catch(e){}
 }
 
 async function confirmSchedule(id,time) {
-  try{await api('/api/schedule/host/'+id+'/confirm','POST',{confirmedTime:time});loadHostSchedule();}catch(e){}
+  try{await api('/api/host/schedule/'+id+'/confirm','POST',{confirmedTime:time});loadHostSchedule();}catch(e){}
 }
 
 // ============================================================
@@ -1822,28 +1852,44 @@ async function loadClientDetailModules() {
       api('/api/host/clients/'+currentDetailClientId),
       api('/api/host/modules')
     ]);
+    // 백엔드는 client_modules 배열을 반환: {id, module_id, is_active, order_num, activated_at, modules:{id,title,order_num}, completed}
     const assignedModules = (clientData && clientData.modules) || [];
-    const assignedIds = new Set(assignedModules.map(m => m.id));
+    const assignedModuleIds = new Set(assignedModules.map(cm => cm.module_id));
+
     if (assignedModules.length === 0) {
       assignedEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">배정된 모듈 없음</p>';
     } else {
-      assignedEl.innerHTML = assignedModules.map(m => {
-        const completed = m.completed ? '✅' : '⏳';
-        const completedLabel = m.completed ? tr('완료') : tr('진행');
+      assignedEl.innerHTML = assignedModules.map(cm => {
+        const m = cm.modules || {};
+        const title = m.title || '(제목 없음)';
+        const completed = cm.completed;
+        const isActive = cm.is_active;
+        let statusIcon = '⏸';
+        let statusText = tr('대기');
+        let statusColor = '#999';
+        if (completed) { statusIcon = '✅'; statusText = tr('완료'); statusColor = 'var(--sage-dark)'; }
+        else if (isActive) { statusIcon = '🟢'; statusText = tr('진행 중'); statusColor = 'var(--sage)'; }
+        const toggleLabel = isActive ? tr('비활성화') : tr('활성화');
+        const toggleNewState = !isActive;
         return '<div class="card" style="margin-bottom:8px">'
-          + '<div class="card-row"><div><div style="font-size:14px;font-weight:500">'+completed+' '+(m.title||'제목 없음')+'</div>'
-          + '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+completedLabel+'</div></div>'
-          + '<button onclick="unassignModule(\''+m.id+'\')" style="background:none;border:1px solid var(--warm);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text-muted);cursor:pointer">해제</button></div></div>';
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+          + '<div style="flex:1"><div style="font-size:14px;font-weight:500">'+statusIcon+' '+title+'</div>'
+          + '<div style="font-size:11px;color:'+statusColor+';margin-top:3px">'+statusText+'</div></div>'
+          + '<div style="display:flex;flex-direction:column;gap:4px">'
+          + (completed ? '' : '<button onclick="toggleModuleActive(\''+cm.module_id+'\','+toggleNewState+')" style="background:'+(isActive?'#FDF3E7':'#EDF4EE')+';border:1px solid '+(isActive?'#E8C99A':'var(--sage-light)')+';border-radius:6px;padding:4px 10px;font-size:11px;color:'+(isActive?'#8B5E2A':'var(--sage-dark)')+';cursor:pointer;white-space:nowrap">'+toggleLabel+'</button>')
+          + '<button onclick="unassignModule(\''+cm.module_id+'\')" style="background:none;border:1px solid var(--warm);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text-muted);cursor:pointer;white-space:nowrap">'+tr('해제')+'</button>'
+          + '</div></div></div>';
       }).join('');
     }
-    const available = (allModules || []).filter(m => !assignedIds.has(m.id));
+
+    const available = (allModules || []).filter(m => !assignedModuleIds.has(m.id));
     if (available.length === 0) {
       allEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
     } else {
       allEl.innerHTML = available.map(m => {
         return '<div class="card" style="margin-bottom:8px">'
           + '<div class="card-row"><div style="font-size:13px">'+(m.title||'제목 없음')+'</div>'
-          + '<button onclick="assignModule(\''+m.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">+ 배정</button></div></div>';
+          + '<button onclick="assignModule(\''+m.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">+ '+tr('배정')+'</button></div></div>';
       }).join('');
     }
     retranslateNow(200);
@@ -1856,9 +1902,9 @@ async function loadClientDetailModules() {
 
 async function assignModule(moduleId) {
   try {
-    await api('/api/host/clients/'+currentDetailClientId+'/modules', 'POST', { moduleId });
+    await api('/api/host/clients/'+currentDetailClientId+'/modules/assign', 'POST', { moduleId, orderNum: 1 });
     loadClientDetailModules();
-  } catch(e) { alert('모듈 배정 실패 - API가 미지원일 수 있습니다'); }
+  } catch(e) { console.error(e); alert('모듈 배정 실패'); }
 }
 
 async function unassignModule(moduleId) {
@@ -1869,6 +1915,14 @@ async function unassignModule(moduleId) {
   } catch(e) { alert('모듈 해제 실패'); }
 }
 
+// 모듈 활성/비활성 토글 (내담자에게 지금 학습 가능하게 할지)
+async function toggleModuleActive(moduleId, isActive) {
+  try {
+    await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId+'/toggle', 'PUT', { is_active: isActive });
+    loadClientDetailModules();
+  } catch(e) { alert('상태 변경 실패'); }
+}
+
 // ============================================================
 // [신규] 호스트 - 내담자 상세: 일정 탭 로드
 // ============================================================
@@ -1877,15 +1931,14 @@ async function loadClientDetailSchedule() {
   if (!el) return;
   el.innerHTML = '<div class="loading">로딩 중...</div>';
   try {
-    const pending = await api('/api/schedule/host/pending').catch(() => []);
-    const confirmed = await api('/api/schedule/host/confirmed').catch(() => []);
-    const combined = [...(confirmed||[]), ...(pending||[])];
-    const clientSchedules = combined.filter(s => s.client_id === currentDetailClientId);
-    if (clientSchedules.length === 0) {
-      el.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">일정 없음</p>';
+    // 내담자 상세 API가 schedules 배열을 이미 반환함
+    const data = await api('/api/host/clients/'+currentDetailClientId);
+    const schedules = (data && data.schedules) || [];
+    if (schedules.length === 0) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">'+tr('일정 없음')+'</p>';
       return;
     }
-    el.innerHTML = clientSchedules.map(s => {
+    el.innerHTML = schedules.map(s => {
       let t = s.confirmed_time || s.requested_time;
       try { if (t && t.includes('T')) t = new Date(t).toLocaleString('ko-KR'); } catch(e){}
       const statusLabel = s.status === 'confirmed' ? tr('확정') : (s.status === 'pending' ? tr('대기 중') : s.status);
