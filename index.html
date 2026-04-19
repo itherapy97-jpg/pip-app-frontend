@@ -491,43 +491,43 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div class="field-label">🇰🇷 한국어 음성</div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <select id="vs-voice-ko" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('ko')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 테스트</button>
+      <button onclick="testVoice('ko',event)" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 테스트</button>
     </div>
 
     <div class="field-label">🇺🇸 English Voice</div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <select id="vs-voice-en" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('en')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+      <button onclick="testVoice('en',event)" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
     </div>
 
     <div class="field-label">🇯🇵 日本語 音声</div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <select id="vs-voice-ja" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('ja')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 テスト</button>
+      <button onclick="testVoice('ja',event)" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 テスト</button>
     </div>
 
     <div class="field-label">🇨🇳 中文语音</div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <select id="vs-voice-zh" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('zh')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 测试</button>
+      <button onclick="testVoice('zh',event)" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 测试</button>
     </div>
 
     <div class="field-label">🇪🇸 Voz en Español</div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <select id="vs-voice-es" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('es')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Prueba</button>
+      <button onclick="testVoice('es',event)" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Prueba</button>
     </div>
 
     <div class="field-label">🇫🇷 Voix Française</div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <select id="vs-voice-fr" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('fr')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+      <button onclick="testVoice('fr',event)" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
     </div>
 
     <div class="field-label">🇩🇪 Deutsche Stimme</div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <select id="vs-voice-de" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;background:white;min-width:0"></select>
-      <button onclick="testVoice('de')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
+      <button onclick="testVoice('de',event)" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔊 Test</button>
     </div>
 
     <div id="vs-voice-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:8px 12px;background:var(--cream);border-radius:6px"></div>
@@ -1227,9 +1227,39 @@ function stopVoiceInput(targetId) {
 // ============================================================
 // TTS (음성 출력)
 // ============================================================
-function speakText(text, lang) {
+// ============================================================
+// TTS (음성 출력) - 토글 방식
+// 한 번 누르면 재생, 다시 누르면 정지
+// ============================================================
+let _currentSpeakBtn = null;  // 현재 재생 중인 버튼 추적
+let _currentUtter = null;
+
+function stopAllSpeech() {
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch(e){}
+  // 현재 재생 중이던 버튼 아이콘 원복
+  if (_currentSpeakBtn) {
+    try {
+      _currentSpeakBtn.innerHTML = _currentSpeakBtn.getAttribute('data-original-label') || '🔊 듣기';
+      _currentSpeakBtn.style.background = '';
+      _currentSpeakBtn.style.color = '';
+    } catch(e){}
+    _currentSpeakBtn = null;
+  }
+  _currentUtter = null;
+}
+
+function speakText(text, lang, btn) {
   if (!text || !window.speechSynthesis) { alert('이 브라우저는 음성 출력을 지원하지 않습니다.'); return; }
-  try { speechSynthesis.cancel(); } catch(e){}
+
+  // [토글] 같은 버튼을 다시 누르면 정지
+  if (btn && _currentSpeakBtn === btn && speechSynthesis.speaking) {
+    stopAllSpeech();
+    return;
+  }
+
+  // 다른 버튼 눌러도 이전 음성 먼저 정지
+  stopAllSpeech();
+
   const utter = new SpeechSynthesisUtterance(text);
   const dl = lang || getCurrentDisplayLang() || 'ko';
   const lc = dl.split('-')[0];
@@ -1251,9 +1281,35 @@ function speakText(text, lang) {
   if (v) { utter.voice = v; utter.lang = v.lang; }
   else { utter.lang = dl; }
   utter.rate = 0.92;
-  utter.onerror = (e) => { console.warn('TTS error:', e); };
+
+  // 재생 중 버튼 아이콘 변경 (정지 표시)
+  if (btn) {
+    if (!btn.hasAttribute('data-original-label')) {
+      btn.setAttribute('data-original-label', btn.innerHTML);
+    }
+    btn.innerHTML = '⏸ 정지';
+    btn.style.background = '#e74c3c';
+    btn.style.color = 'white';
+    _currentSpeakBtn = btn;
+  }
+
+  // 재생 끝나거나 에러나면 버튼 원복
+  utter.onend = () => {
+    if (_currentSpeakBtn === btn) {
+      stopAllSpeech();
+    }
+  };
+  utter.onerror = (e) => {
+    console.warn('TTS error:', e);
+    if (_currentSpeakBtn === btn) {
+      stopAllSpeech();
+    }
+  };
+
+  _currentUtter = utter;
   speechSynthesis.speak(utter);
 }
+
 if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
   speechSynthesis.onvoiceschanged = () => {
     speechSynthesis.getVoices();
@@ -1264,9 +1320,14 @@ if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
 }
 if (window.speechSynthesis) { try { speechSynthesis.getVoices(); } catch(e){} }
 
-// 버블 안의 현재 "화면에 보이는" 텍스트를 읽기 (번역됐으면 번역된 걸로)
+// 버블 안의 현재 "화면에 보이는" 텍스트를 읽기 (토글 지원)
 function speakBubble(btn) {
   if (!btn || !window.speechSynthesis) return;
+  // [토글] 같은 버튼 다시 눌렀으면 정지
+  if (_currentSpeakBtn === btn && speechSynthesis.speaking) {
+    stopAllSpeech();
+    return;
+  }
   const bubble = btn.closest('.tl-bubble');
   if (!bubble) return;
   const clone = bubble.cloneNode(true);
@@ -1276,8 +1337,14 @@ function speakBubble(btn) {
   if (!text) return;
   // 화면 표시 언어로 읽기
   const lang = getCurrentDisplayLang() || 'ko';
-  speakText(text, lang);
+  speakText(text, lang, btn);
 }
+
+// 페이지 이탈 / 화면 전환 시 음성 자동 정지 (공공장소 안전)
+window.addEventListener('beforeunload', stopAllSpeech);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') stopAllSpeech();
+});
 
 // 강제 번역 실행 (동적 DOM 렌더링 직후 호출)
 async function forceTranslate() {
@@ -1389,7 +1456,7 @@ function loadVoiceOptions() {
   if (s) s.textContent = '🎙 총 '+voices.length+'개: ⭐MS '+counts.ms+' · 🍎Apple '+counts.apple+' · 🔵Google '+counts.google+' · 🔶Other '+counts.other;
 }
 
-function testVoice(langCode) {
+function testVoice(langCode, ev) {
   const samples = {
     ko: '안녕하세요. 한국어 음성 테스트입니다.',
     en: 'Hello. This is an English voice test.',
@@ -1399,7 +1466,8 @@ function testVoice(langCode) {
     fr: 'Bonjour. Ceci est un test de voix française.',
     de: 'Hallo. Dies ist ein deutscher Sprachtest.'
   };
-  speakText(samples[langCode] || 'Voice test.', langCode);
+  const btn = (ev && ev.currentTarget) || (window.event && window.event.currentTarget);
+  speakText(samples[langCode] || 'Voice test.', langCode, btn);
 }
 
 // ============================================================
