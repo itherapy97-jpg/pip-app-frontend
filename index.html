@@ -103,7 +103,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .tl-hostnotice .tl-bubble{background:linear-gradient(135deg,#FDF8F0,#F5F0E8);color:#7A4F1A;border:1px solid #E8C99A;border-radius:14px;max-width:95%;}
 .tl-reply-context{background:rgba(255,255,255,0.55);border-left:3px solid var(--sage);padding:8px 10px;margin-bottom:8px;border-radius:6px;font-size:12px;color:var(--text-muted);line-height:1.5;}
 .tl-reply-context b{color:var(--sage-dark);font-size:11px;display:block;margin-bottom:3px;}
-.tl-speak{background:rgba(255,255,255,0.7);border:1px solid var(--sage-light);border-radius:6px;cursor:pointer;font-size:12px;padding:4px 8px;color:var(--sage-dark);margin-top:8px;display:inline-block;}
+.tl-speak{background:rgba(255,255,255,0.7);border:1px solid var(--sage-light);border-radius:8px;cursor:pointer;font-size:13px;padding:10px 16px;color:var(--sage-dark);margin-top:10px;display:inline-block;min-height:44px;min-width:80px;touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:rgba(124,154,126,0.3);font-family:'DM Sans',sans-serif;}
+.tl-speak:active{transform:scale(0.96);}
 .tl-tag{font-size:10px;padding:2px 6px;border-radius:10px;background:#E8EEF5;color:#4A5B7A;}
 .tl-tag.notice{background:#FDF3E7;color:#8B5E2A;}
 
@@ -1228,15 +1229,14 @@ function stopVoiceInput(targetId) {
 // TTS (음성 출력)
 // ============================================================
 // ============================================================
-// TTS (음성 출력) - 토글 방식
-// 한 번 누르면 재생, 다시 누르면 정지
+// TTS (음성 출력) - 토글 방식 + 안드로이드/모바일 최적화
 // ============================================================
-let _currentSpeakBtn = null;  // 현재 재생 중인 버튼 추적
+let _currentSpeakBtn = null;
 let _currentUtter = null;
+let _ttsWarmedUp = false;
 
 function stopAllSpeech() {
   try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch(e){}
-  // 현재 재생 중이던 버튼 아이콘 원복
   if (_currentSpeakBtn) {
     try {
       _currentSpeakBtn.innerHTML = _currentSpeakBtn.getAttribute('data-original-label') || '🔊 듣기';
@@ -1248,41 +1248,88 @@ function stopAllSpeech() {
   _currentUtter = null;
 }
 
-function speakText(text, lang, btn) {
-  if (!text || !window.speechSynthesis) { alert('이 브라우저는 음성 출력을 지원하지 않습니다.'); return; }
+// 안드로이드: 첫 사용자 탭 시 TTS 엔진 웜업 (빈 utterance 재생)
+function warmUpTTS() {
+  if (_ttsWarmedUp || !window.speechSynthesis) return;
+  try {
+    const warm = new SpeechSynthesisUtterance(' ');
+    warm.volume = 0; warm.rate = 10;
+    speechSynthesis.speak(warm);
+    _ttsWarmedUp = true;
+  } catch(e) {}
+}
 
-  // [토글] 같은 버튼을 다시 누르면 정지
+// 음성 목록을 비동기적으로 기다림 (안드로이드는 최대 2초 후 로드)
+function waitForVoices(maxMs) {
+  return new Promise(resolve => {
+    const existing = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+    if (existing.length > 0) return resolve(existing);
+    let tries = 0;
+    const check = setInterval(() => {
+      const v = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+      tries++;
+      if (v.length > 0 || tries >= (maxMs/100)) {
+        clearInterval(check);
+        resolve(v);
+      }
+    }, 100);
+  });
+}
+
+async function speakText(text, lang, btn) {
+  if (!text) return;
+  if (!window.speechSynthesis) {
+    showToast('이 브라우저는 음성 출력을 지원하지 않습니다');
+    return;
+  }
+
+  // [토글] 같은 버튼 다시 누르면 정지
   if (btn && _currentSpeakBtn === btn && speechSynthesis.speaking) {
     stopAllSpeech();
     return;
   }
 
-  // 다른 버튼 눌러도 이전 음성 먼저 정지
+  // 다른 버튼이든 같은 상황이든 일단 이전 음성 정지
   stopAllSpeech();
 
-  const utter = new SpeechSynthesisUtterance(text);
+  // 안드로이드 첫 실행 웜업
+  warmUpTTS();
+
   const dl = lang || getCurrentDisplayLang() || 'ko';
   const lc = dl.split('-')[0];
-  const voices = speechSynthesis.getVoices() || [];
+
+  // 음성 목록 로드 대기 (안드로이드 대응)
+  const voices = await waitForVoices(2000);
+
+  if (voices.length === 0) {
+    showToast('🔊 이 기기에 음성이 설치되어 있지 않습니다.<br>Android: 설정 → 시스템 → 언어 → 텍스트 음성 변환 → 음성 데이터 다운로드');
+    return;
+  }
+
+  // 음성 선택 우선순위
   let v = null;
-  // 1) 사용자가 저장한 음성 우선 (프로필에서 선택한 것)
   const savedURI = localStorage.getItem('pip_voice_'+lc);
   if (savedURI) v = voices.find(vv => vv.voiceURI === savedURI);
-  // 2) Microsoft 음성 우선
   if (!v) v = voices.find(vv => vv.lang && vv.lang.toLowerCase().startsWith(lc) && /microsoft/i.test(vv.name||''));
-  // 3) 정확한 언어코드 매치
   if (!v) v = voices.find(vv => vv.lang && vv.lang.toLowerCase() === dl.toLowerCase());
-  // 4) 언어 prefix 매치
   if (!v) v = voices.find(vv => vv.lang && vv.lang.toLowerCase().startsWith(lc));
-  // 5) 한국어 텍스트 감지 폴백
+  // 해당 언어 음성 없음 - 사용자에게 명확히 안내
   if (!v && /[가-힣]/.test(text)) {
     v = voices.find(vv => vv.lang && vv.lang.toLowerCase().startsWith('ko'));
   }
-  if (v) { utter.voice = v; utter.lang = v.lang; }
-  else { utter.lang = dl; }
-  utter.rate = 0.92;
+  if (!v) {
+    showToast('🔊 "'+lc+'" 음성이 이 기기에 없습니다.<br>Android 설정에서 해당 언어의 음성을 설치해주세요');
+    return;
+  }
 
-  // 재생 중 버튼 아이콘 변경 (정지 표시)
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.voice = v;
+  utter.lang = v.lang;
+  utter.rate = 0.92;
+  utter.volume = 1.0;
+  utter.pitch = 1.0;
+
+  // 버튼 UI 상태 업데이트
   if (btn) {
     if (!btn.hasAttribute('data-original-label')) {
       btn.setAttribute('data-original-label', btn.innerHTML);
@@ -1293,21 +1340,28 @@ function speakText(text, lang, btn) {
     _currentSpeakBtn = btn;
   }
 
-  // 재생 끝나거나 에러나면 버튼 원복
   utter.onend = () => {
-    if (_currentSpeakBtn === btn) {
-      stopAllSpeech();
-    }
+    if (_currentSpeakBtn === btn) stopAllSpeech();
   };
   utter.onerror = (e) => {
     console.warn('TTS error:', e);
-    if (_currentSpeakBtn === btn) {
-      stopAllSpeech();
+    if (e.error === 'not-allowed' || e.error === 'audio-busy') {
+      showToast('🔊 음성 재생이 차단되었습니다.<br>다시 탭해주세요');
     }
+    if (_currentSpeakBtn === btn) stopAllSpeech();
   };
 
   _currentUtter = utter;
-  speechSynthesis.speak(utter);
+
+  // 안드로이드 Chrome 버그 워크어라운드: cancel() 직후 speak() 하면 무시되는 경우 있음
+  setTimeout(() => {
+    try { speechSynthesis.speak(utter); }
+    catch(e) {
+      console.warn('speak failed:', e);
+      stopAllSpeech();
+      showToast('🔊 음성 재생 실패. 다시 시도해주세요');
+    }
+  }, 50);
 }
 
 if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
@@ -1320,10 +1374,10 @@ if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
 }
 if (window.speechSynthesis) { try { speechSynthesis.getVoices(); } catch(e){} }
 
-// 버블 안의 현재 "화면에 보이는" 텍스트를 읽기 (토글 지원)
+// 버블 안의 "화면에 보이는" 텍스트 읽기 (토글 지원)
 function speakBubble(btn) {
   if (!btn || !window.speechSynthesis) return;
-  // [토글] 같은 버튼 다시 눌렀으면 정지
+  // [토글] 같은 버튼 재누르면 정지
   if (_currentSpeakBtn === btn && speechSynthesis.speaking) {
     stopAllSpeech();
     return;
@@ -1331,16 +1385,14 @@ function speakBubble(btn) {
   const bubble = btn.closest('.tl-bubble');
   if (!bubble) return;
   const clone = bubble.cloneNode(true);
-  // 버튼과 이전질문 컨텍스트는 제외
   clone.querySelectorAll('.tl-speak, .tl-reply-context').forEach(n => n.remove());
   const text = (clone.textContent || '').trim();
   if (!text) return;
-  // 화면 표시 언어로 읽기
   const lang = getCurrentDisplayLang() || 'ko';
   speakText(text, lang, btn);
 }
 
-// 페이지 이탈 / 화면 전환 시 음성 자동 정지 (공공장소 안전)
+// 페이지 이탈 / 화면 전환 시 자동 정지
 window.addEventListener('beforeunload', stopAllSpeech);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') stopAllSpeech();
@@ -1375,10 +1427,11 @@ function showToast(msg) {
   const old = document.getElementById('__pip_toast'); if (old) old.remove();
   const d = document.createElement('div');
   d.id = '__pip_toast';
-  d.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(74,107,77,0.95);color:white;padding:12px 20px;border-radius:24px;font-size:13px;z-index:99999;max-width:85%;text-align:center;line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,0.2)';
-  d.innerHTML = msg;
+  d.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(44,44,42,0.95);color:white;padding:14px 22px;border-radius:12px;font-size:13px;z-index:99999;max-width:90%;text-align:center;line-height:1.7;box-shadow:0 4px 20px rgba(0,0,0,0.3);cursor:pointer;';
+  d.innerHTML = msg + '<div style="font-size:10px;opacity:0.7;margin-top:6px">(탭하여 닫기)</div>';
+  d.onclick = () => d.remove();
   document.body.appendChild(d);
-  setTimeout(() => d.remove(), 5000);
+  setTimeout(() => { if (d.parentNode) d.remove(); }, 7000);
 }
 
 function updateSTTStatus() {
