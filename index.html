@@ -111,7 +111,40 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
 #screen-edu.active{display:flex !important;flex-direction:column;height:100vh;}
+/* ★ 번역 준비 전 body 숨김 (한글 깜빡임 완전 제거) */
+html.pip-translating body { visibility: hidden !important; }
+html.pip-ready body { visibility: visible; }
 </style>
+<script>
+// ★★★ HTML 파싱 직후 즉시 실행: 언어 감지 + body 숨김
+// 번역이 준비될 때까지 화면을 숨겨서 한글이 사용자 눈에 보이지 않게 함
+(function(){
+  try {
+    var bl = (navigator.language || 'ko').toLowerCase();
+    var blc = bl.split('-')[0];
+    var lm = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
+    var detected = lm[blc];
+    if (blc === 'zh') detected = (bl.indexOf('tw')>-1||bl.indexOf('hk')>-1)?'zh-TW':'zh-CN';
+    var browserLang = detected || 'ko';
+    var stored = localStorage.getItem('pip_client_lang_pref');
+    var hostStored = localStorage.getItem('pip_host_lang_pref');
+    var isHost = location.hash==='#host' || location.hash==='#/host';
+    var lang = isHost ? (hostStored || browserLang) : (stored || browserLang);
+    // 비한국어 언어면 body를 잠시 숨김 (번역 완료 후 보여줌)
+    if (lang && lang !== 'ko') {
+      document.documentElement.className = 'pip-translating';
+      // 안전장치: 1.5초 후에는 무조건 보여줌 (혹시 번역 실패해도 화면은 나와야 함)
+      setTimeout(function(){
+        document.documentElement.className = 'pip-ready';
+      }, 1500);
+    } else {
+      document.documentElement.className = 'pip-ready';
+    }
+  } catch(e) {
+    document.documentElement.className = 'pip-ready';
+  }
+})();
+</script>
 </head>
 <body>
 <div class="container" id="app">
@@ -206,18 +239,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 <!-- ========== HOME ========== -->
 <div class="screen" id="screen-home">
   <div class="pip-header" style="padding:20px 32px 16px">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:10px">
-        <img src="pip-logo.png" alt="PIP Logo" id="pip-home-logo" style="width:32px;height:32px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
-        <div style="text-align:left">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;font-style:italic">Peace-In <em>Practice</em>™</div>
-          <div id="home-greeting" style="font-size:12px;color:var(--text-muted)">안녕하세요</div>
-        </div>
-      </div>
-      <div class="lang-selector" onclick="toggleLangMenu()" style="padding:4px 10px">
-        <span style="font-size:12px">🌐</span>
-        <span id="langSelectedHome" style="font-size:11px;color:var(--text);font-weight:500">Language</span>
-        <span style="font-size:9px;color:var(--text-muted)">▾</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="pip-logo.png" alt="PIP Logo" id="pip-home-logo" style="width:32px;height:32px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
+      <div style="text-align:left">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;font-style:italic">Peace-In <em>Practice</em>™</div>
+        <div id="home-greeting" style="font-size:12px;color:var(--text-muted)">안녕하세요</div>
       </div>
     </div>
   </div>
@@ -230,7 +256,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
     <p style="font-size:12px;color:var(--sage-dark);margin-bottom:20px" id="prog-text">로딩 중...</p>
     <p class="sec-label" id="lbl-sessions">교육 세션</p>
-    <div id="module-list"><div class="loading">모듈 로딩 중...</div></div>
+    <div id="module-list"><div class="loading"><span id="home-loading-modules">모듈 로딩 중...</span></div></div>
     <p class="sec-label" style="margin-top:8px" id="lbl-schedule">세션 시간 약속</p>
     <div class="card" style="cursor:pointer" onclick="goScreen('screen-schedule')">
       <div class="card-row"><div style="font-size:14px" id="schedule-text">일정 확인 중...</div><span class="badge green" id="schedule-badge">확인</span></div>
@@ -1082,6 +1108,34 @@ const LOCALIZED_HTML = {
     ko:'로그아웃', en:'Logout', ja:'ログアウト', 'zh-CN':'退出', 'zh-TW':'登出',
     es:'Cerrar sesión', fr:'Déconnexion', de:'Abmelden', pt:'Sair', ru:'Выход',
     ar:'تسجيل الخروج', hi:'लॉग आउट', vi:'Đăng xuất', th:'ออกจากระบบ', id:'Keluar'
+  },
+  'prog-text': {
+    ko:'로딩 중...', en:'Loading...', ja:'読み込み中...', 'zh-CN':'加载中...', 'zh-TW':'載入中...',
+    es:'Cargando...', fr:'Chargement...', de:'Wird geladen...', pt:'Carregando...', ru:'Загрузка...',
+    ar:'جاري التحميل...', hi:'लोड हो रहा है...', vi:'Đang tải...', th:'กำลังโหลด...', id:'Memuat...'
+  },
+  'home-loading-modules': {
+    ko:'모듈 로딩 중...', en:'Loading modules...', ja:'モジュール読み込み中...',
+    'zh-CN':'加载模块中...', 'zh-TW':'載入模組中...',
+    es:'Cargando módulos...', fr:'Chargement des modules...',
+    de:'Module werden geladen...', pt:'Carregando módulos...',
+    ru:'Загрузка модулей...', ar:'تحميل الوحدات...',
+    hi:'मॉड्यूल लोड हो रहे हैं...', vi:'Đang tải các mô-đun...',
+    th:'กำลังโหลดโมดูล...', id:'Memuat modul...'
+  },
+  'schedule-text': {
+    ko:'일정 확인 중...', en:'Checking schedule...', ja:'スケジュール確認中...',
+    'zh-CN':'检查日程中...', 'zh-TW':'檢查排程中...',
+    es:'Verificando horario...', fr:'Vérification de l\'horaire...',
+    de:'Zeitplan wird überprüft...', pt:'Verificando agenda...',
+    ru:'Проверка расписания...', ar:'جاري التحقق من الجدول...',
+    hi:'अनुसूची जांच रहा है...', vi:'Đang kiểm tra lịch trình...',
+    th:'กำลังตรวจสอบตารางเวลา...', id:'Memeriksa jadwal...'
+  },
+  'schedule-badge': {
+    ko:'확인', en:'Check', ja:'確認', 'zh-CN':'确认', 'zh-TW':'確認',
+    es:'Verificar', fr:'Vérifier', de:'Prüfen', pt:'Verificar', ru:'Проверить',
+    ar:'تحقق', hi:'जांचें', vi:'Kiểm tra', th:'ตรวจสอบ', id:'Periksa'
   }
 };
 
@@ -1544,9 +1598,8 @@ function setLang(lang) {
   localStorage.setItem('pip_client_lang_pref', lang);
   sessionStorage.setItem('pip_lang_manually_set', '1');
   const el1=document.getElementById('langSelected'); if(el1) el1.textContent=LANG_NAMES[lang]||lang;
-  const el2=document.getElementById('langSelectedHome'); if(el2) el2.textContent=LANG_NAMES[lang]||lang;
+  // langSelectedHome은 홈 화면 언어 버튼 삭제로 제거됨
   applyFullTranslation(lang);
-  // 화면 데이터 재로드 (tr()이 새 언어로 동적 문자열 생성하도록)
   setTimeout(() => {
     const s = document.querySelector('.screen.active');
     if (s) {
@@ -1976,11 +2029,20 @@ function logout() { localStorage.removeItem('pip_token'); token=null; goScreen('
 // 홈
 // ============================================================
 async function loadHome() {
+  const lang = getCurrentDisplayLang();
+  const needTranslate = lang && lang !== 'ko';
+  // ★ 즉시 번역 함수 (각 섹션 업데이트 후 즉시 호출)
+  const applyNow = () => {
+    if (!needTranslate) return;
+    try { renderLocalizedHTML(lang); } catch(e){}
+    try { translateDOM(lang); } catch(e){}
+  };
   try {
     const n=await api('/api/counsel/notification');
     const b=document.getElementById('notif-banner');
     if(n.hasNotification){ b.classList.add('show'); }
     else b.classList.remove('show');
+    applyNow();
   } catch(e){}
   try {
     const modules=await api('/api/sessions/modules');
@@ -1997,7 +2059,8 @@ async function loadHome() {
         +'<div style="font-size:14px;font-weight:500">'+m.title+'</div></div>'
         +'<span class="badge '+(m.completed?'green':'amber')+'">'+(m.completed?tr('완료'):tr('진행'))+'</span></div></div>';
     }).join('');
-  } catch(e){document.getElementById('module-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">'+tr('모듈 로드 실패')+'</p>';}
+    applyNow();
+  } catch(e){document.getElementById('module-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">'+tr('모듈 로드 실패')+'</p>'; applyNow();}
   try {
     const schedules=await api('/api/schedule/confirmed');
     if(schedules&&schedules.length>0){
@@ -2009,8 +2072,14 @@ async function loadHome() {
       document.getElementById('schedule-text').textContent=tr('일정 없음 — 새 세션 요청하기');
       document.getElementById('schedule-badge').textContent='→';
     }
+    applyNow();
   } catch(e){}
-  retranslateNow(150);
+  // 최종 번역 - 딜레이 없이 즉시
+  if (needTranslate) {
+    try { renderLocalizedHTML(lang); translateDOM(lang); } catch(e){}
+    // 동적 콘텐츠 번역 (호스트 메시지)은 병렬로
+    translateDataElements(lang).catch(()=>{});
+  }
 }
 
 // ============================================================
@@ -2819,12 +2888,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const hostLang = localStorage.getItem('pip_host_lang_pref') || browserLang;
     const activeLang = isHost ? hostLang : clientLang;
     // ★ 핵심: 사전 기반 번역을 즉시 적용 (DOM 파싱 직후, 렌더링 전)
-    // 이렇게 하면 사용자 눈에 한글이 절대 보이지 않음
     if (activeLang && activeLang !== 'ko') {
       try { renderLocalizedHTML(activeLang); } catch(e){}
       try { translateDOM(activeLang); } catch(e){}
     }
-  } catch(e) { console.warn('[PIP] Early translation failed:', e); }
+    // ★ 번역 완료되었으므로 body 표시 (숨김 해제)
+    document.documentElement.className = 'pip-ready';
+  } catch(e) {
+    console.warn('[PIP] Early translation failed:', e);
+    document.documentElement.className = 'pip-ready';
+  }
 });
 
 window.addEventListener('load', () => {
@@ -2843,7 +2916,6 @@ window.addEventListener('load', () => {
   const clientLang = localStorage.getItem('pip_client_lang_pref') || browserLang;
   const hostLang = localStorage.getItem('pip_host_lang_pref') || browserLang;
   const l1 = document.getElementById('langSelected'); if (l1) l1.textContent = LANG_NAMES[clientLang]||'한국어';
-  const l2 = document.getElementById('langSelectedHome'); if (l2) l2.textContent = LANG_NAMES[clientLang]||'한국어';
   const l3 = document.getElementById('hostLangSelected'); if (l3) l3.textContent = LANG_NAMES[hostLang]||'한국어';
   const l4 = document.getElementById('hostLoginLangSelected'); if (l4) l4.textContent = LANG_NAMES[hostLang]||'한국어';
   initApp();
