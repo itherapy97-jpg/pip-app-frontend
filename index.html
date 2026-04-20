@@ -247,7 +247,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     </div>
   </div>
   <div style="border-top:1px solid var(--warm);background:var(--white);padding:10px 32px">
-    <button onclick="logout()" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:6px">로그아웃</button>
+    <button onclick="logout()" id="lbl-logout" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:6px">로그아웃</button>
   </div>
 </div>
 
@@ -986,6 +986,102 @@ const LOCALIZED_HTML = {
     vi: '<strong>⚠ Thông Báo Quan Trọng</strong><br><br>Chương trình này chỉ hoạt động hiệu quả dưới sự hướng dẫn của các cố vấn chuyên nghiệp. <strong>Quyền truy cập chỉ giới hạn cho những người tham gia được phép.</strong>',
     th: '<strong>⚠ ประกาศสำคัญ</strong><br><br>โปรแกรมนี้ทำงานได้อย่างมีประสิทธิภาพภายใต้คำแนะนำของที่ปรึกษามืออาชีพเท่านั้น <strong>การเข้าถึงจำกัดเฉพาะผู้เข้าร่วมที่ได้รับอนุญาตเท่านั้น</strong>',
     id: '<strong>⚠ Pemberitahuan Penting</strong><br><br>Program ini bekerja secara efektif hanya di bawah bimbingan konselor profesional. <strong>Akses terbatas hanya untuk peserta yang diizinkan.</strong>'
+  },
+  // ====================== HOME 화면 UI ======================
+  'home-greeting': {
+    ko:'안녕하세요', en:'Hello', ja:'こんにちは', 'zh-CN':'你好', 'zh-TW':'你好',
+    es:'Hola', fr:'Bonjour', de:'Hallo', pt:'Olá', ru:'Здравствуйте',
+    ar:'مرحبا', hi:'नमस्ते', vi:'Xin chào', th:'สวัสดี', id:'Halo'
+  },
+  'notif-text': {
+    ko:'상담 답변이 도착했습니다', en:'Counseling reply has arrived',
+    ja:'カウンセリング返信が届きました', 'zh-CN':'咨询回复已送达', 'zh-TW':'諮商回覆已送達',
+    es:'Respuesta de asesoramiento recibida', fr:'Réponse de conseil reçue',
+    de:'Beratungsantwort eingegangen', pt:'Resposta de aconselhamento recebida',
+    ru:'Получен ответ на консультацию', ar:'وصل رد الاستشارة',
+    hi:'परामर्श का उत्तर आ गया है', vi:'Đã nhận được phản hồi tư vấn',
+    th:'ได้รับการตอบกลับการให้คำปรึกษาแล้ว', id:'Balasan konseling telah tiba'
+  },
+  'lbl-progress': {
+    ko:'이번 주 진행률', en:'Progress This Week',
+    ja:'今週の進捗', 'zh-CN':'本周进度', 'zh-TW':'本週進度',
+    es:'Progreso de la semana', fr:'Progrès de la semaine',
+    de:'Fortschritt diese Woche', pt:'Progresso desta semana',
+    ru:'Прогресс на этой неделе', ar:'تقدم هذا الأسبوع',
+    hi:'इस सप्ताह की प्रगति', vi:'Tiến độ tuần này',
+    th:'ความคืบหน้าสัปดาห์นี้', id:'Progres Minggu Ini'
+  },
+  'lbl-sessions': {
+    ko:'교육 세션', en:'Education Sessions',
+    ja:'教育セッション', 'zh-CN':'教育课程', 'zh-TW':'教育課程',
+    es:'Sesiones de Educación', fr:'Sessions d\'Éducation',
+    de:'Bildungssitzungen', pt:'Sessões de Educação',
+    ru:'Обучающие сессии', ar:'جلسات تعليمية',
+    hi:'शिक्षा सत्र', vi:'Phiên Giáo Dục', th:'เซสชันการศึกษา', id:'Sesi Pendidikan'
+  },
+  'lbl-schedule': {
+    ko:'세션 시간 약속', en:'Session Schedule',
+    ja:'セッションスケジュール', 'zh-CN':'会话时间', 'zh-TW':'會話時間',
+    es:'Horario de Sesión', fr:'Horaire de Session',
+    de:'Sitzungsplan', pt:'Horário da Sessão',
+    ru:'Расписание сеансов', ar:'جدول الجلسات',
+    hi:'सत्र अनुसूची', vi:'Lịch Phiên', th:'ตารางเซสชัน', id:'Jadwal Sesi'
+  },
+  'lbl-counsel': {
+    ko:'개인 상담', en:'Personal Counseling',
+    ja:'個人カウンセリング', 'zh-CN':'个人咨询', 'zh-TW':'個人諮商',
+    es:'Asesoramiento Personal', fr:'Conseil Personnel',
+    de:'Persönliche Beratung', pt:'Aconselhamento Pessoal',
+    ru:'Индивидуальная консультация', ar:'استشارة شخصية',
+    hi:'व्यक्तिगत परामर्श', vi:'Tư Vấn Cá Nhân',
+    th:'การให้คำปรึกษาส่วนบุคคล', id:'Konseling Pribadi'
+  },
+  'btn-counsel': {
+    ko:'상담 내용 작성하기', en:'Write Counseling Content',
+    ja:'カウンセリング内容を書く', 'zh-CN':'撰写咨询内容', 'zh-TW':'撰寫諮商內容',
+    es:'Escribir Contenido de Asesoramiento', fr:'Rédiger le Contenu du Conseil',
+    de:'Beratungsinhalt Schreiben', pt:'Escrever Conteúdo de Aconselhamento',
+    ru:'Написать содержание консультации', ar:'كتابة محتوى الاستشارة',
+    hi:'परामर्श सामग्री लिखें', vi:'Viết Nội Dung Tư Vấn',
+    th:'เขียนเนื้อหาการให้คำปรึกษา', id:'Tulis Konten Konseling'
+  },
+  'btn-threads': {
+    ko:'💬 내 상담 스레드 보기', en:'💬 View My Counseling Threads',
+    ja:'💬 マイカウンセリングスレッドを見る', 'zh-CN':'💬 查看我的咨询线程', 'zh-TW':'💬 查看我的諮商討論串',
+    es:'💬 Ver Mis Hilos de Asesoramiento', fr:'💬 Voir Mes Fils de Conseil',
+    de:'💬 Meine Beratungsthreads Ansehen', pt:'💬 Ver Meus Tópicos de Aconselhamento',
+    ru:'💬 Мои темы консультаций', ar:'💬 عرض مواضيع الاستشارة الخاصة بي',
+    hi:'💬 मेरे परामर्श थ्रेड देखें', vi:'💬 Xem Các Chuỗi Tư Vấn Của Tôi',
+    th:'💬 ดูเธรดคำปรึกษาของฉัน', id:'💬 Lihat Thread Konseling Saya'
+  },
+  'btn-voice-home': {
+    ko:'🔊 내 기기 음성 설정', en:'🔊 My Device Voice Settings',
+    ja:'🔊 私のデバイスの音声設定', 'zh-CN':'🔊 我的设备语音设置', 'zh-TW':'🔊 我的裝置語音設定',
+    es:'🔊 Ajustes de Voz de Mi Dispositivo', fr:'🔊 Paramètres Vocaux de Mon Appareil',
+    de:'🔊 Sprachausgabe Meines Geräts', pt:'🔊 Configurações de Voz do Meu Dispositivo',
+    ru:'🔊 Настройки голоса моего устройства', ar:'🔊 إعدادات صوت جهازي',
+    hi:'🔊 मेरे डिवाइस की आवाज़ सेटिंग्स', vi:'🔊 Cài Đặt Giọng Nói Thiết Bị',
+    th:'🔊 การตั้งค่าเสียงของอุปกรณ์ฉัน', id:'🔊 Pengaturan Suara Perangkat Saya'
+  },
+  'nav-home-lbl': {
+    ko:'홈', en:'Home', ja:'ホーム', 'zh-CN':'首页', 'zh-TW':'首頁',
+    es:'Inicio', fr:'Accueil', de:'Startseite', pt:'Início', ru:'Главная',
+    ar:'الرئيسية', hi:'होम', vi:'Trang chủ', th:'หน้าแรก', id:'Beranda'
+  },
+  'nav-edu': {
+    ko:'교육', en:'Education', ja:'教育', 'zh-CN':'教育', 'zh-TW':'教育',
+    es:'Educación', fr:'Éducation', de:'Bildung', pt:'Educação', ru:'Обучение',
+    ar:'التعليم', hi:'शिक्षा', vi:'Giáo dục', th:'การศึกษา', id:'Pendidikan'
+  },
+  'nav-counsel': {
+    ko:'상담', en:'Counseling', ja:'カウンセリング', 'zh-CN':'咨询', 'zh-TW':'諮商',
+    es:'Asesoramiento', fr:'Conseil', de:'Beratung', pt:'Aconselhamento', ru:'Консультация',
+    ar:'الاستشارة', hi:'परामर्श', vi:'Tư vấn', th:'การให้คำปรึกษา', id:'Konseling'
+  },
+  'lbl-logout': {
+    ko:'로그아웃', en:'Logout', ja:'ログアウト', 'zh-CN':'退出', 'zh-TW':'登出',
+    es:'Cerrar sesión', fr:'Déconnexion', de:'Abmelden', pt:'Sair', ru:'Выход',
+    ar:'تسجيل الخروج', hi:'लॉग आउट', vi:'Đăng xuất', th:'ออกจากระบบ', id:'Keluar'
   }
 };
 
@@ -1901,7 +1997,7 @@ async function loadHome() {
         +'<div style="font-size:14px;font-weight:500">'+m.title+'</div></div>'
         +'<span class="badge '+(m.completed?'green':'amber')+'">'+(m.completed?tr('완료'):tr('진행'))+'</span></div></div>';
     }).join('');
-  } catch(e){document.getElementById('module-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">모듈 로드 실패</p>';}
+  } catch(e){document.getElementById('module-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">'+tr('모듈 로드 실패')+'</p>';}
   try {
     const schedules=await api('/api/schedule/confirmed');
     if(schedules&&schedules.length>0){
@@ -2659,13 +2755,29 @@ function showScreen(id) {
 }
 
 function goScreen(id) {
+  // 핵심: 화면이 보여지기 직전에 선택된 언어로 먼저 번역 적용
+  // 이렇게 해야 한글이 잠깐 보였다가 번역되는 현상이 사라짐
+  const lang = getCurrentDisplayLang();
+  if (lang && lang !== 'ko') {
+    // 1) 사전 기반 번역 즉시 적용 (네트워크 호출 없음)
+    try { renderLocalizedHTML(lang); } catch(e){}
+    // 2) 정적 UI 사전 번역 즉시 적용
+    try { translateDOM(lang); } catch(e){}
+  }
+  // 3) 이제 화면 표시
   showScreen(id);
+  // 4) 데이터 로드 (번역은 이미 적용됨)
   if (id === 'screen-home') loadHome();
   if (id === 'screen-host') loadHostDashboard();
   if (id === 'screen-edu-list') loadEduList();
   if (id === 'screen-schedule') loadSchedule();
   if (id === 'screen-threads') loadThreads();
   if (id === 'screen-client-detail') loadClientDetail();
+  // 5) 동적 콘텐츠 번역 (호스트 메시지 등 - 빠른 호출 + 지연 호출)
+  if (lang && lang !== 'ko') {
+    setTimeout(() => translateDataElements(lang).catch(()=>{}), 50);
+    setTimeout(() => { try { translateDOM(lang); renderLocalizedHTML(lang); } catch(e){} }, 200);
+  }
   retranslateNow(100);
 }
 
@@ -2686,6 +2798,34 @@ function initApp() {
     }
   } catch(e) { showScreen('screen-landing'); }
 }
+
+// ============================================================
+// DOMContentLoaded: 화면이 보여지기 전 선제적 번역 (한글 깜빡임 제거)
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const bl = (navigator.language || 'ko').toLowerCase(), blc = bl.split('-')[0];
+    const lm = {'en':'en','ja':'ja','zh':'zh-CN','hi':'hi','es':'es','fr':'fr','de':'de','ar':'ar','pt':'pt','ru':'ru','vi':'vi','th':'th','id':'id'};
+    let detected = lm[blc];
+    if (blc === 'zh') detected = (bl.includes('tw')||bl.includes('hk'))?'zh-TW':'zh-CN';
+    const browserLang = detected || 'ko';
+    const isHost = location.hash==='#host'||location.hash==='#/host';
+    const sessionSet = sessionStorage.getItem('pip_lang_manually_set');
+    if (!sessionSet) {
+      if (!isHost) localStorage.setItem('pip_client_lang_pref', browserLang);
+      else localStorage.setItem('pip_host_lang_pref', browserLang);
+    }
+    const clientLang = localStorage.getItem('pip_client_lang_pref') || browserLang;
+    const hostLang = localStorage.getItem('pip_host_lang_pref') || browserLang;
+    const activeLang = isHost ? hostLang : clientLang;
+    // ★ 핵심: 사전 기반 번역을 즉시 적용 (DOM 파싱 직후, 렌더링 전)
+    // 이렇게 하면 사용자 눈에 한글이 절대 보이지 않음
+    if (activeLang && activeLang !== 'ko') {
+      try { renderLocalizedHTML(activeLang); } catch(e){}
+      try { translateDOM(activeLang); } catch(e){}
+    }
+  } catch(e) { console.warn('[PIP] Early translation failed:', e); }
+});
 
 window.addEventListener('load', () => {
   // 브라우저 언어 자동 감지
