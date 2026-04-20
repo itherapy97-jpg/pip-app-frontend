@@ -550,6 +550,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
         <div style="font-size:28px;font-weight:500;letter-spacing:0.15em;color:var(--sage-dark)" id="new-invite-code">------</div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:8px">내담자에게 이 코드를 전달하세요</div>
       </div>
+      <div class="divider"></div>
+      <p class="sec-label" id="invite-msg-label">📬 초대 메시지 (언어별 자동 작성)</p>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;line-height:1.6" id="invite-msg-hint">선택된 언어로 안내 메시지가 자동 생성됩니다. 아래 메시지를 복사해서 카카오톡/문자로 보내주세요.</p>
+      <div class="field-label" id="invite-lang-label">메시지 언어</div>
+      <select id="invite-msg-lang" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;background:white;margin-bottom:10px" onchange="updateInviteMessage()">
+        <option value="ko">한국어</option>
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+        <option value="zh-CN">中文(简体)</option>
+        <option value="zh-TW">中文(繁體)</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="pt">Português</option>
+        <option value="ru">Русский</option>
+        <option value="ar">العربية</option>
+        <option value="hi">हिन्दी</option>
+        <option value="vi">Tiếng Việt</option>
+        <option value="th">ภาษาไทย</option>
+        <option value="id">Bahasa Indonesia</option>
+      </select>
+      <textarea id="invite-msg-preview" rows="12" readonly style="width:100%;padding:12px;border:1px solid var(--warm);border-radius:8px;font-size:12px;line-height:1.6;background:#FAFAF7;color:var(--text);font-family:inherit;resize:vertical"></textarea>
+      <button class="btn primary" style="margin-top:10px" onclick="copyInviteMessage()">📋 <span id="copy-btn-label">메시지 복사하기</span></button>
+      <div class="success-msg" id="invite-copied-msg">✓ 복사되었습니다. 카톡/문자에 붙여넣기 하세요.</div>
     </div>
   </div>
 </div>
@@ -978,6 +1002,273 @@ function renderLocalizedHTML(lang) {
   });
 }
 
+// ============================================================
+// 인앱 브라우저 경고 메시지 (15개 언어)
+// ============================================================
+const INAPP_WARNINGS = {
+  ko: {
+    title: '⚠ Chrome/Safari에서 열어주세요',
+    body: '현재 <strong>카카오톡/페이스북 등 앱 내부 브라우저</strong>에서 열렸습니다.<br>음성 재생, 저장 등 주요 기능이 <strong>작동하지 않습니다.</strong>',
+    action_android: '▶ Chrome으로 열기',
+    action_ios: '▶ Safari에서 열기',
+    ios_guide: '📱 iPhone 사용법:<br>우측 상단 <strong>⋯</strong> 또는 <strong>공유</strong> 버튼 → <strong>"Safari로 열기"</strong>를 선택해주세요.',
+    copy_link: '🔗 주소 복사',
+    copied: '✓ 주소가 복사되었습니다',
+    dismiss: '그대로 보기 (기능 제한)'
+  },
+  en: {
+    title: '⚠ Please open in Chrome/Safari',
+    body: 'You are currently using an <strong>in-app browser (KakaoTalk, Facebook, etc.)</strong>.<br>Voice playback and other key features <strong>will not work.</strong>',
+    action_android: '▶ Open in Chrome',
+    action_ios: '▶ Open in Safari',
+    ios_guide: '📱 iPhone: Tap <strong>⋯</strong> or <strong>Share</strong> button at top → select <strong>"Open in Safari"</strong>.',
+    copy_link: '🔗 Copy URL',
+    copied: '✓ URL copied',
+    dismiss: 'Continue anyway (limited features)'
+  },
+  ja: {
+    title: '⚠ Chrome/Safariで開いてください',
+    body: '現在<strong>LINE/Facebookなどアプリ内ブラウザ</strong>で開かれています。<br>音声再生など主要機能が<strong>動作しません。</strong>',
+    action_android: '▶ Chromeで開く',
+    action_ios: '▶ Safariで開く',
+    ios_guide: '📱 iPhone: 右上の<strong>⋯</strong>または<strong>共有</strong>ボタン → <strong>「Safariで開く」</strong>を選択してください。',
+    copy_link: '🔗 URLをコピー',
+    copied: '✓ URLをコピーしました',
+    dismiss: 'このまま続行(機能制限)'
+  },
+  'zh-CN': {
+    title: '⚠ 请在Chrome/Safari中打开',
+    body: '当前在<strong>微信/Facebook等应用内浏览器</strong>中打开。<br>语音播放等主要功能<strong>无法使用。</strong>',
+    action_android: '▶ 在Chrome中打开',
+    action_ios: '▶ 在Safari中打开',
+    ios_guide: '📱 iPhone:点击右上角<strong>⋯</strong>或<strong>分享</strong>按钮 → 选择<strong>"在Safari中打开"</strong>。',
+    copy_link: '🔗 复制链接',
+    copied: '✓ 已复制链接',
+    dismiss: '继续使用(功能受限)'
+  },
+  'zh-TW': {
+    title: '⚠ 請在Chrome/Safari中開啟',
+    body: '目前在<strong>LINE/Facebook等應用內瀏覽器</strong>中開啟。<br>語音播放等主要功能<strong>無法使用。</strong>',
+    action_android: '▶ 在Chrome中開啟',
+    action_ios: '▶ 在Safari中開啟',
+    ios_guide: '📱 iPhone:點擊右上角<strong>⋯</strong>或<strong>分享</strong>按鈕 → 選擇<strong>「在Safari中開啟」</strong>。',
+    copy_link: '🔗 複製連結',
+    copied: '✓ 已複製連結',
+    dismiss: '繼續使用(功能受限)'
+  },
+  es: {
+    title: '⚠ Ábralo en Chrome/Safari',
+    body: 'Está usando un <strong>navegador dentro de una app (WhatsApp, Facebook, etc.)</strong>.<br>La reproducción de voz y otras funciones <strong>no funcionarán.</strong>',
+    action_android: '▶ Abrir en Chrome',
+    action_ios: '▶ Abrir en Safari',
+    ios_guide: '📱 iPhone: Toque el botón <strong>⋯</strong> o <strong>Compartir</strong> arriba → seleccione <strong>"Abrir en Safari"</strong>.',
+    copy_link: '🔗 Copiar URL',
+    copied: '✓ URL copiada',
+    dismiss: 'Continuar de todos modos (funciones limitadas)'
+  },
+  fr: {
+    title: '⚠ Ouvrez dans Chrome/Safari',
+    body: 'Vous utilisez un <strong>navigateur intégré à une application (WhatsApp, Facebook, etc.)</strong>.<br>La lecture vocale et autres fonctions clés <strong>ne fonctionneront pas.</strong>',
+    action_android: '▶ Ouvrir dans Chrome',
+    action_ios: '▶ Ouvrir dans Safari',
+    ios_guide: '📱 iPhone: Touchez <strong>⋯</strong> ou <strong>Partager</strong> en haut → sélectionnez <strong>"Ouvrir dans Safari"</strong>.',
+    copy_link: '🔗 Copier le lien',
+    copied: '✓ Lien copié',
+    dismiss: 'Continuer quand même (fonctions limitées)'
+  },
+  de: {
+    title: '⚠ Bitte in Chrome/Safari öffnen',
+    body: 'Sie verwenden einen <strong>In-App-Browser (WhatsApp, Facebook, usw.)</strong>.<br>Sprachwiedergabe und andere Hauptfunktionen <strong>werden nicht funktionieren.</strong>',
+    action_android: '▶ In Chrome öffnen',
+    action_ios: '▶ In Safari öffnen',
+    ios_guide: '📱 iPhone: Tippen Sie auf <strong>⋯</strong> oder <strong>Teilen</strong> oben → wählen Sie <strong>"In Safari öffnen"</strong>.',
+    copy_link: '🔗 URL kopieren',
+    copied: '✓ URL kopiert',
+    dismiss: 'Trotzdem fortfahren (eingeschränkte Funktionen)'
+  },
+  pt: {
+    title: '⚠ Abra no Chrome/Safari',
+    body: 'Está usando um <strong>navegador dentro de app (WhatsApp, Facebook, etc.)</strong>.<br>A reprodução de voz e outras funções <strong>não funcionarão.</strong>',
+    action_android: '▶ Abrir no Chrome',
+    action_ios: '▶ Abrir no Safari',
+    ios_guide: '📱 iPhone: Toque em <strong>⋯</strong> ou <strong>Compartilhar</strong> no topo → selecione <strong>"Abrir no Safari"</strong>.',
+    copy_link: '🔗 Copiar URL',
+    copied: '✓ URL copiada',
+    dismiss: 'Continuar mesmo assim (recursos limitados)'
+  },
+  ru: {
+    title: '⚠ Откройте в Chrome/Safari',
+    body: 'Вы используете <strong>встроенный браузер приложения (WhatsApp, Facebook и т.д.)</strong>.<br>Воспроизведение голоса и другие функции <strong>не будут работать.</strong>',
+    action_android: '▶ Открыть в Chrome',
+    action_ios: '▶ Открыть в Safari',
+    ios_guide: '📱 iPhone: Нажмите <strong>⋯</strong> или <strong>Поделиться</strong> вверху → выберите <strong>"Открыть в Safari"</strong>.',
+    copy_link: '🔗 Копировать ссылку',
+    copied: '✓ Ссылка скопирована',
+    dismiss: 'Продолжить (с ограничениями)'
+  },
+  ar: {
+    title: '⚠ افتحه في Chrome/Safari',
+    body: 'أنت تستخدم <strong>متصفحًا داخل تطبيق (WhatsApp، Facebook إلخ)</strong>.<br>لن يعمل تشغيل الصوت والميزات الرئيسية الأخرى.',
+    action_android: '▶ فتح في Chrome',
+    action_ios: '▶ فتح في Safari',
+    ios_guide: '📱 iPhone: اضغط على <strong>⋯</strong> أو <strong>مشاركة</strong> في الأعلى → اختر <strong>"فتح في Safari"</strong>.',
+    copy_link: '🔗 نسخ الرابط',
+    copied: '✓ تم نسخ الرابط',
+    dismiss: 'المتابعة على أي حال (ميزات محدودة)'
+  },
+  hi: {
+    title: '⚠ Chrome/Safari में खोलें',
+    body: 'आप <strong>ऐप के अंदर ब्राउज़र (WhatsApp, Facebook आदि)</strong> का उपयोग कर रहे हैं।<br>आवाज़ प्लेबैक और अन्य प्रमुख सुविधाएँ <strong>काम नहीं करेंगी।</strong>',
+    action_android: '▶ Chrome में खोलें',
+    action_ios: '▶ Safari में खोलें',
+    ios_guide: '📱 iPhone: ऊपर <strong>⋯</strong> या <strong>साझा करें</strong> बटन पर टैप करें → <strong>"Safari में खोलें"</strong> चुनें।',
+    copy_link: '🔗 लिंक कॉपी करें',
+    copied: '✓ लिंक कॉपी किया गया',
+    dismiss: 'फिर भी जारी रखें (सीमित सुविधाएँ)'
+  },
+  vi: {
+    title: '⚠ Mở trong Chrome/Safari',
+    body: 'Bạn đang dùng <strong>trình duyệt trong ứng dụng (Zalo, Facebook, v.v.)</strong>.<br>Phát âm thanh và các tính năng chính <strong>sẽ không hoạt động.</strong>',
+    action_android: '▶ Mở trong Chrome',
+    action_ios: '▶ Mở trong Safari',
+    ios_guide: '📱 iPhone: Nhấn <strong>⋯</strong> hoặc <strong>Chia sẻ</strong> ở trên → chọn <strong>"Mở trong Safari"</strong>.',
+    copy_link: '🔗 Sao chép liên kết',
+    copied: '✓ Đã sao chép',
+    dismiss: 'Vẫn tiếp tục (tính năng hạn chế)'
+  },
+  th: {
+    title: '⚠ เปิดใน Chrome/Safari',
+    body: 'คุณกำลังใช้<strong>เบราว์เซอร์ในแอป (Line, Facebook เป็นต้น)</strong><br>การเล่นเสียงและฟังก์ชันหลักอื่นๆ<strong>จะไม่ทำงาน</strong>',
+    action_android: '▶ เปิดใน Chrome',
+    action_ios: '▶ เปิดใน Safari',
+    ios_guide: '📱 iPhone: แตะ <strong>⋯</strong> หรือ <strong>แชร์</strong> ด้านบน → เลือก <strong>"เปิดใน Safari"</strong>',
+    copy_link: '🔗 คัดลอกลิงก์',
+    copied: '✓ คัดลอกแล้ว',
+    dismiss: 'ดำเนินการต่อ (ฟังก์ชันจำกัด)'
+  },
+  id: {
+    title: '⚠ Buka di Chrome/Safari',
+    body: 'Anda menggunakan <strong>browser dalam aplikasi (WhatsApp, Facebook, dll.)</strong>.<br>Pemutaran suara dan fitur utama lainnya <strong>tidak akan berfungsi.</strong>',
+    action_android: '▶ Buka di Chrome',
+    action_ios: '▶ Buka di Safari',
+    ios_guide: '📱 iPhone: Ketuk <strong>⋯</strong> atau <strong>Bagikan</strong> di atas → pilih <strong>"Buka di Safari"</strong>.',
+    copy_link: '🔗 Salin tautan',
+    copied: '✓ Tautan disalin',
+    dismiss: 'Lanjutkan saja (fitur terbatas)'
+  }
+};
+
+// ============================================================
+// 내담자 초대 메시지 템플릿 (15개 언어)
+// {code}는 초대 코드로, {url}은 앱 주소로 치환됨
+// ============================================================
+const INVITE_TEMPLATES = {
+  ko: `📬 Peace-In Practice™ 상담 초대\n\n상담 프로그램에 초대합니다.\n\n🔑 초대 코드: {code}\n\n📱 접속 방법:\n1. Chrome(안드로이드) 또는 Safari(iPhone) 브라우저를 직접 열어주세요.\n⚠ 카카오톡/문자 링크로 바로 열면 음성 재생이 되지 않습니다.\n\n2. 주소창에 아래 주소를 입력:\n{url}\n\n3. "초대 코드" 탭을 선택하고, 위의 코드를 입력하세요.\n\n4. 앱을 자주 사용하시려면 브라우저 메뉴에서 "홈 화면에 추가"를 선택하면 아이콘처럼 사용할 수 있습니다.\n\n문의 사항이 있으시면 언제든 말씀해 주세요.`,
+  en: `📬 Peace-In Practice™ Counseling Invitation\n\nYou are invited to our counseling program.\n\n🔑 Invite Code: {code}\n\n📱 How to Access:\n1. Open Chrome (Android) or Safari (iPhone) directly.\n⚠ If opened from a messenger link, voice playback may not work.\n\n2. Enter this URL in the address bar:\n{url}\n\n3. Select the "Invite Code" tab and enter the code above.\n\n4. For frequent use, select "Add to Home Screen" from the browser menu to use it like an app.\n\nPlease contact us with any questions.`,
+  ja: `📬 Peace-In Practice™ カウンセリングのご招待\n\nカウンセリングプログラムへご招待します。\n\n🔑 招待コード: {code}\n\n📱 アクセス方法:\n1. Chrome(Android)またはSafari(iPhone)を直接開いてください。\n⚠ LINE/メッセンジャーのリンクから直接開くと音声再生ができません。\n\n2. アドレスバーに下記URLを入力:\n{url}\n\n3. 「招待コード」タブを選び、上記コードを入力してください。\n\n4. 頻繁にご利用の場合は、ブラウザメニューから「ホーム画面に追加」を選択するとアプリのように使えます。\n\nご質問があればいつでもお問い合わせください。`,
+  'zh-CN': `📬 Peace-In Practice™ 咨询邀请\n\n我们邀请您参加咨询项目。\n\n🔑 邀请码: {code}\n\n📱 访问方法:\n1. 直接打开Chrome(安卓)或Safari(iPhone)浏览器。\n⚠ 通过微信/消息链接直接打开,语音播放可能无法使用。\n\n2. 在地址栏输入以下网址:\n{url}\n\n3. 选择"邀请码"标签,输入上述代码。\n\n4. 如需经常使用,从浏览器菜单选择"添加到主屏幕",可像应用一样使用。\n\n如有任何问题,请随时联系我们。`,
+  'zh-TW': `📬 Peace-In Practice™ 諮商邀請\n\n我們邀請您參加諮商項目。\n\n🔑 邀請碼: {code}\n\n📱 訪問方法:\n1. 直接打開Chrome(安卓)或Safari(iPhone)瀏覽器。\n⚠ 通過LINE/訊息連結直接打開,語音播放可能無法使用。\n\n2. 在地址欄輸入以下網址:\n{url}\n\n3. 選擇「邀請碼」標籤,輸入上述代碼。\n\n4. 如需經常使用,從瀏覽器菜單選擇「加入主畫面」,可像應用程式一樣使用。\n\n如有任何問題,請隨時聯繫我們。`,
+  es: `📬 Invitación Peace-In Practice™\n\nLe invitamos a nuestro programa de asesoramiento.\n\n🔑 Código de invitación: {code}\n\n📱 Cómo acceder:\n1. Abra Chrome (Android) o Safari (iPhone) directamente.\n⚠ Si abre desde un enlace de mensajería, la reproducción de voz puede no funcionar.\n\n2. Ingrese esta URL en la barra de direcciones:\n{url}\n\n3. Seleccione la pestaña "Código de invitación" e ingrese el código anterior.\n\n4. Para uso frecuente, seleccione "Añadir a pantalla de inicio" en el menú del navegador para usarlo como una app.\n\nContáctenos si tiene alguna pregunta.`,
+  fr: `📬 Invitation Peace-In Practice™\n\nVous êtes invité(e) à notre programme de conseil.\n\n🔑 Code d'invitation: {code}\n\n📱 Comment accéder:\n1. Ouvrez directement Chrome (Android) ou Safari (iPhone).\n⚠ Si ouvert depuis un lien de messagerie, la lecture vocale peut ne pas fonctionner.\n\n2. Entrez cette URL dans la barre d'adresse:\n{url}\n\n3. Sélectionnez l'onglet "Code d'invitation" et entrez le code ci-dessus.\n\n4. Pour une utilisation fréquente, sélectionnez "Ajouter à l'écran d'accueil" dans le menu du navigateur.\n\nN'hésitez pas à nous contacter si vous avez des questions.`,
+  de: `📬 Peace-In Practice™ Einladung\n\nSie sind zu unserem Beratungsprogramm eingeladen.\n\n🔑 Einladungscode: {code}\n\n📱 Zugriff:\n1. Öffnen Sie Chrome (Android) oder Safari (iPhone) direkt.\n⚠ Wenn Sie über einen Messenger-Link öffnen, funktioniert die Sprachwiedergabe möglicherweise nicht.\n\n2. Geben Sie diese URL in die Adressleiste ein:\n{url}\n\n3. Wählen Sie den Tab "Einladungscode" und geben Sie den obigen Code ein.\n\n4. Für häufige Nutzung wählen Sie "Zum Startbildschirm hinzufügen" im Browsermenü.\n\nKontaktieren Sie uns bei Fragen.`,
+  pt: `📬 Convite Peace-In Practice™\n\nVocê está convidado ao nosso programa de aconselhamento.\n\n🔑 Código de convite: {code}\n\n📱 Como acessar:\n1. Abra Chrome (Android) ou Safari (iPhone) diretamente.\n⚠ Se aberto por link de mensageiro, a reprodução de voz pode não funcionar.\n\n2. Digite esta URL na barra de endereço:\n{url}\n\n3. Selecione a aba "Código de convite" e digite o código acima.\n\n4. Para uso frequente, selecione "Adicionar à tela inicial" no menu do navegador.\n\nEntre em contato conosco se tiver dúvidas.`,
+  ru: `📬 Приглашение Peace-In Practice™\n\nПриглашаем вас в нашу программу консультирования.\n\n🔑 Код приглашения: {code}\n\n📱 Как получить доступ:\n1. Откройте Chrome (Android) или Safari (iPhone) напрямую.\n⚠ Если открыть через ссылку из мессенджера, воспроизведение голоса может не работать.\n\n2. Введите этот URL в адресную строку:\n{url}\n\n3. Выберите вкладку "Код приглашения" и введите указанный выше код.\n\n4. Для частого использования выберите "Добавить на главный экран" в меню браузера.\n\nСвяжитесь с нами по любым вопросам.`,
+  ar: `📬 دعوة Peace-In Practice™\n\nنرحب بانضمامك إلى برنامج الإرشاد الخاص بنا.\n\n🔑 رمز الدعوة: {code}\n\n📱 كيفية الوصول:\n1. افتح Chrome (أندرويد) أو Safari (iPhone) مباشرة.\n⚠ إذا فُتح من رابط مراسلة، قد لا يعمل تشغيل الصوت.\n\n2. أدخل هذا الرابط في شريط العناوين:\n{url}\n\n3. اختر علامة التبويب "رمز الدعوة" وأدخل الرمز أعلاه.\n\n4. للاستخدام المتكرر، اختر "إضافة إلى الشاشة الرئيسية" من قائمة المتصفح.\n\nلا تتردد في التواصل معنا.`,
+  hi: `📬 Peace-In Practice™ आमंत्रण\n\nहम आपको हमारे परामर्श कार्यक्रम में आमंत्रित करते हैं।\n\n🔑 आमंत्रण कोड: {code}\n\n📱 कैसे एक्सेस करें:\n1. Chrome (Android) या Safari (iPhone) सीधे खोलें।\n⚠ मैसेंजर लिंक से सीधे खोलने पर आवाज़ प्लेबैक काम नहीं कर सकता।\n\n2. पते की बार में यह URL दर्ज करें:\n{url}\n\n3. "आमंत्रण कोड" टैब चुनें और ऊपर दिया कोड दर्ज करें।\n\n4. नियमित उपयोग के लिए, ब्राउज़र मेनू से "होम स्क्रीन पर जोड़ें" चुनें।\n\nकोई प्रश्न होने पर हमसे संपर्क करें।`,
+  vi: `📬 Lời mời Peace-In Practice™\n\nChúng tôi mời bạn tham gia chương trình tư vấn.\n\n🔑 Mã mời: {code}\n\n📱 Cách truy cập:\n1. Mở Chrome (Android) hoặc Safari (iPhone) trực tiếp.\n⚠ Nếu mở từ liên kết tin nhắn, phát âm thanh có thể không hoạt động.\n\n2. Nhập URL này vào thanh địa chỉ:\n{url}\n\n3. Chọn tab "Mã mời" và nhập mã trên.\n\n4. Để sử dụng thường xuyên, chọn "Thêm vào Màn hình chính" từ menu trình duyệt.\n\nLiên hệ với chúng tôi nếu có câu hỏi.`,
+  th: `📬 คำเชิญ Peace-In Practice™\n\nเราขอเชิญคุณเข้าร่วมโปรแกรมการให้คำปรึกษา\n\n🔑 รหัสเชิญ: {code}\n\n📱 วิธีเข้าถึง:\n1. เปิด Chrome (Android) หรือ Safari (iPhone) โดยตรง\n⚠ หากเปิดจากลิงก์ในแอปแชท การเล่นเสียงอาจไม่ทำงาน\n\n2. ป้อน URL นี้ในแถบที่อยู่:\n{url}\n\n3. เลือกแท็บ "รหัสเชิญ" และป้อนรหัสข้างต้น\n\n4. สำหรับการใช้งานบ่อยครั้ง เลือก "เพิ่มที่หน้าจอหลัก" จากเมนูเบราว์เซอร์\n\nติดต่อเราหากมีคำถาม`,
+  id: `📬 Undangan Peace-In Practice™\n\nAnda diundang ke program konseling kami.\n\n🔑 Kode Undangan: {code}\n\n📱 Cara akses:\n1. Buka Chrome (Android) atau Safari (iPhone) langsung.\n⚠ Jika dibuka dari tautan pesan, pemutaran suara mungkin tidak berfungsi.\n\n2. Masukkan URL ini di bilah alamat:\n{url}\n\n3. Pilih tab "Kode Undangan" dan masukkan kode di atas.\n\n4. Untuk penggunaan sering, pilih "Tambahkan ke Layar Beranda" dari menu browser.\n\nHubungi kami jika ada pertanyaan.`
+};
+
+function getWarning() {
+  const lang = getCurrentDisplayLang() || 'ko';
+  return INAPP_WARNINGS[lang] || INAPP_WARNINGS[lang.split('-')[0]] || INAPP_WARNINGS.en;
+}
+
+function getInviteTemplate(code, url) {
+  const lang = getCurrentDisplayLang() || 'ko';
+  const tpl = INVITE_TEMPLATES[lang] || INVITE_TEMPLATES[lang.split('-')[0]] || INVITE_TEMPLATES.en;
+  return tpl.replace(/\{code\}/g, code || '------').replace(/\{url\}/g, url || (location.origin + location.pathname));
+}
+
+// ============================================================
+// 인앱 브라우저 감지
+// ============================================================
+function detectInAppBrowser() {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  const patterns = [
+    'kakaotalk', 'fban', 'fbav', 'instagram', 'line/', 'naver', 'daum',
+    'tiktok', 'wechat', 'micromessenger', 'weibo', 'qq/',
+    'snapchat', 'twitter', 'whatsapp', 'telegram'
+  ];
+  for (const p of patterns) {
+    if (ua.includes(p)) return true;
+  }
+  return false;
+}
+
+function showInAppWarning() {
+  if (document.getElementById('__pip_inapp_warning')) return;
+  const w = getWarning();
+  const ua = (navigator.userAgent || '').toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  const currentUrl = location.href;
+
+  const overlay = document.createElement('div');
+  overlay.id = '__pip_inapp_warning';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+
+  const card = document.createElement('div');
+  card.style.cssText = 'background:white;border-radius:16px;max-width:400px;width:100%;padding:24px 22px;box-shadow:0 8px 32px rgba(0,0,0,0.3);font-family:"DM Sans",sans-serif;';
+
+  let actionBtn;
+  if (isIOS) {
+    actionBtn = '<div style="background:#FDF8F0;border:1px solid #E8C99A;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;color:#7A4F1A;margin:14px 0">'+w.ios_guide+'</div>';
+  } else {
+    const intentUrl = 'intent://' + location.host + location.pathname + location.search + location.hash + '#Intent;scheme=https;package=com.android.chrome;end';
+    actionBtn = '<a href="'+intentUrl+'" style="display:block;width:100%;background:#7C9A7E;color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:500;text-align:center;text-decoration:none;margin:14px 0;cursor:pointer">'+w.action_android+'</a>';
+  }
+
+  card.innerHTML = '<h3 style="margin:0 0 12px;font-size:17px;color:#A0522D">'+w.title+'</h3>'
+    + '<p style="margin:0 0 14px;font-size:13px;line-height:1.7;color:#2C2C2A">'+w.body+'</p>'
+    + actionBtn
+    + '<button id="__pip_copy_url" style="display:block;width:100%;background:white;border:1px solid #B8CEBC;color:#4A6B4D;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;margin-bottom:10px">'+w.copy_link+'</button>'
+    + '<div id="__pip_copied_msg" style="display:none;font-size:12px;color:#4A6B4D;text-align:center;margin-bottom:8px">'+w.copied+'</div>'
+    + '<button id="__pip_dismiss_warning" style="display:block;width:100%;background:transparent;border:none;color:#7A7872;font-size:12px;cursor:pointer;padding:8px;text-decoration:underline">'+w.dismiss+'</button>';
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  document.getElementById('__pip_copy_url').onclick = () => {
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = currentUrl;
+      ta.style.position = 'fixed'; ta.style.top = '-9999px';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(e){}
+      ta.remove();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(currentUrl).catch(fallback);
+    } else {
+      fallback();
+    }
+    const m = document.getElementById('__pip_copied_msg');
+    if (m) { m.style.display = 'block'; setTimeout(() => m.style.display='none', 2500); }
+  };
+
+  document.getElementById('__pip_dismiss_warning').onclick = () => {
+    overlay.remove();
+    sessionStorage.setItem('pip_inapp_dismissed', '1');
+  };
+}
+
+function checkInAppBrowser() {
+  if (sessionStorage.getItem('pip_inapp_dismissed')) return;
+  if (detectInAppBrowser()) {
+    setTimeout(showInAppWarning, 800);
+  }
+}
+
 function translateDOM(lang) {
   const lc = (lang||'ko').split('-')[0];
   const key = lc==='zh' ? 'zh' : (KO_TRANSLATIONS[lang] ? lang : (KO_TRANSLATIONS[lc] ? lc : 'en'));
@@ -1126,6 +1417,11 @@ function applyFullTranslation(lang) {
   setTimeout(() => translateDataElements(lang).catch(e=>console.warn('[PIP] translate error',e)), 100);
   setTimeout(() => translateDataElements(lang).catch(()=>{}), 800);
   setTimeout(() => translateDataElements(lang).catch(()=>{}), 2500);
+  // 4) 인앱 경고창이 열려 있으면 새 언어로 재렌더링
+  if (document.getElementById('__pip_inapp_warning')) {
+    document.getElementById('__pip_inapp_warning').remove();
+    setTimeout(showInAppWarning, 100);
+  }
   console.log('[PIP] Translation pipeline triggered for:', lang);
 }
 
@@ -1919,8 +2215,57 @@ async function addClient() {
   const name=document.getElementById('new-client-name').value.trim()||'내담자';
   try {
     const res=await api('/api/host/clients/add','POST',{name,language:'ko'});
-    if(res.inviteCode){document.getElementById('new-invite-code').textContent=res.inviteCode;document.getElementById('new-invite-result').style.display='block';}
+    if(res.inviteCode){
+      document.getElementById('new-invite-code').textContent=res.inviteCode;
+      document.getElementById('new-invite-result').style.display='block';
+      // 메시지 언어 기본값: 현재 호스트 표시 언어
+      const sel = document.getElementById('invite-msg-lang');
+      const hostLang = localStorage.getItem('pip_host_lang_pref') || 'ko';
+      if (sel) {
+        // 옵션 값 매칭 시도
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === hostLang) { sel.selectedIndex = i; break; }
+        }
+      }
+      updateInviteMessage();
+    }
   } catch(e){alert('추가 실패');}
+}
+
+function updateInviteMessage() {
+  const code = document.getElementById('new-invite-code').textContent;
+  const lang = document.getElementById('invite-msg-lang').value;
+  const url = location.origin + location.pathname;
+  const tpl = INVITE_TEMPLATES[lang] || INVITE_TEMPLATES['en'];
+  const msg = tpl.replace(/\{code\}/g, code).replace(/\{url\}/g, url);
+  document.getElementById('invite-msg-preview').value = msg;
+}
+
+function copyInviteMessage() {
+  const ta = document.getElementById('invite-msg-preview');
+  const text = ta.value;
+  const success = document.getElementById('invite-copied-msg');
+  const fallback = () => {
+    ta.removeAttribute('readonly');
+    ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    ta.setAttribute('readonly', 'true');
+    ta.blur();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      success.classList.add('show');
+      setTimeout(() => success.classList.remove('show'), 3500);
+    }).catch(() => {
+      fallback();
+      success.classList.add('show');
+      setTimeout(() => success.classList.remove('show'), 3500);
+    });
+  } else {
+    fallback();
+    success.classList.add('show');
+    setTimeout(() => success.classList.remove('show'), 3500);
+  }
 }
 
 async function loadHostSchedule() {
@@ -2358,6 +2703,8 @@ window.addEventListener('load', () => {
   initApp();
   const activeLang = isHost ? hostLang : clientLang;
   if (activeLang && activeLang !== 'ko') applyFullTranslation(activeLang);
+  // 인앱 브라우저 감지 + 경고 (번역이 먼저 적용된 후 호출되도록 딜레이)
+  setTimeout(checkInAppBrowser, 1000);
 });
 
 // 화면이 다시 활성화될 때 재번역
