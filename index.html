@@ -2886,6 +2886,7 @@ async function loadClientDetailModules() {
           + (advanceBtn ? '<div style="margin-top:8px">'+advanceBtn+'</div>' : '')
           + '</div>'
           + '<div style="display:flex;flex-direction:column;gap:4px">'
+          + '<button onclick="showModuleAnswerHistory(\''+cm.module_id+'\',\''+(title).replace(/\x27/g,"\\\x27")+'\')" style="background:#FBF4E6;border:1px solid #D9B779;border-radius:6px;padding:4px 10px;font-size:11px;color:#8B5E2A;cursor:pointer;white-space:nowrap;font-weight:500">📚 답변 내역</button>'
           + '<button onclick="openClientModuleEditor(\''+cm.module_id+'\',\''+(title).replace(/\x27/g,"\\\x27")+'\')" style="background:#EDF4EE;border:1px solid var(--sage-light);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--sage-dark);cursor:pointer;white-space:nowrap">📋 질문 편집</button>'
           + '<button onclick="openSessionAssignModal(\''+cm.module_id+'\',\''+(title).replace(/\x27/g,"\\\x27")+'\','+currentSession+',' + JSON.stringify(completedSessions) + ',' + totalSessions + ')" style="background:#EAF3F7;border:1px solid #9BC7D9;border-radius:6px;padding:4px 10px;font-size:11px;color:#2E5E72;cursor:pointer;white-space:nowrap">🔄 세션 지정 배정</button>'
           + (completed ? '' : '<button onclick="toggleModuleActive(\''+cm.module_id+'\','+toggleNewState+')" style="background:'+(isActive?'#FDF3E7':'#EDF4EE')+';border:1px solid '+(isActive?'#E8C99A':'var(--sage-light)')+';border-radius:6px;padding:4px 10px;font-size:11px;color:'+(isActive?'#8B5E2A':'var(--sage-dark)')+';cursor:pointer;white-space:nowrap">'+toggleLabel+'</button>')
@@ -3631,6 +3632,90 @@ async function deleteQuestion_cme(questionId) {
   } catch(e) {
     alert('질문 삭제 실패: ' + (e.message || e.toString()));
     console.error('deleteQuestion_cme error:', e);
+  }
+}
+
+// [신규] 모듈 전체 답변 내역 보기 (모든 세션 × 모든 질문 × 답변)
+async function showModuleAnswerHistory(moduleId, title) {
+  try {
+    const data = await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId+'/all-answers');
+    const sessions = (data && data.sessions) || [];
+    const curSess = data && data.currentSession;
+    const compSess = (data && data.completedSessions) || [];
+
+    const existingModal = document.getElementById('__history_modal');
+    if (existingModal) existingModal.remove();
+    const modal = document.createElement('div');
+    modal.id = '__history_modal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
+
+    let bodyHTML = '';
+    if (sessions.length === 0) {
+      bodyHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px 20px;font-size:13px">이 모듈에 아직 질문이 등록되어 있지 않습니다.</p>';
+    } else {
+      sessions.forEach(sess => {
+        let statusBadge = '';
+        if (compSess.includes(sess.sessionNum)) {
+          statusBadge = '<span style="font-size:10px;color:var(--sage-dark);background:#DDEEE0;padding:2px 7px;border-radius:4px;margin-left:8px">✓ 완료</span>';
+        } else if (sess.sessionNum === curSess && sess.answeredCount > 0) {
+          statusBadge = '<span style="font-size:10px;color:#2E5E72;background:#DCEBF1;padding:2px 7px;border-radius:4px;margin-left:8px">진행 중</span>';
+        } else if (sess.sessionNum === curSess) {
+          statusBadge = '<span style="font-size:10px;color:#8B5E2A;background:#F7E9CF;padding:2px 7px;border-radius:4px;margin-left:8px">현재</span>';
+        }
+
+        bodyHTML += '<div style="margin-bottom:18px">';
+        bodyHTML += '<div style="padding:10px 14px;background:var(--sage);color:white;border-radius:8px 8px 0 0;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:space-between">';
+        bodyHTML += '<span>📄 세션 '+sess.sessionNum+statusBadge+'</span>';
+        bodyHTML += '<span style="font-size:11px;opacity:0.9">'+sess.answeredCount+'/'+sess.totalCount+' 답변</span>';
+        bodyHTML += '</div>';
+        bodyHTML += '<div style="border:1px solid var(--warm);border-top:none;border-radius:0 0 8px 8px;padding:12px">';
+
+        if (sess.questions.length === 0) {
+          bodyHTML += '<p style="color:var(--text-muted);font-size:12px;padding:8px;margin:0">질문이 없습니다.</p>';
+        } else {
+          sess.questions.forEach((q, i) => {
+            const isLast = i === sess.questions.length - 1;
+            const qLabel = (q.isClientSpecific ? '[전용] ' : '') + 'Q' + (q.orderNum || (i+1));
+            let ansHTML = '<p style="color:var(--text-muted);font-size:12px;font-style:italic;margin:0;padding:8px 10px;background:#F9F7F3;border-radius:6px;border:1px dashed var(--warm)">답변 없음</p>';
+            if (q.answer) {
+              if (q.type === 'choice') {
+                const label = q.answer.choiceLabel || q.answer.choiceValue || '-';
+                ansHTML = '<p style="font-size:13px;background:#EDF4EE;padding:8px 10px;border-radius:6px;color:var(--sage-dark);margin:0">✓ '+String(label).replace(/</g,'&lt;')+'</p>';
+              } else {
+                const txt = (q.answer.textValue || '').replace(/</g,'&lt;');
+                ansHTML = '<p style="font-size:13px;background:#FDF8F0;padding:10px 12px;border-radius:6px;color:var(--text);white-space:pre-wrap;line-height:1.6;margin:0">'+txt+'</p>';
+              }
+              if (q.answer.answeredAt) {
+                try {
+                  const d = new Date(q.answer.answeredAt);
+                  const dstr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+                  ansHTML += '<p style="font-size:10px;color:var(--text-muted);margin:4px 2px 0">⏱ '+dstr+'</p>';
+                } catch(e){}
+              }
+            }
+            bodyHTML += '<div style="margin-bottom:'+(isLast?0:12)+'px;padding-bottom:'+(isLast?0:12)+'px'+(isLast?'':';border-bottom:1px solid var(--warm)')+'">';
+            bodyHTML += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+qLabel+' · '+(q.type==='text'?'서술형':'선택형')+'</div>';
+            bodyHTML += '<div style="font-size:13px;font-weight:500;margin-bottom:6px">'+(q.text||'').replace(/</g,'&lt;')+'</div>';
+            bodyHTML += ansHTML;
+            bodyHTML += '</div>';
+          });
+        }
+        bodyHTML += '</div></div>';
+      });
+    }
+
+    modal.innerHTML = '<div style="background:white;border-radius:14px;max-width:560px;width:100%;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3)">'
+      + '<div style="padding:18px 22px;border-bottom:1px solid var(--warm);flex-shrink:0">'
+      + '<h3 style="font-size:16px;color:#8B5E2A;margin-bottom:4px">📚 답변 내역</h3>'
+      + '<p style="font-size:12px;color:var(--text-muted)">'+((data && data.moduleTitle) || title || '')+'</p></div>'
+      + '<div style="padding:18px 22px;overflow-y:auto;flex:1">'+bodyHTML+'</div>'
+      + '<div style="padding:16px 22px;border-top:1px solid var(--warm);flex-shrink:0">'
+      + '<button onclick="document.getElementById(\'__history_modal\').remove()" style="width:100%;padding:12px;background:var(--sage);border:none;border-radius:8px;font-size:13px;color:white;cursor:pointer;font-weight:500">닫기</button>'
+      + '</div></div>';
+    document.body.appendChild(modal);
+  } catch(e) {
+    alert('답변 내역 조회 실패: ' + (e.message || e.toString()));
+    console.error('showModuleAnswerHistory error:', e);
   }
 }
 
