@@ -713,12 +713,13 @@ html.pip-ready body { visibility: visible; }
     <div class="divider"></div>
     <p class="sec-label">🗂 세션 (차시) 선택</p>
     <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;line-height:1.6">각 세션은 내담자가 1회분으로 진행하는 단위입니다. 한 세션을 내담자가 완료하면 호스트가 검토 후 다음 세션을 열어줘야 합니다.</p>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
       <select id="me-session-select" onchange="onSessionChange('me')" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;background:white">
         <option value="1">세션 1</option>
       </select>
       <button onclick="addNewSession('me')" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 14px;font-size:12px;cursor:pointer;white-space:nowrap">+ 새 세션</button>
     </div>
+    <button onclick="deleteEntireSession('me')" style="width:100%;background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:8px;padding:8px;font-size:11px;cursor:pointer;margin-bottom:12px">🗑 현재 세션의 모든 질문·답변 삭제</button>
 
     <div class="divider"></div>
     <p class="sec-label"><span id="me-session-label">세션 1</span> 질문 목록</p>
@@ -758,11 +759,12 @@ html.pip-ready body { visibility: visible; }
 
     <p class="sec-label">🗂 세션 (차시) 선택</p>
     <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;line-height:1.6">이 내담자만을 위한 추가 질문을 특정 세션에 넣을 수 있습니다.</p>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
       <select id="cme-session-select" onchange="onSessionChange('cme')" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;background:white">
         <option value="1">세션 1</option>
       </select>
     </div>
+    <button onclick="deleteEntireSession('cme')" style="width:100%;background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:8px;padding:8px;font-size:11px;cursor:pointer;margin-bottom:12px">🗑 이 세션의 이 내담자 전용 질문·답변 삭제</button>
 
     <p class="sec-label"><span id="cme-session-label">세션 1</span> · 이 내담자 전용 질문</p>
     <div id="cme-questions-list"><div class="loading">로딩 중...</div></div>
@@ -1024,6 +1026,16 @@ async function api(path, method='GET', body=null) {
     if (role==='host') { localStorage.removeItem('pip_role'); showScreen('screen-host-login'); }
     else { showScreen('screen-login'); }
     throw new Error('인증 만료');
+  }
+  // 4xx/5xx 오류면 백엔드 JSON의 error 메시지를 꺼내 throw
+  if (!res.ok) {
+    let errMsg = 'HTTP ' + res.status;
+    try {
+      const errData = await res.json();
+      if (errData && errData.error) errMsg = errData.error;
+      else if (errData && errData.message) errMsg = errData.message;
+    } catch(e) {}
+    throw new Error(errMsg);
   }
   return res.json();
 }
@@ -3467,13 +3479,36 @@ async function saveModuleTitle() {
 
 // 공통 모듈 완전 삭제
 async function deleteWholeModule() {
-  if (!confirm('⚠ 이 모듈 "'+currentEditingModuleTitle+'"을(를) 완전히 삭제하시겠습니까?\n\n해당 모듈의 모든 질문과 답변이 함께 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.')) return;
+  if (!confirm('⚠ 이 모듈 "'+currentEditingModuleTitle+'"을(를) 완전히 삭제하시겠습니까?\n\n해당 모듈의 모든 세션, 모든 질문, 모든 답변, 모든 배정이 함께 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.')) return;
   try {
     await api('/api/host/modules/'+currentEditingModuleId, 'DELETE');
     alert('모듈이 삭제되었습니다');
     goScreen('screen-host');
     setTimeout(() => showHostTab('edu', document.querySelector('[onclick*="\'edu\'"]')), 50);
-  } catch(e) { alert('삭제 실패'); }
+  } catch(e) {
+    alert('모듈 삭제 실패: ' + (e.message || e.toString()));
+    console.error('deleteWholeModule error:', e);
+  }
+}
+
+// [신규] 현재 선택된 세션의 모든 질문·답변 일괄 삭제
+async function deleteEntireSession(prefix) {
+  const isClientSpecific = (prefix === 'cme');
+  const scope = isClientSpecific ? '이 내담자 전용 질문' : '공통 질문';
+  if (!confirm('⚠ 세션 '+currentEditingSession+'의 '+scope+'을(를) 모두 삭제하시겠습니까?\n\n이 세션에 속한 모든 질문과 답변이 함께 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.')) return;
+  let url = '/api/host/modules/'+currentEditingModuleId+'/sessions/'+currentEditingSession;
+  if (isClientSpecific) url += '?clientId='+encodeURIComponent(currentEditingClientId);
+  try {
+    const res = await api(url, 'DELETE');
+    alert('세션 '+currentEditingSession+'의 '+(res.deletedCount||0)+'개 질문을 삭제했습니다.');
+    // 세션 목록이 비어버릴 수 있으므로 세션 1로 리셋 후 새로고침
+    await refreshSessionList(prefix);
+    if (isClientSpecific) loadClientModuleQuestions();
+    else loadModuleQuestions();
+  } catch(e) {
+    alert('세션 삭제 실패: ' + (e.message || e.toString()));
+    console.error('deleteEntireSession error:', e);
+  }
 }
 
 // 공통 질문 추가
@@ -3551,16 +3586,20 @@ async function editQuestion_me(questionId) {
   try {
     await api('/api/host/questions/'+questionId, 'PUT', body);
     loadModuleQuestions();
-  } catch(e) { alert('수정 실패'); }
+  } catch(e) { alert('질문 수정 실패: ' + (e.message || e.toString())); }
 }
 
 // 공통 질문 삭제
 async function deleteQuestion_me(questionId) {
-  if (!confirm('이 질문을 삭제하시겠습니까? (관련 답변 기록도 영향 받을 수 있음)')) return;
+  if (!confirm('이 질문을 삭제하시겠습니까?\n내담자가 이 질문에 답한 기록도 함께 삭제됩니다.')) return;
   try {
     await api('/api/host/questions/'+questionId, 'DELETE');
+    await refreshSessionList('me');
     loadModuleQuestions();
-  } catch(e) { alert('삭제 실패'); }
+  } catch(e) {
+    alert('질문 삭제 실패: ' + (e.message || e.toString()));
+    console.error('deleteQuestion_me error:', e);
+  }
 }
 
 // 내담자별 질문 수정
@@ -3579,16 +3618,19 @@ async function editQuestion_cme(questionId) {
   try {
     await api('/api/host/questions/'+questionId, 'PUT', body);
     loadClientModuleQuestions();
-  } catch(e) { alert('수정 실패'); }
+  } catch(e) { alert('질문 수정 실패: ' + (e.message || e.toString())); }
 }
 
 // 내담자별 질문 삭제
 async function deleteQuestion_cme(questionId) {
-  if (!confirm('이 내담자 전용 질문을 삭제하시겠습니까?')) return;
+  if (!confirm('이 내담자 전용 질문을 삭제하시겠습니까?\n해당 답변도 함께 삭제됩니다.')) return;
   try {
     await api('/api/host/questions/'+questionId, 'DELETE');
     loadClientModuleQuestions();
-  } catch(e) { alert('삭제 실패'); }
+  } catch(e) {
+    alert('질문 삭제 실패: ' + (e.message || e.toString()));
+    console.error('deleteQuestion_cme error:', e);
+  }
 }
 
 // 세션 완료 답변 검토 + 다음 세션 열기
