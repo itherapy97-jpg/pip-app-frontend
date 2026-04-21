@@ -439,22 +439,6 @@ html.pip-ready body { visibility: visible; }
       <button class="btn ghost" style="width:auto;padding:4px 10px;font-size:12px" onclick="hostLogout()">로그아웃</button>
     </div>
   </div>
-  <div class="lang-selector-wrap" style="padding:6px 20px 0">
-    <div class="lang-selector" onclick="toggleHostLangMenu()">
-      <span style="font-size:13px">🌐</span>
-      <span id="hostLangSelected" style="font-size:12px;color:var(--text);font-weight:500">Language</span>
-      <span style="font-size:10px">▾</span>
-    </div>
-    <div class="lang-menu" id="hostLangMenu">
-      <div class="lang-menu-item" onclick="setHostLang('en',this)">English</div>
-      <div class="lang-menu-item" onclick="setHostLang('zh-CN',this)">中文（简体）</div>
-      <div class="lang-menu-item" onclick="setHostLang('ja',this)">日本語</div>
-      <div class="lang-menu-item" onclick="setHostLang('es',this)">Español</div>
-      <div class="lang-menu-item" onclick="setHostLang('fr',this)">Français</div>
-      <div class="lang-menu-item" onclick="setHostLang('de',this)">Deutsch</div>
-      <div class="lang-menu-item lang-ko" onclick="setHostLang('ko',this)">한국어 (원본)</div>
-    </div>
-  </div>
   <div class="host-tabs">
     <button class="host-tab active" onclick="showHostTab('groups',this)">그룹</button>
     <button class="host-tab" onclick="showHostTab('clients',this)">내담자</button>
@@ -707,6 +691,83 @@ html.pip-ready body { visibility: visible; }
     <button class="btn primary" onclick="sendHostThreadReply()">답변 전송</button>
     <div class="success-msg" id="ht-success"></div>
     <div class="error-msg" id="ht-error"></div>
+  </div>
+</div>
+
+<!-- ========== [신규] 공통 모듈 편집 (교육 탭에서 진입) ========== -->
+<div class="screen" id="screen-module-edit">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-host');showHostTab('edu',document.querySelector('[onclick*=\'edu\']'))">← 뒤로</button>
+    <div class="top-bar-title"><h2 id="me-title">모듈 편집</h2><p>공통 질문지 (모든 배정된 내담자 기본값)</p></div>
+  </div>
+  <div class="content">
+    <div class="field-label">모듈 제목</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input type="text" id="me-module-title" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px" />
+      <button onclick="saveModuleTitle()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;white-space:nowrap">제목 저장</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="deleteWholeModule()" style="flex:1;background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:8px;padding:9px;font-size:12px;cursor:pointer">🗑 이 모듈 완전 삭제</button>
+    </div>
+
+    <div class="divider"></div>
+    <p class="sec-label">질문 목록</p>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">💡 각 질문은 순서대로 표시됩니다. 선택형 질문은 각 선택지마다 <strong>다음 질문 번호</strong>를 지정해 <strong>분기</strong>시킬 수 있습니다. (비워두면 순서대로 진행)</p>
+    <div id="me-questions-list"><div class="loading">로딩 중...</div></div>
+
+    <div class="divider"></div>
+    <p class="sec-label">+ 새 질문 추가</p>
+    <div class="field-label">질문 내용</div>
+    <textarea id="me-new-q-text" class="editor-area" rows="3" placeholder="예) 지금 어떤 기분이신가요?"></textarea>
+    <div class="field-label">질문 유형</div>
+    <select id="me-new-q-type" onchange="toggleChoiceSection('me')" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;background:white;margin-bottom:10px">
+      <option value="text">서술형 (자유 텍스트 답변)</option>
+      <option value="choice">선택형 (선택지 중 고르기)</option>
+    </select>
+    <div id="me-new-choices-section" style="display:none">
+      <div class="field-label">선택지 (한 줄에 하나씩)</div>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px;line-height:1.6">형식: <code>라벨|값|분기할질문번호(선택)</code><br>예: <code>기쁨|happy|3</code> (이 선택 시 3번 질문으로 분기)<br>예: <code>슬픔|sad</code> (분기 없이 다음 질문으로)</p>
+      <textarea id="me-new-q-choices" class="editor-area" rows="4" placeholder="기쁨|happy|3&#10;슬픔|sad|4&#10;화남|angry"></textarea>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="addModuleQuestion()">+ 질문 추가</button>
+    <div class="success-msg" id="me-success"></div>
+    <div class="error-msg" id="me-error"></div>
+    <div class="spacer"></div>
+  </div>
+</div>
+
+<!-- ========== [신규] 내담자별 모듈 질문 편집 (내담자 상세 → 모듈 탭에서 진입) ========== -->
+<div class="screen" id="screen-client-module-edit">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('screen-client-detail');setTimeout(function(){showDetailTab('modules',document.getElementById('dtab-modules'))},50)">← 뒤로</button>
+    <div class="top-bar-title"><h2 id="cme-title">내담자별 질문 편집</h2><p id="cme-sub">이 내담자에게만 추가로 보여질 질문</p></div>
+  </div>
+  <div class="content">
+    <div class="notice"><p>📌 여기서 추가한 질문은 <strong>이 내담자에게만</strong> 해당 모듈에서 표시됩니다.<br>공통 질문은 <strong>교육 탭</strong>에서 편집하세요.</p></div>
+
+    <p class="sec-label">이 내담자 전용 질문 목록</p>
+    <div id="cme-questions-list"><div class="loading">로딩 중...</div></div>
+
+    <div class="divider"></div>
+    <p class="sec-label">+ 이 내담자 전용 질문 추가</p>
+    <div class="field-label">질문 내용</div>
+    <textarea id="cme-new-q-text" class="editor-area" rows="3" placeholder="예) (이 내담자에게만) 어제 시도한 호흡법 효과가 있었나요?"></textarea>
+    <div class="field-label">질문 유형</div>
+    <select id="cme-new-q-type" onchange="toggleChoiceSection('cme')" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;background:white;margin-bottom:10px">
+      <option value="text">서술형 (자유 텍스트 답변)</option>
+      <option value="choice">선택형 (선택지 중 고르기)</option>
+    </select>
+    <div id="cme-new-choices-section" style="display:none">
+      <div class="field-label">선택지 (한 줄에 하나씩)</div>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px;line-height:1.6">형식: <code>라벨|값|분기할질문번호(선택)</code></p>
+      <textarea id="cme-new-q-choices" class="editor-area" rows="4" placeholder="예|yes|2&#10;아니오|no"></textarea>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="addClientModuleQuestion()">+ 질문 추가</button>
+    <div class="success-msg" id="cme-success"></div>
+    <div class="error-msg" id="cme-error"></div>
+    <div class="spacer"></div>
   </div>
 </div>
 
@@ -2492,7 +2553,10 @@ async function loadHostDashboard() {
   } catch(e){document.getElementById('client-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">로드 실패</p>';}
   try {
     const modules=await api('/api/host/modules');
-    document.getElementById('host-module-list').innerHTML=modules.length>0?modules.map(m=>'<div class="card" style="margin-bottom:8px"><div style="font-size:14px;font-weight:500">'+m.title+'</div></div>').join(''):'<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';
+    document.getElementById('host-module-list').innerHTML=modules.length>0?modules.map(m=>{
+      const safeTitle=(m.title||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      return '<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openModuleEditor(\''+m.id+'\',\''+safeTitle+'\')"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:14px;font-weight:500">'+(m.title||'(제목 없음)')+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">탭하여 질문 편집</div></div><span style="font-size:13px;color:var(--sage-dark);white-space:nowrap">편집 →</span></div></div>';
+    }).join(''):'<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';
   } catch(e){}
   loadHostSchedule();
   retranslateNow(300);
@@ -2746,6 +2810,7 @@ async function loadClientDetailModules() {
           + '<div style="flex:1"><div style="font-size:14px;font-weight:500">'+statusIcon+' '+title+'</div>'
           + '<div style="font-size:11px;color:'+statusColor+';margin-top:3px">'+statusText+'</div></div>'
           + '<div style="display:flex;flex-direction:column;gap:4px">'
+          + '<button onclick="openClientModuleEditor(\''+cm.module_id+'\',\''+(title).replace(/\x27/g,"\\\x27")+'\')" style="background:#EDF4EE;border:1px solid var(--sage-light);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--sage-dark);cursor:pointer;white-space:nowrap">📋 질문 편집</button>'
           + (completed ? '' : '<button onclick="toggleModuleActive(\''+cm.module_id+'\','+toggleNewState+')" style="background:'+(isActive?'#FDF3E7':'#EDF4EE')+';border:1px solid '+(isActive?'#E8C99A':'var(--sage-light)')+';border-radius:6px;padding:4px 10px;font-size:11px;color:'+(isActive?'#8B5E2A':'var(--sage-dark)')+';cursor:pointer;white-space:nowrap">'+toggleLabel+'</button>')
           + '<button onclick="unassignModule(\''+cm.module_id+'\')" style="background:none;border:1px solid var(--warm);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text-muted);cursor:pointer;white-space:nowrap">'+tr('해제')+'</button>'
           + '</div></div></div>';
@@ -3105,6 +3170,306 @@ const _mutationObserver = new MutationObserver(() => {
 setTimeout(() => {
   try { _mutationObserver.observe(document.body, { childList: true, subtree: true }); } catch(e){}
 }, 2500);
+
+// ============================================================
+// [신규] 모듈/질문 편집 (공통 + 내담자별) - 분기(branching) 지원
+// ============================================================
+let currentEditingModuleId = null;
+let currentEditingModuleTitle = '';
+let currentEditingClientId = null; // null이면 공통, 값이 있으면 내담자별
+let currentEditingQuestions = [];
+
+// 한 모듈 편집 화면 열기 (공통 모드)
+function openModuleEditor(moduleId, title) {
+  currentEditingModuleId = moduleId;
+  currentEditingModuleTitle = title || '';
+  currentEditingClientId = null; // 공통 모드
+  goScreen('screen-module-edit');
+  const t = document.getElementById('me-module-title');
+  if (t) t.value = currentEditingModuleTitle;
+  const tt = document.getElementById('me-title');
+  if (tt) tt.textContent = '모듈 편집: ' + currentEditingModuleTitle;
+  const newT = document.getElementById('me-new-q-text'); if (newT) newT.value = '';
+  const newC = document.getElementById('me-new-q-choices'); if (newC) newC.value = '';
+  const typeSel = document.getElementById('me-new-q-type'); if (typeSel) typeSel.value = 'text';
+  toggleChoiceSection('me');
+  document.getElementById('me-success').classList.remove('show');
+  document.getElementById('me-error').classList.remove('show');
+  loadModuleQuestions();
+}
+
+// 내담자별 질문 편집 화면 열기
+function openClientModuleEditor(moduleId, title) {
+  if (!currentDetailClientId) { alert('내담자를 먼저 선택하세요'); return; }
+  currentEditingModuleId = moduleId;
+  currentEditingModuleTitle = title || '';
+  currentEditingClientId = currentDetailClientId; // 내담자별 모드
+  goScreen('screen-client-module-edit');
+  const tt = document.getElementById('cme-title');
+  if (tt) tt.textContent = '내담자별 질문: ' + currentEditingModuleTitle;
+  const sub = document.getElementById('cme-sub');
+  const cname = document.getElementById('detail-client-name').textContent || '내담자';
+  if (sub) sub.textContent = cname + ' 전용 추가 질문';
+  const newT = document.getElementById('cme-new-q-text'); if (newT) newT.value = '';
+  const newC = document.getElementById('cme-new-q-choices'); if (newC) newC.value = '';
+  const typeSel = document.getElementById('cme-new-q-type'); if (typeSel) typeSel.value = 'text';
+  toggleChoiceSection('cme');
+  document.getElementById('cme-success').classList.remove('show');
+  document.getElementById('cme-error').classList.remove('show');
+  loadClientModuleQuestions();
+}
+
+// 선택형 토글 시 선택지 영역 표시/숨김
+function toggleChoiceSection(prefix) {
+  const type = document.getElementById(prefix+'-new-q-type').value;
+  const sect = document.getElementById(prefix+'-new-choices-section');
+  if (sect) sect.style.display = (type === 'choice') ? 'block' : 'none';
+}
+
+// 선택지 문자열 "라벨|값|분기번호"를 객체 배열로 파싱
+function parseChoicesString(str) {
+  return (str||'').split('\n').map(line => {
+    const parts = line.split('|').map(p => p.trim());
+    if (!parts[0]) return null;
+    const obj = { label: parts[0], value: parts[1] || parts[0] };
+    if (parts[2] && !isNaN(parseInt(parts[2]))) {
+      obj.nextOrder = parseInt(parts[2]);
+    }
+    return obj;
+  }).filter(Boolean);
+}
+
+// 선택지 객체 배열을 편집용 문자열로
+function choicesArrayToString(choices) {
+  if (!Array.isArray(choices)) return '';
+  return choices.map(c => {
+    let line = (c.label||'') + '|' + (c.value||'');
+    if (c.nextOrder || c.next_order) line += '|' + (c.nextOrder || c.next_order);
+    return line;
+  }).join('\n');
+}
+
+// 공통 질문 로드
+async function loadModuleQuestions() {
+  const listEl = document.getElementById('me-questions-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="loading">로딩 중...</div>';
+  try {
+    const data = await api('/api/host/modules/'+currentEditingModuleId+'/questions');
+    const questions = Array.isArray(data) ? data : (data.questions || []);
+    currentEditingQuestions = questions;
+    renderQuestionEditor(questions, 'me-questions-list', 'me');
+  } catch(e) {
+    listEl.innerHTML = '<p style="color:var(--danger);font-size:13px">질문 로드 실패 (백엔드가 해당 엔드포인트를 아직 지원하지 않을 수 있습니다)</p>';
+  }
+}
+
+// 내담자별 질문 로드
+async function loadClientModuleQuestions() {
+  const listEl = document.getElementById('cme-questions-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="loading">로딩 중...</div>';
+  try {
+    const data = await api('/api/host/modules/'+currentEditingModuleId+'/questions?clientId='+encodeURIComponent(currentEditingClientId));
+    const questions = Array.isArray(data) ? data : (data.questions || []);
+    currentEditingQuestions = questions;
+    if (!questions.length) {
+      listEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:14px;background:var(--cream);border-radius:8px">이 내담자 전용 질문이 없습니다. 아래에서 추가하세요.<br><br>💡 공통 질문은 모든 내담자에게 기본으로 제공됩니다.</p>';
+      return;
+    }
+    renderQuestionEditor(questions, 'cme-questions-list', 'cme');
+  } catch(e) {
+    listEl.innerHTML = '<p style="color:var(--danger);font-size:13px">질문 로드 실패</p>';
+  }
+}
+
+// 질문 목록 렌더링 (편집 UI)
+function renderQuestionEditor(questions, containerId, prefix) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!questions.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:10px">아직 질문이 없습니다. 아래에서 추가하세요.</p>';
+    return;
+  }
+  el.innerHTML = questions.map((q, idx) => {
+    const qNum = (q.order_num != null) ? q.order_num : (idx+1);
+    const typeLabel = (q.type === 'choice') ? '선택형' : '서술형';
+    const typeColor = (q.type === 'choice') ? 'var(--sage-dark)' : 'var(--text-muted)';
+    let choicesHTML = '';
+    if (q.type === 'choice' && Array.isArray(q.choices)) {
+      choicesHTML = '<div style="margin-top:6px;padding:8px 10px;background:#FAFAF7;border-radius:6px"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">선택지:</div>' + q.choices.map(c => {
+        const branch = (c.nextOrder || c.next_order) ? ' → ❯ ' + (c.nextOrder || c.next_order) + '번' : '';
+        return '<div style="font-size:12px;padding:2px 0">• '+(c.label||'')+branch+'</div>';
+      }).join('') + '</div>';
+    }
+    return '<div class="card" style="margin-bottom:8px;padding:12px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
+      + '<div style="flex:1"><div style="font-size:11px;color:'+typeColor+';font-weight:500">Q'+qNum+' · '+typeLabel+'</div>'
+      + '<div style="font-size:13px;line-height:1.5;margin-top:3px">'+(q.text||'').replace(/</g,'&lt;')+'</div>'
+      + choicesHTML
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:4px">'
+      + '<button onclick="editQuestion_'+prefix+'(\''+q.id+'\')" style="background:#EDF4EE;border:1px solid var(--sage-light);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--sage-dark);cursor:pointer;white-space:nowrap">수정</button>'
+      + '<button onclick="deleteQuestion_'+prefix+'(\''+q.id+'\')" style="background:#F8E7E0;border:1px solid #E8A898;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--danger);cursor:pointer;white-space:nowrap">삭제</button>'
+      + '</div></div></div>';
+  }).join('');
+}
+
+// 공통 모듈 제목 저장
+async function saveModuleTitle() {
+  const newTitle = document.getElementById('me-module-title').value.trim();
+  if (!newTitle) { alert('제목을 입력하세요'); return; }
+  try {
+    await api('/api/host/modules/'+currentEditingModuleId, 'PUT', { title: newTitle });
+    currentEditingModuleTitle = newTitle;
+    const okEl = document.getElementById('me-success');
+    okEl.textContent = '제목이 저장되었습니다.'; okEl.classList.add('show');
+    setTimeout(() => okEl.classList.remove('show'), 2000);
+    const tt = document.getElementById('me-title');
+    if (tt) tt.textContent = '모듈 편집: ' + newTitle;
+  } catch(e) {
+    const errEl = document.getElementById('me-error');
+    errEl.textContent = '저장 실패'; errEl.classList.add('show');
+  }
+}
+
+// 공통 모듈 완전 삭제
+async function deleteWholeModule() {
+  if (!confirm('⚠ 이 모듈 "'+currentEditingModuleTitle+'"을(를) 완전히 삭제하시겠습니까?\n\n해당 모듈의 모든 질문과 답변이 함께 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.')) return;
+  try {
+    await api('/api/host/modules/'+currentEditingModuleId, 'DELETE');
+    alert('모듈이 삭제되었습니다');
+    goScreen('screen-host');
+    setTimeout(() => showHostTab('edu', document.querySelector('[onclick*="\'edu\'"]')), 50);
+  } catch(e) { alert('삭제 실패'); }
+}
+
+// 공통 질문 추가
+async function addModuleQuestion() {
+  const text = document.getElementById('me-new-q-text').value.trim();
+  const type = document.getElementById('me-new-q-type').value;
+  const choicesStr = document.getElementById('me-new-q-choices').value;
+  const okEl = document.getElementById('me-success'), errEl = document.getElementById('me-error');
+  okEl.classList.remove('show'); errEl.classList.remove('show');
+  if (!text) { errEl.textContent = '질문 내용을 입력하세요'; errEl.classList.add('show'); return; }
+  let choices = null;
+  if (type === 'choice') {
+    choices = parseChoicesString(choicesStr);
+    if (!choices.length) { errEl.textContent = '선택지를 하나 이상 입력하세요'; errEl.classList.add('show'); return; }
+  }
+  const nextOrder = (currentEditingQuestions.length || 0) + 1;
+  const body = { questions: [{ text, type, choices, order_num: nextOrder }] };
+  try {
+    await api('/api/host/modules/'+currentEditingModuleId+'/questions', 'POST', body);
+    document.getElementById('me-new-q-text').value = '';
+    document.getElementById('me-new-q-choices').value = '';
+    document.getElementById('me-new-q-type').value = 'text';
+    toggleChoiceSection('me');
+    okEl.textContent = '질문이 추가되었습니다'; okEl.classList.add('show');
+    setTimeout(() => okEl.classList.remove('show'), 2000);
+    loadModuleQuestions();
+  } catch(e) {
+    errEl.textContent = '추가 실패'; errEl.classList.add('show');
+  }
+}
+
+// 내담자별 질문 추가
+async function addClientModuleQuestion() {
+  const text = document.getElementById('cme-new-q-text').value.trim();
+  const type = document.getElementById('cme-new-q-type').value;
+  const choicesStr = document.getElementById('cme-new-q-choices').value;
+  const okEl = document.getElementById('cme-success'), errEl = document.getElementById('cme-error');
+  okEl.classList.remove('show'); errEl.classList.remove('show');
+  if (!text) { errEl.textContent = '질문 내용을 입력하세요'; errEl.classList.add('show'); return; }
+  let choices = null;
+  if (type === 'choice') {
+    choices = parseChoicesString(choicesStr);
+    if (!choices.length) { errEl.textContent = '선택지를 하나 이상 입력하세요'; errEl.classList.add('show'); return; }
+  }
+  const nextOrder = (currentEditingQuestions.length || 0) + 1;
+  const body = { questions: [{ text, type, choices, order_num: nextOrder }] };
+  try {
+    await api('/api/host/modules/'+currentEditingModuleId+'/questions?clientId='+encodeURIComponent(currentEditingClientId), 'POST', body);
+    document.getElementById('cme-new-q-text').value = '';
+    document.getElementById('cme-new-q-choices').value = '';
+    document.getElementById('cme-new-q-type').value = 'text';
+    toggleChoiceSection('cme');
+    okEl.textContent = '질문이 추가되었습니다'; okEl.classList.add('show');
+    setTimeout(() => okEl.classList.remove('show'), 2000);
+    loadClientModuleQuestions();
+  } catch(e) {
+    errEl.textContent = '추가 실패'; errEl.classList.add('show');
+  }
+}
+
+// 공통 질문 수정 (prompt 기반)
+async function editQuestion_me(questionId) {
+  const q = currentEditingQuestions.find(x => x.id === questionId);
+  if (!q) return;
+  const newText = prompt('질문 내용 수정:', q.text || '');
+  if (newText === null) return;
+  let body = { text: newText.trim() };
+  if (q.type === 'choice') {
+    const currentStr = choicesArrayToString(q.choices);
+    const newStr = prompt('선택지 수정 (한 줄에 하나, 형식: 라벨|값|분기번호):\n\n분기 없으면 "라벨|값"만. 예:\n기쁨|happy|3\n슬픔|sad', currentStr);
+    if (newStr === null) return;
+    body.choices = parseChoicesString(newStr);
+  }
+  try {
+    await api('/api/host/questions/'+questionId, 'PUT', body);
+    loadModuleQuestions();
+  } catch(e) { alert('수정 실패'); }
+}
+
+// 공통 질문 삭제
+async function deleteQuestion_me(questionId) {
+  if (!confirm('이 질문을 삭제하시겠습니까? (관련 답변 기록도 영향 받을 수 있음)')) return;
+  try {
+    await api('/api/host/questions/'+questionId, 'DELETE');
+    loadModuleQuestions();
+  } catch(e) { alert('삭제 실패'); }
+}
+
+// 내담자별 질문 수정
+async function editQuestion_cme(questionId) {
+  const q = currentEditingQuestions.find(x => x.id === questionId);
+  if (!q) return;
+  const newText = prompt('질문 내용 수정:', q.text || '');
+  if (newText === null) return;
+  let body = { text: newText.trim() };
+  if (q.type === 'choice') {
+    const currentStr = choicesArrayToString(q.choices);
+    const newStr = prompt('선택지 수정 (한 줄에 하나, 형식: 라벨|값|분기번호):', currentStr);
+    if (newStr === null) return;
+    body.choices = parseChoicesString(newStr);
+  }
+  try {
+    await api('/api/host/questions/'+questionId, 'PUT', body);
+    loadClientModuleQuestions();
+  } catch(e) { alert('수정 실패'); }
+}
+
+// 내담자별 질문 삭제
+async function deleteQuestion_cme(questionId) {
+  if (!confirm('이 내담자 전용 질문을 삭제하시겠습니까?')) return;
+  try {
+    await api('/api/host/questions/'+questionId, 'DELETE');
+    loadClientModuleQuestions();
+  } catch(e) { alert('삭제 실패'); }
+}
+
+// goScreen에 새 화면 진입 시 데이터 로드 훅 (기존 goScreen을 랩핑)
+(function(){
+  const origGoScreen = window.goScreen;
+  if (typeof origGoScreen === 'function') {
+    window.goScreen = function(id) {
+      origGoScreen(id);
+      if (id === 'screen-module-edit') { setTimeout(loadModuleQuestions, 100); }
+      if (id === 'screen-client-module-edit') { setTimeout(loadClientModuleQuestions, 100); }
+    };
+  }
+})();
+
 </script>
 </body>
 </html>
