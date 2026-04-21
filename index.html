@@ -3677,10 +3677,8 @@ async function openSessionAssignModal(moduleId, moduleTitle, currentSess, comple
     + '<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">💡 선택한 세션으로 이 내담자를 이동시킵니다.<br>이미 완료한 세션도 다시 선택해 반복 진행시킬 수 있습니다.</p>'
     + sessionOptions
     + '<div style="margin-top:14px;padding:10px;background:#FFF8EC;border:1px solid #EAD49E;border-radius:8px">'
-    + '<label style="display:flex;align-items:center;font-size:12px;cursor:pointer">'
-    + '<input type="checkbox" id="__sa_reset_answers" style="margin-right:8px">'
-    + '<span>이 세션의 기존 답변도 모두 삭제하고 처음부터 다시 진행하게 하기</span>'
-    + '</label></div>'
+    + '<p style="font-size:11px;color:#8B5E2A;line-height:1.6;margin:0">⚠ 배정 시 이 세션의 기존 답변은 자동으로 삭제되고, 내담자는 첫 질문부터 다시 진행합니다.</p>'
+    + '</div>'
     + '</div>'
     + '<div style="padding:16px 22px;border-top:1px solid var(--warm);display:flex;gap:10px;flex-shrink:0">'
     + '<button onclick="document.getElementById(\'__session_assign_modal\').remove()" style="flex:1;padding:12px;background:white;border:1px solid var(--warm);border-radius:8px;font-size:13px;cursor:pointer">취소</button>'
@@ -3694,14 +3692,13 @@ async function confirmSessionAssign(moduleId) {
   const checked = document.querySelector('input[name="__sa_radio"]:checked');
   if (!checked) { alert('세션을 선택해주세요.'); return; }
   const sessionNum = parseInt(checked.value);
-  const resetAnswers = document.getElementById('__sa_reset_answers').checked;
   try {
     await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId+'/set-session', 'PUT', {
-      sessionNum, resetAnswers
+      sessionNum
     });
     const m = document.getElementById('__session_assign_modal');
     if (m) m.remove();
-    alert('세션 ' + sessionNum + '(으)로 배정되었습니다.' + (resetAnswers ? '\n(기존 답변도 삭제됨)' : ''));
+    alert('세션 ' + sessionNum + '(으)로 배정되었습니다.\n내담자는 이 세션을 첫 질문부터 진행합니다.');
     loadClientDetailModules();
   } catch(e) {
     alert('세션 배정 실패: ' + (e.message || e.toString()));
