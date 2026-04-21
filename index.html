@@ -284,7 +284,8 @@ html.pip-ready body { visibility: visible; }
     </div>
     <p class="sec-label" id="lbl-progress">이번 주 진행률</p>
     <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
-    <p style="font-size:12px;color:var(--sage-dark);margin-bottom:20px" id="prog-text">로딩 중...</p>
+    <p style="font-size:12px;color:var(--sage-dark);margin-bottom:8px" id="prog-text">로딩 중...</p>
+    <div id="home-extra-msg" style="display:none;background:#FBF4E6;border:1px solid #D9B779;border-radius:8px;padding:10px 12px;font-size:12px;color:#8B5E2A;line-height:1.6;margin-bottom:16px"></div>
     <p class="sec-label" id="lbl-sessions">교육 세션</p>
     <div id="module-list"><div class="loading"><span id="home-loading-modules">모듈 로딩 중...</span></div></div>
     <p class="sec-label" style="margin-top:8px" id="lbl-schedule">세션 시간 약속</p>
@@ -2269,9 +2270,41 @@ async function loadHome() {
     const completed=modules.filter(m=>m.completed).length;
     const sessPerWeek=modules.length>0?(modules[0].sessionsPerWeek||3):3;
     const totalModules=24;
-    const pct=totalModules>0?Math.round((completed/totalModules)*100):0;
-    document.getElementById('prog-bar').style.width=pct+'%';
-    document.getElementById('prog-text').textContent=(((completed)%sessPerWeek)+1)+'/'+sessPerWeek+'/'+Math.min(completed+1,totalModules)+'/'+totalModules;
+    // 현재 진행 중인 모듈 (가장 최근에 활성화되었거나 첫 미완료 모듈)
+    const activeModule = modules.find(m => !m.completed && (m.currentSession || m.totalSessions));
+    // [수정] 이번 주 진행률 = 현재 진행 중 모듈의 세션 진행도 기반
+    // 완료 세션 수 / 총 세션 수 → 교육 파트 (상담 왕복 없으면 최대 95%)
+    let weekPct = 0;
+    let weekLabel = '';
+    let extraMsg = '';
+    if (activeModule) {
+      const totalSess = activeModule.totalSessions || 1;
+      const compSess = Array.isArray(activeModule.completedSessions) ? activeModule.completedSessions.length : 0;
+      const eduPct = Math.min(Math.round((compSess / totalSess) * 95), 95);
+      weekPct = eduPct;
+      weekLabel = compSess + '/' + totalSess + ' ' + tr('세션');
+      // 교육은 끝났는데 상담 왕복 전 (백엔드 needsCounsel 상태 유사)
+      if (compSess >= totalSess && totalSess > 0) {
+        weekPct = 95;
+        extraMsg = tr('이번 주 교육 세션은 모두 완료되었습니다. 1회 상담 요청을 진행하고 답변 확인 후 이번 주 과정이 완료됩니다.');
+      }
+    } else if (completed >= totalModules) {
+      weekPct = 100;
+      weekLabel = tr('전 과정 완료');
+    } else {
+      // 활성 모듈 없음 = 배정 대기
+      weekPct = 0;
+      weekLabel = tr('대기');
+    }
+    document.getElementById('prog-bar').style.width=weekPct+'%';
+    // 기존 라벨은 "월내세션번호/주당세션수/모듈번호/전체모듈수" 형태 - 현재 진행도 표시로 교체하면서 전체 진행 정보도 병기
+    document.getElementById('prog-text').textContent=weekLabel+' · '+tr('전체')+' '+completed+'/'+totalModules+' '+tr('모듈');
+    // 안내 메시지 표시 (모듈 리스트 위)
+    const extraEl = document.getElementById('home-extra-msg');
+    if (extraEl) {
+      if (extraMsg) { extraEl.textContent = extraMsg; extraEl.style.display='block'; }
+      else { extraEl.style.display='none'; }
+    }
     // 모듈 제목들을 미리 배치 번역 시작
     if (needTranslate) {
       const titles = modules.map(m => m.title).filter(t => t && /[가-힣]/.test(t));
@@ -2288,13 +2321,20 @@ async function loadHome() {
   } catch(e){document.getElementById('module-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">'+tr('모듈 로드 실패')+'</p>'; applyNow();}
   try {
     const schedules=await api('/api/schedule/confirmed');
-    if(schedules&&schedules.length>0){
-      const s=schedules[0]; let t=s.confirmed_time||s.requested_time;
+    // [수정] 지나간 시간 필터링: 현재 시각 이후 + confirmed 상태만
+    const now = new Date();
+    const upcoming = (schedules||[]).filter(s => {
+      const t = s.confirmed_time || s.requested_time;
+      if (!t) return false;
+      try { return new Date(t) > now; } catch(e) { return false; }
+    });
+    if(upcoming.length>0){
+      const s=upcoming[0]; let t=s.confirmed_time||s.requested_time;
       try{if(t&&t.includes('T'))t=formatSlotForTZ(new Date(t),Intl.DateTimeFormat().resolvedOptions().timeZone);}catch(e){}
       document.getElementById('schedule-text').textContent=tr('다음 세션')+': '+t;
       document.getElementById('schedule-badge').textContent=s.status==='confirmed'?tr('확정'):tr('대기 중');
     } else {
-      document.getElementById('schedule-text').textContent=tr('일정 없음 — 새 세션 요청하기');
+      document.getElementById('schedule-text').textContent=tr('일정 없음');
       document.getElementById('schedule-badge').textContent='→';
     }
     applyNow();
@@ -2591,9 +2631,16 @@ async function loadSchedule(){
   try{
     const schedules=await api('/api/schedule/confirmed');
     const el=document.getElementById('confirmed-schedule');
-    if(schedules&&schedules.length>0){
-      el.innerHTML=schedules.map(s=>{let d=s.confirmed_time||s.requested_time;try{if(d&&d.includes('T'))d=formatSlotForTZ(new Date(d),Intl.DateTimeFormat().resolvedOptions().timeZone);}catch(e){}return'<div class="card"><div class="card-row"><div>'+d+'</div><span class="badge '+(s.status==='confirmed'?'green':'amber')+'">'+(s.status==='confirmed'?'확정':'대기 중')+'</span></div></div>';}).join('');
-    } else el.innerHTML='<p style="font-size:13px;color:var(--text-muted)">확정된 일정 없음</p>';
+    // [수정] 지나간 시간 필터링: 현재 시각 이후 일정만
+    const now = new Date();
+    const upcoming = (schedules||[]).filter(s => {
+      const t = s.confirmed_time || s.requested_time;
+      if (!t) return false;
+      try { return new Date(t) > now; } catch(e) { return false; }
+    });
+    if(upcoming.length>0){
+      el.innerHTML=upcoming.map(s=>{let d=s.confirmed_time||s.requested_time;try{if(d&&d.includes('T'))d=formatSlotForTZ(new Date(d),Intl.DateTimeFormat().resolvedOptions().timeZone);}catch(e){}return'<div class="card"><div class="card-row"><div>'+d+'</div><span class="badge '+(s.status==='confirmed'?'green':'amber')+'">'+(s.status==='confirmed'?tr('확정'):tr('대기 중'))+'</span></div></div>';}).join('');
+    } else el.innerHTML='<p style="font-size:13px;color:var(--text-muted)">'+tr('일정 없음')+'</p>';
   }catch(e){}
   buildTimeSlots();
   retranslateNow(150);
