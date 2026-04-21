@@ -2510,6 +2510,13 @@ async function submitTextAnswer(value) {
         addBubble('🔍 ' + msg);
         document.getElementById('edu-choices').innerHTML='<button onclick="goScreen(\'screen-home\')" style="width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>';
       },600);
+    } else if(res.needsCounsel){
+      document.getElementById('edu-prog-bar').style.width='95%';
+      setTimeout(()=>{
+        const msg = res.message || '모든 세션을 마치셨습니다! 상담 요청을 보내 상담자의 답변을 1회 받으시면 이 모듈의 진행률이 100%가 됩니다.';
+        addBubble('💬 ' + msg);
+        document.getElementById('edu-choices').innerHTML='<button onclick="goScreen(\'screen-counsel\')" style="width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer;margin-bottom:8px">💬 상담 요청하러 가기</button><button onclick="goScreen(\'screen-home\')" style="width:100%;background:var(--white);border:1.5px solid var(--warm);border-radius:14px;padding:15px;color:var(--text);font-size:14px;cursor:pointer">홈으로 돌아가기</button>';
+      },600);
     } else setTimeout(()=>showQuestion(res.nextQuestion),800);
   } catch(e){addBubble('오류가 발생했습니다.');}
 }
@@ -2537,6 +2544,13 @@ async function submitAnswer(value,label) {
         const msg = res.message || ('세션 '+(res.currentSession||1)+'를 완료했습니다. 상담자 검토 후 다음 세션이 열립니다.');
         addBubble('🔍 ' + msg);
         document.getElementById('edu-choices').innerHTML='<button onclick="goScreen(\'screen-home\')" style="width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer">홈으로 돌아가기</button>';
+      },600);
+    } else if(res.needsCounsel){
+      document.getElementById('edu-prog-bar').style.width='95%';
+      setTimeout(()=>{
+        const msg = res.message || '모든 세션을 마치셨습니다! 상담 요청을 보내 상담자의 답변을 1회 받으시면 이 모듈의 진행률이 100%가 됩니다.';
+        addBubble('💬 ' + msg);
+        document.getElementById('edu-choices').innerHTML='<button onclick="goScreen(\'screen-counsel\')" style="width:100%;background:var(--sage);border:none;border-radius:14px;padding:15px;color:white;font-size:14px;cursor:pointer;margin-bottom:8px">💬 상담 요청하러 가기</button><button onclick="goScreen(\'screen-home\')" style="width:100%;background:var(--white);border:1.5px solid var(--warm);border-radius:14px;padding:15px;color:var(--text);font-size:14px;cursor:pointer">홈으로 돌아가기</button>';
       },600);
     } else if(res.nextQuestion) setTimeout(()=>showQuestion(res.nextQuestion),800);
   } catch(e){addBubble('오류 발생');}
