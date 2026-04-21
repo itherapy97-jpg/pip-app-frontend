@@ -2887,6 +2887,7 @@ async function loadClientDetailModules() {
           + '</div>'
           + '<div style="display:flex;flex-direction:column;gap:4px">'
           + '<button onclick="openClientModuleEditor(\''+cm.module_id+'\',\''+(title).replace(/\x27/g,"\\\x27")+'\')" style="background:#EDF4EE;border:1px solid var(--sage-light);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--sage-dark);cursor:pointer;white-space:nowrap">📋 질문 편집</button>'
+          + '<button onclick="openSessionAssignModal(\''+cm.module_id+'\',\''+(title).replace(/\x27/g,"\\\x27")+'\','+currentSession+',' + JSON.stringify(completedSessions) + ',' + totalSessions + ')" style="background:#EAF3F7;border:1px solid #9BC7D9;border-radius:6px;padding:4px 10px;font-size:11px;color:#2E5E72;cursor:pointer;white-space:nowrap">🔄 세션 지정 배정</button>'
           + (completed ? '' : '<button onclick="toggleModuleActive(\''+cm.module_id+'\','+toggleNewState+')" style="background:'+(isActive?'#FDF3E7':'#EDF4EE')+';border:1px solid '+(isActive?'#E8C99A':'var(--sage-light)')+';border-radius:6px;padding:4px 10px;font-size:11px;color:'+(isActive?'#8B5E2A':'var(--sage-dark)')+';cursor:pointer;white-space:nowrap">'+toggleLabel+'</button>')
           + '<button onclick="unassignModule(\''+cm.module_id+'\')" style="background:none;border:1px solid var(--warm);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text-muted);cursor:pointer;white-space:nowrap">'+tr('해제')+'</button>'
           + '</div></div></div>';
@@ -3630,6 +3631,81 @@ async function deleteQuestion_cme(questionId) {
   } catch(e) {
     alert('질문 삭제 실패: ' + (e.message || e.toString()));
     console.error('deleteQuestion_cme error:', e);
+  }
+}
+
+// [신규] 세션 지정 배정 모달 - 호스트가 내담자를 특정 세션으로 보내기/재배정
+async function openSessionAssignModal(moduleId, moduleTitle, currentSess, completedArr, totalSess) {
+  // 백엔드에서 실제 세션 목록 (질문이 있는 세션만) 가져오기
+  let sessions = [];
+  try {
+    const data = await api('/api/host/modules/'+moduleId+'/sessions');
+    sessions = (data && data.sessions) || [];
+  } catch(e) { sessions = []; }
+  if (!sessions.length) {
+    alert('이 모듈에 질문이 입력된 세션이 없습니다. 먼저 공통 모듈에서 세션을 만들어주세요.');
+    return;
+  }
+
+  const completedList = Array.isArray(completedArr) ? completedArr : [];
+  const existingModal = document.getElementById('__session_assign_modal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = '__session_assign_modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
+
+  const sessionOptions = sessions.map(s => {
+    const isCurrent = s.sessionNum === currentSess;
+    const isCompleted = completedList.includes(s.sessionNum);
+    let badge = '';
+    if (isCurrent && !isCompleted) badge = '<span style="font-size:10px;color:var(--sage-dark);background:#EDF4EE;padding:2px 6px;border-radius:4px;margin-left:6px">현재 진행 중</span>';
+    else if (isCurrent && isCompleted) badge = '<span style="font-size:10px;color:#8B5E2A;background:#FDF3E7;padding:2px 6px;border-radius:4px;margin-left:6px">검토 대기</span>';
+    else if (isCompleted) badge = '<span style="font-size:10px;color:var(--sage-dark);background:#EDF4EE;padding:2px 6px;border-radius:4px;margin-left:6px">✓ 완료</span>';
+    return '<label style="display:flex;align-items:center;padding:10px 12px;margin-bottom:6px;background:var(--cream);border:1px solid var(--warm);border-radius:8px;cursor:pointer" onclick="document.getElementById(\'__sa_radio_'+s.sessionNum+'\').checked=true">'
+      + '<input type="radio" name="__sa_radio" id="__sa_radio_'+s.sessionNum+'" value="'+s.sessionNum+'" '+(isCurrent?'checked':'')+' style="margin-right:10px">'
+      + '<div style="flex:1"><div style="font-size:13px;font-weight:500">세션 '+s.sessionNum+badge+'</div>'
+      + '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+s.questionCount+'개 질문</div></div>'
+      + '</label>';
+  }).join('');
+
+  modal.innerHTML = '<div style="background:white;border-radius:14px;max-width:460px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3)">'
+    + '<div style="padding:18px 22px;border-bottom:1px solid var(--warm);flex-shrink:0">'
+    + '<h3 style="font-size:16px;color:var(--sage-dark);margin-bottom:4px">🔄 세션 지정 배정</h3>'
+    + '<p style="font-size:12px;color:var(--text-muted)">'+(moduleTitle||'')+'</p></div>'
+    + '<div style="padding:18px 22px;overflow-y:auto;flex:1">'
+    + '<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">💡 선택한 세션으로 이 내담자를 이동시킵니다.<br>이미 완료한 세션도 다시 선택해 반복 진행시킬 수 있습니다.</p>'
+    + sessionOptions
+    + '<div style="margin-top:14px;padding:10px;background:#FFF8EC;border:1px solid #EAD49E;border-radius:8px">'
+    + '<label style="display:flex;align-items:center;font-size:12px;cursor:pointer">'
+    + '<input type="checkbox" id="__sa_reset_answers" style="margin-right:8px">'
+    + '<span>이 세션의 기존 답변도 모두 삭제하고 처음부터 다시 진행하게 하기</span>'
+    + '</label></div>'
+    + '</div>'
+    + '<div style="padding:16px 22px;border-top:1px solid var(--warm);display:flex;gap:10px;flex-shrink:0">'
+    + '<button onclick="document.getElementById(\'__session_assign_modal\').remove()" style="flex:1;padding:12px;background:white;border:1px solid var(--warm);border-radius:8px;font-size:13px;cursor:pointer">취소</button>'
+    + '<button onclick="confirmSessionAssign(\''+moduleId+'\')" style="flex:1;padding:12px;background:var(--sage);border:none;border-radius:8px;font-size:13px;color:white;cursor:pointer;font-weight:500">✓ 이 세션으로 배정</button>'
+    + '</div></div>';
+  document.body.appendChild(modal);
+}
+
+// 세션 배정 확정 실행
+async function confirmSessionAssign(moduleId) {
+  const checked = document.querySelector('input[name="__sa_radio"]:checked');
+  if (!checked) { alert('세션을 선택해주세요.'); return; }
+  const sessionNum = parseInt(checked.value);
+  const resetAnswers = document.getElementById('__sa_reset_answers').checked;
+  try {
+    await api('/api/host/clients/'+currentDetailClientId+'/modules/'+moduleId+'/set-session', 'PUT', {
+      sessionNum, resetAnswers
+    });
+    const m = document.getElementById('__session_assign_modal');
+    if (m) m.remove();
+    alert('세션 ' + sessionNum + '(으)로 배정되었습니다.' + (resetAnswers ? '\n(기존 답변도 삭제됨)' : ''));
+    loadClientDetailModules();
+  } catch(e) {
+    alert('세션 배정 실패: ' + (e.message || e.toString()));
+    console.error('confirmSessionAssign error:', e);
   }
 }
 
