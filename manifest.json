@@ -1,0 +1,26 @@
+{
+  "name": "Peace-In Practice",
+  "short_name": "PIP",
+  "description": "Peace-In Practice - 마음의 평화를 위한 상담 플랫폼",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF5EA",
+  "theme_color": "#8FA68E",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "pip-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pip-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
