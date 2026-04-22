@@ -6,21 +6,21 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FAF5EA",
+  "background_color": "#FDFCFA",
   "theme_color": "#8FA68E",
   "lang": "ko",
   "icons": [
     {
-      "src": "pip-logo.png",
-      "sizes": "192x192",
+      "src": "pip-logo_2.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "pip-logo.png",
+      "src": "pip-logo_2.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }
