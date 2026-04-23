@@ -11,13 +11,13 @@
   "lang": "ko",
   "icons": [
     {
-      "src": "pip-logo_2.png",
+      "src": "pip-logo_3.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "pip-logo_2.png",
+      "src": "pip-logo_3.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
