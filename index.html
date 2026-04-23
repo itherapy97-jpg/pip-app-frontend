@@ -12,8 +12,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="PIP">
 <meta name="application-name" content="PIP">
-<link rel="apple-touch-icon" href="pip-logo_1.png">
-<link rel="icon" type="image/png" href="pip-logo_1.png">
+<link rel="apple-touch-icon" href="pip-logo.png">
+<link rel="icon" type="image/png" href="pip-logo.png">
 <title>Peace-In Practice™</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
@@ -217,7 +217,7 @@ html.pip-ready body { visibility: visible; }
   </div>
   <div class="pip-header" style="padding:32px 32px 28px">
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px">
-      <img src="pip-logo_1.png" alt="PIP Logo" id="pip-landing-logo" style="width:48px;height:48px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
+      <img src="pip-logo.png" alt="PIP Logo" id="pip-landing-logo" style="width:48px;height:48px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
       <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#4A6B4D;letter-spacing:0.15em;margin:0">PIP</p>
     </div>
     <h1 class="pip-title">Peace-In <em>Practice</em>™</h1>
@@ -280,7 +280,7 @@ html.pip-ready body { visibility: visible; }
 <div class="screen" id="screen-home">
   <div class="pip-header" style="padding:20px 32px 16px">
     <div style="display:flex;align-items:center;gap:10px">
-      <img src="pip-logo_1.png" alt="PIP Logo" id="pip-home-logo" style="width:32px;height:32px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
+      <img src="pip-logo.png" alt="PIP Logo" id="pip-home-logo" style="width:32px;height:32px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
       <div style="text-align:left">
         <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;font-style:italic">Peace-In <em>Practice</em>™</div>
         <div id="home-greeting" style="font-size:12px;color:var(--text-muted)">안녕하세요</div>
@@ -1882,19 +1882,49 @@ function startVoiceInput(targetId, lang) {
   _recognition = new SR();
   const dl = getCurrentDisplayLang();
   _recognition.lang = lang || (dl==='en'?'en-US':dl==='ja'?'ja-JP':dl==='zh-CN'?'zh-CN':'ko-KR');
-  _recognition.continuous = true;
+  // 안드로이드 Chrome 버그 회피: continuous를 끄고 세션 단위로 처리
+  // 각 세션의 final 결과만 누적, interim은 현재 세션에서만 미리보기
+  const ua = navigator.userAgent || '';
+  const isAndroid = /Android/i.test(ua);
+  _recognition.continuous = !isAndroid;  // 안드로이드는 false로
   _recognition.interimResults = true;
-  let finalText = el.value || '';
+  _recognition.maxAlternatives = 1;
+  // 누적된 확정 텍스트 (세션 간 재시작 시에도 유지)
+  let committedText = el.value || '';
   _recognition.onresult = (e) => {
+    let finalChunk = '';
     let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
+    // 이번 이벤트의 모든 결과를 훑되, isFinal만 committedText에 덧붙이고
+    // interim은 이번 이벤트 것만 미리보기
+    for (let i = 0; i < e.results.length; i++) {
+      const txt = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        // e.resultIndex 이상인 것만 이번 이벤트의 "새로" 확정된 것
+        if (i >= e.resultIndex) finalChunk += txt;
+      } else {
+        interim += txt;
+      }
     }
-    el.value = finalText + interim;
+    if (finalChunk) committedText += finalChunk;
+    el.value = committedText + interim;
   };
-  _recognition.onend = () => { if (_sttRunning) { try { _recognition.start(); } catch(e){} } };
-  _recognition.onerror = (e) => { if (e.error==='not-allowed') { alert('마이크 권한을 허용해 주세요.'); stopVoiceInput(targetId); } };
+  _recognition.onend = () => {
+    // interim으로 남아있던 것이 있으면 버림 (안 쓰면 다음 세션에서 중복 원인)
+    el.value = committedText;
+    // 사용자가 계속 쓰기를 원하면 재시작 (안드로이드 포함)
+    if (_sttRunning) {
+      try { _recognition.start(); } catch(e) {
+        // 빠른 재시작 실패 시 약간 대기 후 재시도
+        setTimeout(() => { if (_sttRunning) { try { _recognition.start(); } catch(e2){} } }, 200);
+      }
+    }
+  };
+  _recognition.onerror = (e) => {
+    if (e.error==='not-allowed') { alert('마이크 권한을 허용해 주세요.'); stopVoiceInput(targetId); }
+    else if (e.error==='no-speech' || e.error==='aborted') {
+      // 안드로이드에서 침묵 시 자주 발생. onend가 처리하므로 여기선 무시
+    }
+  };
   _sttRunning = true;
   try { _recognition.start(); } catch(e) { _sttRunning = false; return; }
   const btn = document.getElementById('mic-'+targetId);
@@ -3976,7 +4006,7 @@ async function confirmAdvanceSession(moduleId, sessionNum) {
     const banner = document.createElement('div');
     banner.id = '__pwa_install_banner';
     banner.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;background:#FDFCFA;border:1px solid #B8CEBC;border-radius:14px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,0.12);z-index:99998;display:flex;align-items:center;gap:10px;max-width:396px;margin:0 auto';
-    banner.innerHTML = '<img src="pip-logo_1.png" style="width:36px;height:36px;border-radius:8px;flex-shrink:0" alt="PIP">'
+    banner.innerHTML = '<img src="pip-logo.png" style="width:36px;height:36px;border-radius:8px;flex-shrink:0" alt="PIP">'
       + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:#2C2C2A">Peace-In Practice 앱 설치</div>'
       + '<div style="font-size:11px;color:#7A7872;margin-top:2px">홈 화면에서 바로 열어요</div></div>'
       + '<button id="__pwa_install_btn" style="background:#7C9A7E;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:500">설치</button>'
