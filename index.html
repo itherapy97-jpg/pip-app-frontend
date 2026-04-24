@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="google" content="notranslate">
+<!-- 보안: 검색엔진/Discover 피드/Siri 제안 등 모든 외부 학습 차단 -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!-- iOS Safari: Siri 제안/Spotlight 인덱싱 차단 -->
+<meta name="apple-itunes-app" content="">
+<meta name="format-detection" content="telephone=no, email=no, address=no, date=no">
 <!-- PWA: 홈 화면 설치 지원 -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#8FA68E">
@@ -352,7 +362,7 @@ html.pip-ready body { visibility: visible; }
     <div class="warn"><p>📌 작성하신 내용은 암호화되어 전송되며, 이 기기에는 저장되지 않습니다.</p></div>
     <div class="field">
       <label id="counsel-label">지금 마음속에 있는 것을 자유롭게 적어주세요</label>
-      <textarea id="counsel-text" placeholder="여기에 작성하세요..." style="min-height:140px"></textarea>
+      <textarea id="counsel-text" placeholder="여기에 작성하세요..." style="min-height:140px" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-private="true" data-form-type="other"></textarea>
       <button id="mic-counsel-text" onclick="startVoiceInput('counsel-text')" style="margin-top:8px;width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer">🎤 음성 입력</button>
     </div>
     <div class="error-msg" id="counsel-error"></div>
@@ -397,7 +407,7 @@ html.pip-ready body { visibility: visible; }
     <div class="thread-timeline" id="td-timeline"><div class="loading">불러오는 중...</div></div>
     <div class="divider"></div>
     <p class="sec-label" id="td-followup-label">✏ 추가 질문하기 (이 스레드에 이어서)</p>
-    <textarea id="td-followup-text" placeholder="이 답변에 대해 궁금한 점을 더 질문해보세요..." class="editor-area" style="min-height:100px"></textarea>
+    <textarea id="td-followup-text" placeholder="이 답변에 대해 궁금한 점을 더 질문해보세요..." class="editor-area" style="min-height:100px" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-private="true" data-form-type="other"></textarea>
     <button id="mic-td-followup-text" onclick="startVoiceInput('td-followup-text')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;margin-top:6px">🎤 음성 입력</button>
     <div class="spacer"></div>
     <button class="btn primary" onclick="sendFollowup()" id="td-send-btn">📤 추가 질문 전송</button>
@@ -468,7 +478,7 @@ html.pip-ready body { visibility: visible; }
       <div class="divider"></div>
       <p class="sec-label">선택된 내담자: <span id="notice-selected-name" style="color:var(--sage-dark);font-weight:500"></span></p>
       <div class="field-label">상담 안내 내용</div>
-      <textarea id="notice-message" class="editor-area" rows="8" placeholder="내담자에게 전달할 상담 안내 내용을 입력하세요..."></textarea>
+      <textarea id="notice-message" class="editor-area" rows="8" placeholder="내담자에게 전달할 상담 안내 내용을 입력하세요..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-private="true" data-form-type="other"></textarea>
       <button id="mic-notice-message" onclick="startVoiceInput('notice-message')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;margin-top:6px">🎤 음성 입력</button>
       <div class="spacer"></div>
       <button class="btn primary" onclick="sendHostNotice()">📨 상담 안내 전송</button>
@@ -696,7 +706,7 @@ html.pip-ready body { visibility: visible; }
     <p class="sec-label" id="ht-reply-target">미답변 질문에 답변</p>
     <div id="ht-pending-list" style="margin-bottom:12px"></div>
     <div class="field-label">답변 내용</div>
-    <textarea id="ht-reply-text" class="editor-area" rows="6" placeholder="답변을 작성하세요..."></textarea>
+    <textarea id="ht-reply-text" class="editor-area" rows="6" placeholder="답변을 작성하세요..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-private="true" data-form-type="other"></textarea>
     <button id="mic-ht-reply-text" onclick="startVoiceInput('ht-reply-text')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;margin-top:6px">🎤 음성 입력</button>
     <div class="spacer"></div>
     <button class="btn primary" onclick="sendHostThreadReply()">답변 전송</button>
@@ -2488,7 +2498,7 @@ async function sendFollowup() {
   if (!msg) { errEl.textContent = '내용을 입력해주세요.'; errEl.classList.add('show'); return; }
   try {
     await api('/api/counsel/followup', 'POST', { threadRootId: currentThreadRootId, message: msg });
-    document.getElementById('td-followup-text').value = '';
+    purgeSensitiveField('td-followup-text');
     okEl.textContent = '새 질문 전송 완료'; okEl.classList.add('show');
     // 타임라인 새로고침
     const data = await api('/api/counsel/thread/'+currentThreadRootId);
@@ -2511,13 +2521,33 @@ async function confirmThread() {
 // ============================================================
 // 새 상담 작성
 // ============================================================
+// 보안: 민감한 textarea를 전송 후 완전히 정리 (Chrome Discover/Siri 제안 차단)
+function purgeSensitiveField(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // 1) 값 비우기 + 변경 이벤트 발생 (브라우저 내부 캐시 무효화)
+  el.value = '';
+  try { el.dispatchEvent(new Event('input', {bubbles:true})); } catch(e){}
+  try { el.dispatchEvent(new Event('change', {bubbles:true})); } catch(e){}
+  // 2) DOM에서 분리 후 재삽입 (브라우저 학습 컨텍스트 끊기)
+  const parent = el.parentNode;
+  if (parent) {
+    const next = el.nextSibling;
+    parent.removeChild(el);
+    el.value = '';  // 분리 상태에서 한번 더
+    parent.insertBefore(el, next);
+  }
+  // 3) blur + 포커스 해제 (모바일 키보드/IME 컨텍스트 정리)
+  try { el.blur(); } catch(e){}
+}
+
 async function sendCounsel() {
   const msg=document.getElementById('counsel-text').value.trim();
   const errEl=document.getElementById('counsel-error'); errEl.classList.remove('show');
   if(!msg){errEl.textContent='내용을 입력해주세요.';errEl.classList.add('show');return;}
   try {
     const res=await api('/api/counsel/send','POST',{message:msg});
-    if(res.success){ document.getElementById('counsel-text').value=''; goScreen('screen-counsel-sent'); }
+    if(res.success){ purgeSensitiveField('counsel-text'); goScreen('screen-counsel-sent'); }
     else { errEl.textContent='전송 실패.'; errEl.classList.add('show'); }
   } catch(e){ errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
 }
@@ -2864,7 +2894,7 @@ async function sendHostNotice() {
   try {
     const res = await api('/api/host/counsel/initiate', 'POST', { clientId: noticeSelectedClientId, message: msg });
     if (res.success) {
-      document.getElementById('notice-message').value = '';
+      purgeSensitiveField('notice-message');
       okEl.textContent = '전송되었습니다.'; okEl.classList.add('show');
       setTimeout(() => okEl.classList.remove('show'), 3000);
     }
@@ -3144,7 +3174,7 @@ async function sendHostThreadReply() {
   try {
     const res = await api('/api/host/counsel/'+currentReplyTargetId+'/reply', 'POST', { reply });
     if (res.success) {
-      document.getElementById('ht-reply-text').value = '';
+      purgeSensitiveField('ht-reply-text');
       okEl.textContent='답변이 전송되었습니다.'; okEl.classList.add('show');
       setTimeout(() => openHostThread(currentHostThreadRootId), 1000);
     }
