@@ -1142,9 +1142,10 @@ function twrap(koText) {
     return '<span class="pip-fade-in">'+escapeHTML(cached)+'</span>';
   }
   // 캐시 없음 - 숨김 + 스피너로 표시하고, 백그라운드에서 번역 시작
+  // notranslate 클래스로 translateDataElements가 안 건드리게 보호 (translateAndShow만 처리)
   const id = 'twrap_' + Math.random().toString(36).substr(2, 9);
   setTimeout(() => { translateAndShow(id, koText, lang); }, 0);
-  return '<span id="'+id+'" class="pip-pending-translation" data-ko="'+escapeAttr(koText)+'">'+escapeHTML(koText)+'</span>';
+  return '<span id="'+id+'" class="pip-pending-translation notranslate" data-ko="'+escapeAttr(koText)+'">'+escapeHTML(koText)+'</span>';
 }
 
 // 텍스트의 주요 언어 감지 (간단한 휴리스틱)
@@ -1187,6 +1188,7 @@ async function translateAndShow(id, koText, lang) {
       el.textContent = cached;
       el.classList.remove('pip-pending-translation');
       el.classList.add('pip-fade-in');
+      el.setAttribute('data-translated', lang);  // 다른 시스템이 다시 번역 시도 안 하게
     }
     return;
   }
@@ -1200,6 +1202,7 @@ async function translateAndShow(id, koText, lang) {
       el.textContent = translated || koText;
       el.classList.remove('pip-pending-translation');
       el.classList.add('pip-fade-in');
+      el.setAttribute('data-translated', lang);
     }
   } catch(e) {
     const el = document.getElementById(id);
@@ -1244,7 +1247,27 @@ function tr(koText) {
   const lc = lang.split('-')[0];
   const key = lc==='zh' ? 'zh' : (KO_TRANSLATIONS[lang] ? lang : (KO_TRANSLATIONS[lc] ? lc : 'en'));
   const map = KO_TRANSLATIONS[key] || {};
-  return map[koText] || koText;
+  if (map[koText]) return map[koText];
+  // 사전에 없으면 DeepL 번역 캐시 확인
+  const cached = tCached(koText, lang);
+  if (cached) return cached;
+  // 캐시도 없으면 백그라운드로 번역 시작 (다음 호출에는 캐시에서 가져옴)
+  // 한국어 텍스트가 포함된 경우만 (DeepL 호출 절약)
+  if (/[가-힣]/.test(koText)) {
+    setTimeout(() => {
+      translateText(koText, lang, 'ko').then(translated => {
+        if (translated && translated !== koText) {
+          tCacheSet(koText, lang, translated);
+          // 1초 후 화면 다시 그려서 새 번역 반영
+          setTimeout(() => {
+            try { translateDOM(lang); } catch(e){}
+            try { translateDataElements(lang).catch(()=>{}); } catch(e){}
+          }, 100);
+        }
+      }).catch(()=>{});
+    }, 0);
+  }
+  return koText;  // 일단 한국어 반환 (다음 렌더링 때 번역됨)
 }
 
 // ============================================================
@@ -2470,7 +2493,7 @@ async function loadThreads() {
       const dateStr = new Date(t.lastActivityAt).toLocaleDateString('ko-KR', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
       const isNotice = t.rootKind === 'host_notice' || t.initiatedBy === 'host';
       const badgeClass = isNotice ? 'amber' : 'blue';
-      const badgeLabel = isNotice ? '📌 '+tr('상담 안내') : '💬 '+tr('내 질문');
+      const badgeLabel = isNotice ? tr('📌 상담 안내') : tr('📝 내 질문');
       const preview = (t.rootMessage || '').substring(0, 70) + ((t.rootMessage||'').length > 70 ? '...' : '');
       return '<div class="card" style="cursor:pointer;margin-bottom:10px" onclick="openThread(\''+t.threadRootId+'\')">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
@@ -2517,7 +2540,7 @@ function renderThreadTimeline(timeline) {
   el.innerHTML = timeline.map(item => {
     const dateStr = new Date(item.at).toLocaleDateString('ko-KR', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
     if (item.type === 'client_msg') {
-      const tag = item.kind === 'followup' ? '<span class="tl-tag">'+tr('추가 질문')+'</span>' : '<span class="tl-tag">📝 '+tr('내 질문')+'</span>';
+      const tag = item.kind === 'followup' ? '<span class="tl-tag">'+tr('추가 질문')+'</span>' : '<span class="tl-tag">'+tr('📝 내 질문')+'</span>';
       return '<div class="tl-item tl-client"><div class="tl-meta">'+tag+' · '+dateStr+'</div>'
            + '<div class="tl-bubble">'+twrap(item.content)+'</div></div>';
     } else if (item.type === 'host_reply') {
