@@ -1075,18 +1075,30 @@ async function api(path, method='GET', body=null) {
 async function translateText(text, targetLang, sourceLang) {
   if (!text || !text.trim()) return text;
   if (!sourceLang) sourceLang = 'auto';
-  const tk = localStorage.getItem('pip_token') || token;
-  if (!tk) return text;
   try {
+    const tk = localStorage.getItem('pip_token') || token;
+    const headers = {'Content-Type':'application/json'};
+    if (tk) headers['Authorization'] = 'Bearer ' + tk;
     const res = await fetch(API + '/api/translate', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer '+tk},
+      headers,
       body: JSON.stringify({text, targetLang, sourceLang})
     });
-    if (!res.ok) return text;
+    if (!res.ok) {
+      console.warn('[Translate] HTTP', res.status, 'for text:', text.substring(0, 30));
+      return text;
+    }
     const data = await res.json();
+    if (data.source === 'failed') {
+      console.warn('[Translate] backend failed:', data.error, 'text:', text.substring(0, 30));
+    } else if (data.source) {
+      console.log('[Translate]', data.source, '→', (data.translated||'').substring(0, 30));
+    }
     return data.translated || text;
-  } catch(e) { return text; }
+  } catch(e) {
+    console.warn('[Translate] exception:', e.message, 'text:', text.substring(0, 30));
+    return text;
+  }
 }
 
 // ============================================================
@@ -1105,6 +1117,56 @@ function tCached(text, lang) {
 function tCacheSet(text, lang, translated) {
   if (!text || !translated) return;
   _translateCache[lang + '::' + text.trim()] = translated;
+}
+
+// [신규] 화면에 남은 미번역 span을 강제로 재시도 (loadThreads 등 동적 렌더링 후 호출)
+// twrap이 만든 setTimeout이 어떤 이유로든 실패하면 이 함수가 다시 시도
+async function flushPendingTranslations() {
+  const lang = getCurrentDisplayLang();
+  if (!lang || lang === 'ko') return;
+  const pending = document.querySelectorAll('.pip-pending-translation');
+  if (pending.length === 0) return;
+  console.log('[Translate] 보강 처리:', pending.length, '개 span 재시도');
+  // 텍스트별로 그룹화 (같은 텍스트 중복 호출 방지)
+  const byText = {};
+  pending.forEach(el => {
+    const ko = el.getAttribute('data-ko') || el.textContent;
+    if (!ko) return;
+    const trimmed = ko.trim();
+    if (!trimmed) return;
+    if (!byText[trimmed]) byText[trimmed] = [];
+    byText[trimmed].push(el);
+  });
+  // 캐시 우선 → 백엔드 → 결과 반영
+  const texts = Object.keys(byText);
+  for (const ko of texts) {
+    const cached = tCached(ko, lang);
+    if (cached) {
+      byText[ko].forEach(el => {
+        el.textContent = cached;
+        el.classList.remove('pip-pending-translation');
+        el.classList.add('pip-fade-in');
+        el.setAttribute('data-translated', lang);
+      });
+      continue;
+    }
+    try {
+      const translated = await translateText(ko, lang, 'auto');
+      if (translated && translated !== ko) {
+        tCacheSet(ko, lang, translated);
+      }
+      byText[ko].forEach(el => {
+        if (document.body.contains(el)) {  // 아직 화면에 있으면
+          el.textContent = translated || ko;
+          el.classList.remove('pip-pending-translation');
+          el.classList.add('pip-fade-in');
+          el.setAttribute('data-translated', lang);
+        }
+      });
+    } catch(e) {
+      console.warn('[Translate] flush 실패:', e.message, ko.substring(0, 30));
+    }
+  }
 }
 
 // innerHTML 생성 시 한글/외국어 텍스트를 번역 가능한 span으로 래핑
@@ -2503,6 +2565,9 @@ async function loadThreads() {
         + '<div style="text-align:right;font-size:11px;color:var(--sage-dark);margin-top:6px">'+tr('열기')+' →</div></div>';
     }).join('');
     retranslateNow(150);
+    // 렌더링 직후 + 약간의 지연 후 미번역 span 강제 처리
+    setTimeout(() => flushPendingTranslations(), 100);
+    setTimeout(() => flushPendingTranslations(), 1000);
   } catch(e) {
     listEl.innerHTML = '<p style="color:var(--danger)">'+tr('스레드 로드 실패')+'</p>';
   }
@@ -2560,6 +2625,9 @@ function renderThreadTimeline(timeline) {
     return '';
   }).join('');
   forceTranslate();
+  // 미번역 span 강제 보강 처리
+  setTimeout(() => flushPendingTranslations(), 100);
+  setTimeout(() => flushPendingTranslations(), 1000);
 }
 
 function escapeHTML(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
