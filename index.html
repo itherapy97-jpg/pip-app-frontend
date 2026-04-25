@@ -498,19 +498,21 @@ html.pip-ready body { visibility: visible; }
     <button class="btn" onclick="goScreen('screen-host-add')">+ 내담자 추가 (초대 코드 생성)</button>
   </div>
   <div id="host-tab-groups" class="content">
-    <p class="sec-label">그룹 목록</p>
+    <p class="sec-label" id="lbl-group-list-title">그룹 목록</p>
     <div id="group-list"><div class="loading">로딩 중...</div></div>
-    <div class="divider"></div>
-    <p class="sec-label">새 그룹 만들기</p>
-    <input type="text" id="new-group-name" placeholder="그룹 이름" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />
-    <input type="text" id="new-group-desc" placeholder="설명 (선택)" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-      <input type="number" id="new-group-freq" value="3" min="1" max="7" placeholder="주 N회" style="padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
-      <input type="number" id="new-group-months" value="6" min="1" max="24" placeholder="개월" style="padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
-      <input type="number" id="new-group-modules" value="24" min="1" max="100" placeholder="모듈" style="padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
+    <div class="divider" id="new-group-divider"></div>
+    <div id="new-group-form-wrap">
+      <p class="sec-label">새 그룹 만들기</p>
+      <input type="text" id="new-group-name" placeholder="그룹 이름" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />
+      <input type="text" id="new-group-desc" placeholder="설명 (선택)" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+        <input type="number" id="new-group-freq" value="3" min="1" max="7" placeholder="주 N회" style="padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
+        <input type="number" id="new-group-months" value="6" min="1" max="24" placeholder="개월" style="padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
+        <input type="number" id="new-group-modules" value="24" min="1" max="100" placeholder="모듈" style="padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
+      </div>
+      <button onclick="createGroup()" style="width:100%;padding:12px;background:var(--sage);color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer">+ 그룹 생성</button>
+      <div class="success-msg" id="group-create-success" style="margin-top:8px">그룹이 생성되었습니다.</div>
     </div>
-    <button onclick="createGroup()" style="width:100%;padding:12px;background:var(--sage);color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer">+ 그룹 생성</button>
-    <div class="success-msg" id="group-create-success" style="margin-top:8px">그룹이 생성되었습니다.</div>
   </div>
   <div id="host-tab-edu" class="content" style="display:none">
     <p class="sec-label">공통 교육 모듈</p>
@@ -670,6 +672,10 @@ html.pip-ready body { visibility: visible; }
     <div class="field-label">이메일</div><input type="email" id="dp-email" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />
     <input type="hidden" id="dp-language" value="ko" />
     <div class="field-label">초대 코드</div><div style="padding:10px 12px;background:var(--cream);border-radius:8px;font-size:14px;letter-spacing:0.1em;color:var(--sage-dark);font-weight:500;margin-bottom:8px" id="dp-invite-code">-</div>
+    <div class="field-label">소속 그룹</div>
+    <select id="dp-group" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px;background:white">
+      <option value="">📌 미배정</option>
+    </select>
     <div class="field-label">상담 빈도 (주 N회)</div><input type="number" id="dp-frequency" min="1" max="7" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />
     <div class="field-label">프로그램 시작일</div><input type="date" id="dp-startdate" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />
     <div class="field-label">특징 / 메모</div><textarea id="dp-characteristics" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px;margin-bottom:8px"></textarea>
@@ -2787,19 +2793,42 @@ async function loadGroups() {
     if (_groupView.mode === 'detail') {
       const g = groups.find(x => x.id === _groupView.currentGroupId);
       if (!g) { _groupView.mode = 'list'; loadGroups(); return; }
+      // 그룹 상세 모드에서는 "새 그룹 만들기" 폼 + "그룹 목록" 라벨 숨김
+      const formWrap = document.getElementById('new-group-form-wrap');
+      const divider = document.getElementById('new-group-divider');
+      const listTitle = document.getElementById('lbl-group-list-title');
+      if (formWrap) formWrap.style.display = 'none';
+      if (divider) divider.style.display = 'none';
+      if (listTitle) listTitle.style.display = 'none';
+
       const inGroup = clients.filter(c => c.group_id === g.id);
       let html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
         + '<button onclick="exitGroupView()" style="background:none;border:none;color:var(--sage-dark);font-size:13px;cursor:pointer;padding:4px 8px">← 그룹 목록</button>'
         + '<div style="flex:1"></div>'
-        + '<button onclick="toggleSelectMode()" style="background:'+(_groupView.selectMode?'var(--sage)':'#EDF4EE')+';color:'+(_groupView.selectMode?'white':'var(--sage-dark)')+';border:1px solid var(--sage-light);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">'+(_groupView.selectMode?'✓ 선택 중':'☐ 선택')+'</button>'
-        + '</div>'
-        + '<div class="card" style="margin-bottom:14px"><div style="font-size:16px;font-weight:500">📁 '+g.name+'</div>'
+        + (_groupView.selectMode
+          ? '<button onclick="toggleSelectMode()" style="background:#FDF3E7;color:#8B5E2A;border:1px solid #E8C99A;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">✕ 선택 취소</button>'
+          : '<button onclick="toggleSelectMode()" style="background:#EDF4EE;color:var(--sage-dark);border:1px solid var(--sage-light);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">☐ 여러 명 선택</button>')
+        + '</div>';
+      html += '<div class="card" style="margin-bottom:14px"><div style="font-size:16px;font-weight:500">📁 '+g.name+'</div>'
         + (g.description?'<div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+g.description+'</div>':'')
         + '<div style="font-size:11px;color:var(--sage-dark);margin-top:6px">내담자 '+inGroup.length+'명 · 주'+(g.session_frequency||3)+'회 · '+(g.contract_months||6)+'개월 · '+(g.total_modules||24)+'모듈</div></div>';
+
+      // 그룹 내 내담자 추가 + 그룹 자체 삭제 버튼
+      if (!_groupView.selectMode) {
+        html += '<div style="display:flex;gap:8px;margin-bottom:14px">'
+          + '<button onclick="addClientToCurrentGroup()" style="flex:1;background:var(--sage);color:white;border:none;border-radius:8px;padding:11px;font-size:13px;cursor:pointer">+ 이 그룹에 내담자 추가</button>'
+          + '<button onclick="deleteCurrentGroup()" style="background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:8px;padding:11px 14px;font-size:12px;cursor:pointer;white-space:nowrap">🗑 그룹 삭제</button>'
+          + '</div>';
+      }
+
+      if (_groupView.selectMode) {
+        html += '<div style="background:#FDF8F0;border:1px solid #E8C99A;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#7A4F1A;line-height:1.6">💡 내담자를 탭해 체크하세요. 아래 [📂 이동] 버튼으로 다른 그룹으로 옮기거나 [🗑 삭제]할 수 있습니다.</div>';
+      }
+
       if (inGroup.length === 0) {
-        html += '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:30px 10px">이 그룹에 배정된 내담자가 없습니다.<br>아래에서 다른 그룹의 내담자를 이동시킬 수 있습니다.</p>';
+        html += '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:30px 10px;background:var(--cream);border-radius:8px">이 그룹에 배정된 내담자가 없습니다.<br><br>위 [+ 이 그룹에 내담자 추가] 버튼으로 새 내담자를 만들거나,<br>다른 그룹/미배정 내담자의 프로필에서 이 그룹으로 이동시킬 수 있습니다.</p>';
       } else {
-        html += '<p class="sec-label" style="margin-top:14px">소속 내담자</p>';
+        html += '<p class="sec-label" style="margin-top:14px">소속 내담자 ('+inGroup.length+'명)</p>';
         html += inGroup.map(c => renderClientItem(c, true)).join('');
       }
       // 선택 모드 시 일괄 작업 버튼
@@ -2811,13 +2840,27 @@ async function loadGroups() {
       return;
     }
 
+    // 그룹 목록 모드 - 폼 다시 표시
+    const formWrap2 = document.getElementById('new-group-form-wrap');
+    const divider2 = document.getElementById('new-group-divider');
+    const listTitle2 = document.getElementById('lbl-group-list-title');
+    if (formWrap2) formWrap2.style.display = 'block';
+    if (divider2) divider2.style.display = 'block';
+    if (listTitle2) listTitle2.style.display = 'block';
+
     // 그룹 목록 모드 (기본)
     let html = '';
     // 상단 액션 바
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
-      + '<div style="flex:1;font-size:11px;color:var(--text-muted)">그룹을 탭하면 안에 들어가서 관리할 수 있습니다</div>'
-      + '<button onclick="toggleSelectMode()" style="background:'+(_groupView.selectMode?'var(--sage)':'#EDF4EE')+';color:'+(_groupView.selectMode?'white':'var(--sage-dark)')+';border:1px solid var(--sage-light);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">'+(_groupView.selectMode?'✓ 선택 중':'☐ 선택')+'</button>'
+      + '<div style="flex:1;font-size:11px;color:var(--text-muted)">그룹을 탭하면 안에 들어갑니다</div>'
+      + (_groupView.selectMode
+        ? '<button onclick="toggleSelectMode()" style="background:#FDF3E7;color:#8B5E2A;border:1px solid #E8C99A;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">✕ 선택 취소</button>'
+        : '<button onclick="toggleSelectMode()" style="background:#EDF4EE;color:var(--sage-dark);border:1px solid var(--sage-light);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">☐ 여러 명/그룹 선택</button>')
       + '</div>';
+
+    if (_groupView.selectMode) {
+      html += '<div style="background:#FDF8F0;border:1px solid #E8C99A;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#7A4F1A;line-height:1.6">💡 내담자나 그룹을 탭해 체크하세요. 아래 [📂 이동] 또는 [🗑 삭제] 버튼이 나타납니다.</div>';
+    }
 
     if (groups.length === 0) {
       html += '<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';
@@ -2959,6 +3002,35 @@ async function confirmBulkMove() {
     loadGroups();
     alert('✓ '+ids.length+'명 이동 완료');
   } catch(e) { alert('이동 실패: ' + (e.message||'')); }
+}
+
+// 현재 진입 중인 그룹에 신규 내담자 추가 (추가 화면으로 이동, 그룹 미리 선택)
+function addClientToCurrentGroup() {
+  const gid = _groupView.currentGroupId;
+  goScreen('screen-host-add');
+  // 그룹 드롭다운이 채워진 후 자동 선택
+  setTimeout(() => {
+    const sel = document.getElementById('new-client-group');
+    if (sel && gid) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === gid) { sel.selectedIndex = i; break; }
+      }
+    }
+  }, 300);
+}
+
+// 현재 진입 중인 그룹 단독 삭제
+async function deleteCurrentGroup() {
+  const gid = _groupView.currentGroupId;
+  if (!gid) return;
+  if (!confirm('⚠ 이 그룹을 삭제하시겠습니까?\n\n• 그룹은 삭제됩니다\n• 소속 내담자들은 자동으로 미배정 상태로 풀립니다 (삭제되지 않음)\n\n계속하시겠습니까?')) return;
+  try {
+    await api('/api/host/groups/'+gid,'DELETE');
+    _groupView.mode = 'list';
+    _groupView.currentGroupId = null;
+    loadGroups();
+    alert('✓ 그룹 삭제 완료. 소속 내담자는 미배정으로 풀렸습니다.');
+  } catch(e) { alert('삭제 실패: ' + (e.message||'')); }
 }
 
 // 일괄 삭제
@@ -3156,7 +3228,7 @@ async function openClientDetail(clientId) {
 async function loadClientDetail() {
   try {
     const data = await api('/api/host/clients/'+currentDetailClientId);
-    const c = data.client;
+    const c = flattenClientGroup(data.client);
     document.getElementById('detail-client-name').textContent = c.name + (c.nickname?' · '+c.nickname:'');
     document.getElementById('detail-client-sub').textContent = '주'+(c.session_frequency||2)+'회';
     document.getElementById('dp-name').value=c.name||'';
@@ -3169,6 +3241,26 @@ async function loadClientDetail() {
     document.getElementById('dp-startdate').value=c.program_start_date||'';
     document.getElementById('dp-characteristics').value=c.characteristics||'';
     document.getElementById('dp-memo').value=c.memo||'';
+    // 그룹 드롭다운 채우기 + 현재 그룹 선택 표시
+    try {
+      const groups = await api('/api/host/groups');
+      const sel = document.getElementById('dp-group');
+      if (sel) {
+        sel.innerHTML = '<option value="">📌 미배정</option>'
+          + groups.map(g => '<option value="'+g.id+'"'+(c.group_id===g.id?' selected':'')+'>'+g.name+'</option>').join('');
+        // 변경 시 즉시 저장 (UX 개선)
+        sel.onchange = async function() {
+          const newGid = sel.value || null;
+          try {
+            await api('/api/host/clients/'+currentDetailClientId+'/group','POST',{groupId:newGid});
+            const suc=document.getElementById('profile-save-success');
+            suc.textContent='그룹이 변경되었습니다.';
+            suc.classList.add('show');
+            setTimeout(()=>{suc.classList.remove('show'); suc.textContent='저장되었습니다.';}, 2000);
+          } catch(e) { alert('그룹 변경 실패: '+(e.message||'')); }
+        };
+      }
+    } catch(e) {}
     // 상담 스레드 목록 로드
     await loadDetailCounselThreads();
   } catch(e){console.error(e);}
