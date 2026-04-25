@@ -609,6 +609,11 @@ html.pip-ready body { visibility: visible; }
   <div class="content">
     <div class="field"><label>내담자 이름 (내부용)</label><input type="text" id="new-client-name" placeholder="예: 홍길동" /></div>
     <input type="hidden" id="new-client-lang" value="ko" />
+    <div class="field"><label>그룹 배정</label>
+      <select id="new-client-group" style="width:100%;padding:13px 16px;border:1px solid var(--warm);border-radius:8px;font-size:14px;background:white">
+        <option value="">📌 미배정으로 두기</option>
+      </select>
+    </div>
     <div class="spacer"></div>
     <button class="btn primary" onclick="addClient()">초대 코드 생성하기</button>
     <div id="new-invite-result" style="display:none;margin-top:20px">
@@ -2758,19 +2763,229 @@ async function loadHostDashboard() {
   retranslateNow(300);
 }
 
+// 그룹 화면 상태 (선택 모드, 현재 진입한 그룹)
+let _groupView = { mode: 'list', currentGroupId: null, selectMode: false, selectedClients: new Set(), selectedGroups: new Set() };
+
+// client.group_id 평탄화 헬퍼 (백엔드는 client_groups(group_id) 배열로 반환)
+function flattenClientGroup(c) {
+  if (c.group_id !== undefined) return c;  // 이미 평탄화됨
+  if (Array.isArray(c.client_groups) && c.client_groups.length > 0) {
+    c.group_id = c.client_groups[0].group_id;
+  } else {
+    c.group_id = null;
+  }
+  return c;
+}
+
 async function loadGroups() {
   try {
-    const [groups,clients]=await Promise.all([api('/api/host/groups'),api('/api/host/clients')]);
-    if(groups.length===0){document.getElementById('group-list').innerHTML='<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';return;}
-    document.getElementById('group-list').innerHTML=groups.map(g=>{
-      const gc=clients.filter(c=>c.group_id===g.id);
-      const ch=gc.length>0?gc.map(c=>{const dn=c.email||c.name||'내담자';return'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar" style="width:34px;height:34px;font-size:10px">'+dn.substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:12px;font-weight:500">'+dn+'</div><div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';}).join(''):'<p style="font-size:12px;color:var(--text-muted);padding:8px 0">내담자 없음</p>';
-      return'<div class="card" style="margin-bottom:12px"><div style="font-size:15px;font-weight:500;margin-bottom:8px">'+g.name+'</div><div style="border-top:1px solid var(--warm);padding-top:8px">'+ch+'</div></div>';
-    }).join('');
-    const ungrouped=clients.filter(c=>!c.group_id);
-    if(ungrouped.length>0){document.getElementById('group-list').innerHTML+='<div class="card" style="margin-bottom:12px;border-style:dashed"><div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">📌 미배정 내담자</div>'+ungrouped.map(c=>'<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar" style="width:34px;height:34px;font-size:11px">'+(c.name||'?').substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+c.name+'</div><div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+'</div></div></div>').join('')+'</div>';}
+    const [groups,clientsRaw]=await Promise.all([api('/api/host/groups'),api('/api/host/clients')]);
+    const clients = clientsRaw.map(flattenClientGroup);
+    const container = document.getElementById('group-list');
+
+    // 그룹 상세 모드 (특정 그룹 진입)
+    if (_groupView.mode === 'detail') {
+      const g = groups.find(x => x.id === _groupView.currentGroupId);
+      if (!g) { _groupView.mode = 'list'; loadGroups(); return; }
+      const inGroup = clients.filter(c => c.group_id === g.id);
+      let html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+        + '<button onclick="exitGroupView()" style="background:none;border:none;color:var(--sage-dark);font-size:13px;cursor:pointer;padding:4px 8px">← 그룹 목록</button>'
+        + '<div style="flex:1"></div>'
+        + '<button onclick="toggleSelectMode()" style="background:'+(_groupView.selectMode?'var(--sage)':'#EDF4EE')+';color:'+(_groupView.selectMode?'white':'var(--sage-dark)')+';border:1px solid var(--sage-light);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">'+(_groupView.selectMode?'✓ 선택 중':'☐ 선택')+'</button>'
+        + '</div>'
+        + '<div class="card" style="margin-bottom:14px"><div style="font-size:16px;font-weight:500">📁 '+g.name+'</div>'
+        + (g.description?'<div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+g.description+'</div>':'')
+        + '<div style="font-size:11px;color:var(--sage-dark);margin-top:6px">내담자 '+inGroup.length+'명 · 주'+(g.session_frequency||3)+'회 · '+(g.contract_months||6)+'개월 · '+(g.total_modules||24)+'모듈</div></div>';
+      if (inGroup.length === 0) {
+        html += '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:30px 10px">이 그룹에 배정된 내담자가 없습니다.<br>아래에서 다른 그룹의 내담자를 이동시킬 수 있습니다.</p>';
+      } else {
+        html += '<p class="sec-label" style="margin-top:14px">소속 내담자</p>';
+        html += inGroup.map(c => renderClientItem(c, true)).join('');
+      }
+      // 선택 모드 시 일괄 작업 버튼
+      if (_groupView.selectMode && _groupView.selectedClients.size > 0) {
+        html += renderBulkActionsBar();
+      }
+      container.innerHTML = html;
+      retranslateNow(200);
+      return;
+    }
+
+    // 그룹 목록 모드 (기본)
+    let html = '';
+    // 상단 액션 바
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+      + '<div style="flex:1;font-size:11px;color:var(--text-muted)">그룹을 탭하면 안에 들어가서 관리할 수 있습니다</div>'
+      + '<button onclick="toggleSelectMode()" style="background:'+(_groupView.selectMode?'var(--sage)':'#EDF4EE')+';color:'+(_groupView.selectMode?'white':'var(--sage-dark)')+';border:1px solid var(--sage-light);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">'+(_groupView.selectMode?'✓ 선택 중':'☐ 선택')+'</button>'
+      + '</div>';
+
+    if (groups.length === 0) {
+      html += '<p style="font-size:13px;color:var(--text-muted)">그룹 없음 — 아래에서 생성하세요</p>';
+    } else {
+      html += groups.map(g => {
+        const gc = clients.filter(c => c.group_id === g.id);
+        const isSel = _groupView.selectedGroups.has(g.id);
+        const checkbox = _groupView.selectMode
+          ? '<div style="width:20px;height:20px;border:2px solid '+(isSel?'var(--sage)':'#ccc')+';border-radius:4px;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--sage)':'transparent')+';flex-shrink:0">'+(isSel?'<span style="color:white;font-size:13px">✓</span>':'')+'</div>'
+          : '';
+        const onclickAttr = _groupView.selectMode
+          ? 'toggleGroupSelect(\''+g.id+'\')'
+          : 'enterGroup(\''+g.id+'\')';
+        return '<div class="card" style="margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px" onclick="'+onclickAttr+'">'
+          + checkbox
+          + '<div style="flex:1"><div style="font-size:15px;font-weight:500">📁 '+g.name+'</div>'
+          + '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">내담자 '+gc.length+'명'+(g.description?' · '+g.description:'')+'</div></div>'
+          + (_groupView.selectMode?'':'<span style="color:var(--sage);font-size:14px">→</span>')
+          + '</div>';
+      }).join('');
+    }
+
+    // 미배정 내담자 섹션
+    const ungrouped = clients.filter(c => !c.group_id);
+    if (ungrouped.length > 0) {
+      html += '<div class="card" style="margin-top:12px;margin-bottom:12px;border-style:dashed">'
+        + '<div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">📌 미배정 내담자 ('+ungrouped.length+'명)</div>'
+        + ungrouped.map(c => renderClientItem(c, true)).join('')
+        + '</div>';
+    }
+
+    if (_groupView.selectMode && (_groupView.selectedClients.size > 0 || _groupView.selectedGroups.size > 0)) {
+      html += renderBulkActionsBar();
+    }
+
+    container.innerHTML = html;
     retranslateNow(200);
-  } catch(e){document.getElementById('group-list').innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패</p>';}
+  } catch(e){document.getElementById('group-list').innerHTML='<p style="color:var(--danger);font-size:13px">로드 실패: '+(e.message||'')+'</p>';}
+}
+
+// 내담자 카드 렌더링 (선택 모드 대응)
+function renderClientItem(c, allowSelect) {
+  const dn = c.email || c.name || '내담자';
+  const ini = (c.name||'?').substring(0,2).toUpperCase();
+  const isSel = _groupView.selectedClients.has(c.id);
+  const showCheckbox = allowSelect && _groupView.selectMode;
+  const checkbox = showCheckbox
+    ? '<div style="width:20px;height:20px;border:2px solid '+(isSel?'var(--sage)':'#ccc')+';border-radius:4px;display:flex;align-items:center;justify-content:center;background:'+(isSel?'var(--sage)':'transparent')+';flex-shrink:0;margin-right:8px">'+(isSel?'<span style="color:white;font-size:13px">✓</span>':'')+'</div>'
+    : '';
+  const onclickAttr = showCheckbox
+    ? 'toggleClientSelect(\''+c.id+'\')'
+    : 'openClientDetail(\''+c.id+'\')';
+  return '<div class="client-item" style="cursor:pointer" onclick="'+onclickAttr+'">'
+    + checkbox
+    + '<div class="avatar" style="width:34px;height:34px;font-size:11px">'+ini+'</div>'
+    + '<div style="flex:1"><div style="font-size:13px;font-weight:500">'+dn+'</div>'
+    + '<div style="font-size:11px;color:var(--text-muted)">🔑 '+(c.invite_code||'-')+'</div></div>'
+    + (c.hasPending?'<div class="unread-dot"></div>':'')
+    + '</div>';
+}
+
+// 일괄 작업 바
+function renderBulkActionsBar() {
+  const cCount = _groupView.selectedClients.size;
+  const gCount = _groupView.selectedGroups.size;
+  return '<div style="position:sticky;bottom:0;background:white;border-top:1px solid var(--warm);padding:12px;margin:14px -32px -28px;display:flex;gap:8px;box-shadow:0 -4px 12px rgba(0,0,0,0.05);z-index:50">'
+    + '<div style="flex:1;font-size:12px;color:var(--sage-dark);align-self:center">선택: 내담자 '+cCount+'명, 그룹 '+gCount+'개</div>'
+    + (cCount > 0 ? '<button onclick="bulkMoveClients()" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:8px 14px;font-size:12px;cursor:pointer">📂 이동</button>' : '')
+    + '<button onclick="bulkDelete()" style="background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:6px;padding:8px 14px;font-size:12px;cursor:pointer">🗑 삭제</button>'
+    + '</div>';
+}
+
+function enterGroup(gid) {
+  _groupView.mode = 'detail';
+  _groupView.currentGroupId = gid;
+  _groupView.selectedClients.clear();
+  _groupView.selectedGroups.clear();
+  loadGroups();
+}
+
+function exitGroupView() {
+  _groupView.mode = 'list';
+  _groupView.currentGroupId = null;
+  _groupView.selectMode = false;
+  _groupView.selectedClients.clear();
+  _groupView.selectedGroups.clear();
+  loadGroups();
+}
+
+function toggleSelectMode() {
+  _groupView.selectMode = !_groupView.selectMode;
+  _groupView.selectedClients.clear();
+  _groupView.selectedGroups.clear();
+  loadGroups();
+}
+
+function toggleClientSelect(cid) {
+  if (_groupView.selectedClients.has(cid)) _groupView.selectedClients.delete(cid);
+  else _groupView.selectedClients.add(cid);
+  loadGroups();
+}
+
+function toggleGroupSelect(gid) {
+  if (_groupView.selectedGroups.has(gid)) _groupView.selectedGroups.delete(gid);
+  else _groupView.selectedGroups.add(gid);
+  loadGroups();
+}
+
+// 일괄 이동: 선택된 내담자들을 어떤 그룹으로 옮길지 묻고 처리
+async function bulkMoveClients() {
+  const ids = Array.from(_groupView.selectedClients);
+  if (ids.length === 0) return;
+  try {
+    const groups = await api('/api/host/groups');
+    let opts = '<option value="">📌 미배정으로 두기</option>';
+    opts += groups.map(g => '<option value="'+g.id+'">'+g.name+'</option>').join('');
+    const modal = document.createElement('div');
+    modal.id = '__move_modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = '<div style="background:white;border-radius:14px;padding:20px;max-width:340px;width:100%">'
+      + '<h3 style="font-size:15px;margin-bottom:12px">📂 '+ids.length+'명의 내담자를 어디로 이동?</h3>'
+      + '<select id="__move_target" style="width:100%;padding:10px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:14px">'+opts+'</select>'
+      + '<div style="display:flex;gap:8px">'
+      + '<button onclick="document.getElementById(\'__move_modal\').remove()" style="flex:1;padding:10px;background:white;border:1px solid var(--warm);border-radius:8px;cursor:pointer">취소</button>'
+      + '<button onclick="confirmBulkMove()" style="flex:1;padding:10px;background:var(--sage);color:white;border:none;border-radius:8px;cursor:pointer">이동</button>'
+      + '</div></div>';
+    document.body.appendChild(modal);
+  } catch(e) { alert('그룹 목록 로드 실패'); }
+}
+
+async function confirmBulkMove() {
+  const target = document.getElementById('__move_target').value || null;
+  const ids = Array.from(_groupView.selectedClients);
+  document.getElementById('__move_modal').remove();
+  try {
+    await Promise.all(ids.map(id => api('/api/host/clients/'+id+'/group','POST',{ groupId: target })));
+    _groupView.selectMode = false;
+    _groupView.selectedClients.clear();
+    loadGroups();
+    alert('✓ '+ids.length+'명 이동 완료');
+  } catch(e) { alert('이동 실패: ' + (e.message||'')); }
+}
+
+// 일괄 삭제
+async function bulkDelete() {
+  const cIds = Array.from(_groupView.selectedClients);
+  const gIds = Array.from(_groupView.selectedGroups);
+  if (cIds.length===0 && gIds.length===0) return;
+  let msg = '⚠ 정말 삭제하시겠습니까?\n\n';
+  if (cIds.length) msg += '• 내담자 '+cIds.length+'명 (모든 데이터 영구 삭제)\n';
+  if (gIds.length) msg += '• 그룹 '+gIds.length+'개 (소속 내담자는 미배정으로 풀림)\n';
+  msg += '\n이 작업은 되돌릴 수 없습니다.';
+  if (!confirm(msg)) return;
+  try {
+    // 그룹 먼저 삭제 (소속 내담자 보호)
+    for (const gid of gIds) await api('/api/host/groups/'+gid,'DELETE');
+    // 내담자 삭제
+    await Promise.all(cIds.map(id => api('/api/host/clients/'+id,'DELETE')));
+    _groupView.selectMode = false;
+    _groupView.selectedClients.clear();
+    _groupView.selectedGroups.clear();
+    if (_groupView.mode === 'detail' && gIds.includes(_groupView.currentGroupId)) {
+      _groupView.mode = 'list';
+      _groupView.currentGroupId = null;
+    }
+    loadGroups();
+    alert('✓ 삭제 완료');
+  } catch(e) { alert('삭제 실패: ' + (e.message||'')); }
 }
 
 async function createGroup() {
@@ -2792,18 +3007,33 @@ async function createGlobalModule() {
   } catch(e){}
 }
 
+// 내담자 추가 화면 진입 시 그룹 드롭다운을 현재 그룹 목록으로 채움
+async function populateNewClientGroupOptions() {
+  const sel = document.getElementById('new-client-group');
+  if (!sel) return;
+  try {
+    const groups = await api('/api/host/groups');
+    sel.innerHTML = '<option value="">📌 미배정으로 두기</option>'
+      + groups.map(g => '<option value="'+g.id+'">'+g.name+'</option>').join('');
+  } catch(e) {}
+}
+
 async function addClient() {
   const name=document.getElementById('new-client-name').value.trim()||'내담자';
+  const groupId = document.getElementById('new-client-group') ? document.getElementById('new-client-group').value : '';
   try {
     const res=await api('/api/host/clients/add','POST',{name,language:'ko'});
     if(res.inviteCode){
+      // 그룹 선택했으면 배정
+      if (groupId && res.clientId) {
+        try { await api('/api/host/clients/'+res.clientId+'/group','POST',{groupId}); } catch(e){}
+      }
       document.getElementById('new-invite-code').textContent=res.inviteCode;
       document.getElementById('new-invite-result').style.display='block';
       // 메시지 언어 기본값: 현재 호스트 표시 언어
       const sel = document.getElementById('invite-msg-lang');
       const hostLang = localStorage.getItem('pip_host_lang_pref') || 'ko';
       if (sel) {
-        // 옵션 값 매칭 시도
         for (let i = 0; i < sel.options.length; i++) {
           if (sel.options[i].value === hostLang) { sel.selectedIndex = i; break; }
         }
@@ -3267,6 +3497,7 @@ function goScreen(id) {
   if (id === 'screen-schedule') loadSchedule();
   if (id === 'screen-threads') loadThreads();
   if (id === 'screen-client-detail') loadClientDetail();
+  if (id === 'screen-host-add') populateNewClientGroupOptions();
   // 5) 동적 콘텐츠 번역 (호스트 메시지 등 - 빠른 호출 + 지연 호출)
   if (lang && lang !== 'ko') {
     setTimeout(() => translateDataElements(lang).catch(()=>{}), 50);
