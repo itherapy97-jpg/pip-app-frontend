@@ -1107,17 +1107,29 @@ function tCacheSet(text, lang, translated) {
   _translateCache[lang + '::' + text.trim()] = translated;
 }
 
-// innerHTML 생성 시 한글 텍스트를 번역 가능한 span으로 래핑
+// innerHTML 생성 시 한글/외국어 텍스트를 번역 가능한 span으로 래핑
 // 번역 캐시가 있으면 즉시 번역된 결과로, 없으면 로딩 스피너 표시
 function twrap(koText) {
   if (!koText) return '';
   const lang = getCurrentDisplayLang();
   const trimmed = String(koText).trim();
-  // 한국어 아니면 변환 불필요
-  if (!lang || lang === 'ko' || !/[가-힣]/.test(trimmed)) {
+  if (!lang) return escapeHTML(koText);
+
+  // 빈 문자열, 숫자만, 또는 매우 짧은 기호는 번역 안 함
+  if (!trimmed || trimmed.length < 2 || /^[\d\s\W]+$/.test(trimmed)) {
     return escapeHTML(koText);
   }
-  // 정적 사전 매치 먼저 확인
+
+  // 텍스트의 주요 언어 감지
+  const detected = detectTextLang(trimmed);
+  // 타겟 언어와 같은 언어면 번역 불필요
+  // (예: 한국어 화면인데 한글 텍스트, 영어 화면인데 영어 텍스트)
+  const targetMain = lang.split('-')[0];
+  if (detected === targetMain) return escapeHTML(koText);
+  // 한국어 모드일 때 한글이 포함된 텍스트는 번역 안 함 (원본 보존)
+  if (lang === 'ko' && /[가-힣]/.test(trimmed)) return escapeHTML(koText);
+
+  // 정적 사전 매치 먼저 확인 (한국어 → 다른 언어)
   const lc = lang.split('-')[0];
   const key = lc==='zh' ? 'zh' : (KO_TRANSLATIONS[lang] ? lang : (KO_TRANSLATIONS[lc] ? lc : 'en'));
   const staticMap = KO_TRANSLATIONS[key] || {};
@@ -1133,6 +1145,32 @@ function twrap(koText) {
   const id = 'twrap_' + Math.random().toString(36).substr(2, 9);
   setTimeout(() => { translateAndShow(id, koText, lang); }, 0);
   return '<span id="'+id+'" class="pip-pending-translation" data-ko="'+escapeAttr(koText)+'">'+escapeHTML(koText)+'</span>';
+}
+
+// 텍스트의 주요 언어 감지 (간단한 휴리스틱)
+function detectTextLang(text) {
+  if (/[가-힣]/.test(text)) return 'ko';
+  if (/[\u3040-\u309f\u30a0-\u30ff]/.test(text)) return 'ja';
+  if (/[\u4e00-\u9fff]/.test(text)) return 'zh';
+  if (/[\u0600-\u06ff]/.test(text)) return 'ar';
+  if (/[\u0400-\u04ff]/.test(text)) return 'ru';
+  if (/[\u0e00-\u0e7f]/.test(text)) return 'th';
+  if (/[\u0900-\u097f]/.test(text)) return 'hi';
+  if (/[a-zA-Z]/.test(text)) return 'en';
+  return 'unknown';
+}
+
+// 번역 필요 여부 판단 - 타겟 언어와 다른 언어면 true
+function needsTranslation(text, targetLang) {
+  if (!text || !targetLang) return false;
+  // 숫자/기호만 있으면 스킵
+  if (/^[\d\s\W]+$/.test(text)) return false;
+  const detected = detectTextLang(text);
+  const tgt = (targetLang || '').split('-')[0];
+  // 감지 못 함 → 번역 시도 (안전장치)
+  if (detected === 'unknown') return true;
+  // 같은 언어면 스킵
+  return detected !== tgt;
 }
 
 function escapeAttr(s) {
@@ -1716,7 +1754,8 @@ async function translateDataElements(lang) {
       const parent = node.parentElement;
       if (parent && parent.getAttribute('data-translated') === lang) return;
       const txt = node.textContent.trim();
-      if (txt && txt.length > 1 && txt.length < 1500 && /[가-힣]/.test(txt) && !staticMap[txt]) {
+      // 타겟 언어가 아닌 텍스트만 번역 (한글, 일본어, 영어 등 모두 처리)
+      if (txt && txt.length > 1 && txt.length < 1500 && !staticMap[txt] && needsTranslation(txt, lang)) {
         toTranslate.push({node, txt, parent, isPlaceholder:false});
       }
     } else if (node.nodeType === 1) {
@@ -1726,7 +1765,7 @@ async function translateDataElements(lang) {
       // INPUT/TEXTAREA의 placeholder 동적 번역
       if ((node.tagName === 'INPUT' || node.tagName === 'TEXTAREA') && node.placeholder) {
         const ph = node.placeholder.trim();
-        if (ph && /[가-힣]/.test(ph) && !staticMap[ph]) {
+        if (ph && !staticMap[ph] && needsTranslation(ph, lang)) {
           toTranslate.push({node, txt:ph, parent:node, isPlaceholder:true});
         }
         return; // input의 자식은 안 봄
