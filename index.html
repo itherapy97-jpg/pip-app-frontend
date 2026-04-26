@@ -3881,6 +3881,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (activeLang && activeLang !== 'ko') {
       try { renderLocalizedHTML(activeLang); } catch(e){}
       try { translateDOM(activeLang); } catch(e){}
+    } else {
+      // 한국어 모드일 때도 호스트 커스텀 랜딩 텍스트는 적용해야 함
+      try { applyCustomLandingText('ko'); } catch(e){}
     }
     // ★ 번역 완료되었으므로 body 표시 (숨김 해제)
     document.documentElement.className = 'pip-ready';
@@ -3911,6 +3914,9 @@ window.addEventListener('load', () => {
   initApp();
   const activeLang = isHost ? hostLang : clientLang;
   if (activeLang && activeLang !== 'ko') applyFullTranslation(activeLang);
+  // 한국어든 다른 언어든 호스트 커스텀 랜딩 텍스트는 항상 적용
+  setTimeout(() => { try { applyCustomLandingText(activeLang || 'ko'); } catch(e){} }, 100);
+  setTimeout(() => { try { applyCustomLandingText(activeLang || 'ko'); } catch(e){} }, 800);
   // 인앱 브라우저 감지 + 경고 (번역이 먼저 적용된 후 호출되도록 딜레이)
   setTimeout(checkInAppBrowser, 1000);
 });
