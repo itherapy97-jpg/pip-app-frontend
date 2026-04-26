@@ -534,10 +534,10 @@ html.pip-ready body { visibility: visible; }
     <p class="sec-label">앱 설정 (내담자 랜딩 페이지)</p>
     <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">아래 문구는 내담자가 처음 접속하는 랜딩 페이지에 표시됩니다. HTML 태그 사용 가능: &lt;br&gt; (줄바꿈), &lt;strong&gt; (굵게), &lt;em&gt; (기울임).</p>
     <div class="field-label">📜 인용 문구 (랜딩 상단)</div>
-    <textarea class="editor-area" id="landing-quote" rows="3" placeholder='예: "내면의 평화는 고치는 것이 아니라,&lt;br&gt;이미 있는 것을 &lt;em&gt;발견하는 것&lt;/em&gt;입니다."'></textarea>
+    <textarea class="editor-area" id="landing-quote-input" rows="3" placeholder='예: "내면의 평화는 고치는 것이 아니라,&lt;br&gt;이미 있는 것을 &lt;em&gt;발견하는 것&lt;/em&gt;입니다."'></textarea>
     <div class="field-label">📝 랜딩 소개 문구</div><textarea class="editor-area" id="landing-text" rows="4"></textarea>
     <div class="field-label">⚠ 중요 안내 문구</div>
-    <textarea class="editor-area" id="landing-notice" rows="3" placeholder="본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. &lt;strong&gt;허가된 참여자만 접근 가능합니다.&lt;/strong&gt;"></textarea>
+    <textarea class="editor-area" id="landing-notice-input" rows="3" placeholder="본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. &lt;strong&gt;허가된 참여자만 접근 가능합니다.&lt;/strong&gt;"></textarea>
     <div class="field-label">🏢 회사명</div><input type="text" id="company-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
     <div class="field-label">📌 프로그램 이름</div><input type="text" id="program-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
     <div class="spacer"></div>
@@ -3777,9 +3777,9 @@ async function loadHostSettings() {
       document.getElementById('landing-text').value=s.landing_text||'';
       document.getElementById('company-name').value=s.company_name||'';
       document.getElementById('program-name').value=s.program_name||'';
-      const lq = document.getElementById('landing-quote');
+      const lq = document.getElementById('landing-quote-input');
       if (lq) lq.value = s.landing_quote || '';
-      const ln = document.getElementById('landing-notice');
+      const ln = document.getElementById('landing-notice-input');
       if (ln) ln.value = s.landing_notice || '';
     }
   } catch(e){}
@@ -3791,9 +3791,9 @@ async function saveSettings() {
     company_name:document.getElementById('company-name').value,
     program_name:document.getElementById('program-name').value
   };
-  const lq = document.getElementById('landing-quote');
+  const lq = document.getElementById('landing-quote-input');
   if (lq) data.landing_quote = lq.value;
-  const ln = document.getElementById('landing-notice');
+  const ln = document.getElementById('landing-notice-input');
   if (ln) data.landing_notice = ln.value;
   try{
     await api('/api/host/settings','PUT',data);
