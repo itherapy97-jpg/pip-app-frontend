@@ -531,10 +531,15 @@ html.pip-ready body { visibility: visible; }
     <div id="host-confirmed-schedule"><div class="loading">로딩 중...</div></div>
   </div>
   <div id="host-tab-settings" class="content" style="display:none">
-    <p class="sec-label">앱 설정</p>
-    <div class="field-label">랜딩 소개 문구</div><textarea class="editor-area" id="landing-text" rows="4"></textarea>
-    <div class="field-label">회사명</div><input type="text" id="company-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
-    <div class="field-label">프로그램 이름</div><input type="text" id="program-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
+    <p class="sec-label">앱 설정 (내담자 랜딩 페이지)</p>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">아래 문구는 내담자가 처음 접속하는 랜딩 페이지에 표시됩니다. HTML 태그 사용 가능: &lt;br&gt; (줄바꿈), &lt;strong&gt; (굵게), &lt;em&gt; (기울임).</p>
+    <div class="field-label">📜 인용 문구 (랜딩 상단)</div>
+    <textarea class="editor-area" id="landing-quote" rows="3" placeholder='예: "내면의 평화는 고치는 것이 아니라,&lt;br&gt;이미 있는 것을 &lt;em&gt;발견하는 것&lt;/em&gt;입니다."'></textarea>
+    <div class="field-label">📝 랜딩 소개 문구</div><textarea class="editor-area" id="landing-text" rows="4"></textarea>
+    <div class="field-label">⚠ 중요 안내 문구</div>
+    <textarea class="editor-area" id="landing-notice" rows="3" placeholder="본 프로그램은 전문 상담가의 지도 하에만 효과적으로 작동합니다. &lt;strong&gt;허가된 참여자만 접근 가능합니다.&lt;/strong&gt;"></textarea>
+    <div class="field-label">🏢 회사명</div><input type="text" id="company-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
+    <div class="field-label">📌 프로그램 이름</div><input type="text" id="program-name" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:13px" />
     <div class="spacer"></div>
     <button class="btn primary" onclick="saveSettings()">저장하기</button>
     <div class="success-msg" id="settings-success">저장되었습니다.</div>
@@ -1518,6 +1523,21 @@ const LOCALIZED_HTML = {
 };
 
 // 긴 HTML 본문을 언어별로 즉시 교체
+// 호스트가 설정한 커스텀 랜딩 텍스트 (한 번만 로드, 캐시)
+let _customLandingText = null;
+let _customLandingTextLoaded = false;
+async function loadCustomLandingText() {
+  if (_customLandingTextLoaded) return _customLandingText;
+  _customLandingTextLoaded = true;
+  try {
+    const res = await fetch(API + '/api/host/public-settings');
+    if (res.ok) {
+      _customLandingText = await res.json();
+    }
+  } catch(e) {}
+  return _customLandingText;
+}
+
 function renderLocalizedHTML(lang) {
   const targetLang = lang || getCurrentDisplayLang() || 'ko';
   Object.keys(LOCALIZED_HTML).forEach(id => {
@@ -1534,6 +1554,73 @@ function renderLocalizedHTML(lang) {
     if (!html) html = langMap['ko'];
     if (html && el.innerHTML !== html) el.innerHTML = html;
   });
+
+  // 호스트 커스텀 텍스트로 덮어쓰기 (있을 때만)
+  applyCustomLandingText(targetLang);
+}
+
+// 호스트가 설정 페이지에서 입력한 커스텀 문구를 랜딩 페이지에 반영
+async function applyCustomLandingText(targetLang) {
+  const custom = await loadCustomLandingText();
+  if (!custom) return;
+  const lc = (targetLang || 'ko').split('-')[0];
+  // landing-quote, landing-desc, landing-notice를 호스트 커스텀으로 교체
+  // 한국어 모드에서는 그대로 표시, 다른 언어는 DeepL 번역 후 표시
+  const mappings = [
+    { id: 'landing-quote', source: custom.landing_quote },
+    { id: 'landing-desc', source: custom.landing_text },
+    { id: 'landing-notice', source: custom.landing_notice }
+  ];
+  for (const m of mappings) {
+    if (!m.source || !m.source.trim()) continue;
+    const el = document.getElementById(m.id);
+    if (!el) continue;
+    if (lc === 'ko') {
+      // 한국어는 그대로 (HTML 태그 보존)
+      el.innerHTML = m.source;
+    } else {
+      // 다른 언어 - 캐시 확인 후 번역
+      const cacheKey = m.id + '::' + targetLang;
+      const cached = tCached(m.source, targetLang);
+      if (cached) {
+        el.innerHTML = cached;
+      } else {
+        // 일단 한국어 보여주고 백그라운드 번역
+        el.innerHTML = m.source;
+        // HTML 태그 제거 후 번역, 결과를 다시 표시
+        // 단순히 텍스트로만 번역 (태그 보존이 어려움)
+        const plainText = m.source.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (plainText) {
+          translateText(plainText, targetLang, 'ko').then(translated => {
+            if (translated && translated !== plainText) {
+              tCacheSet(m.source, targetLang, translated);
+              if (document.body.contains(el)) {
+                el.textContent = translated;
+              }
+            }
+          }).catch(()=>{});
+        }
+      }
+    }
+  }
+
+  // 회사명, 프로그램명도 적용 (있다면)
+  if (custom.company_name) {
+    document.querySelectorAll('.landing-company-name').forEach(el => {
+      el.textContent = custom.company_name;
+    });
+  }
+  if (custom.program_name) {
+    document.querySelectorAll('.landing-program-name').forEach(el => {
+      el.textContent = custom.program_name;
+    });
+  }
+}
+
+// 호스트가 설정 저장하면 캐시 비우기 (즉시 반영)
+function clearCustomLandingTextCache() {
+  _customLandingText = null;
+  _customLandingTextLoaded = false;
 }
 
 // ============================================================
@@ -3686,13 +3773,35 @@ function showHostTab(tab, btn) {
 async function loadHostSettings() {
   try {
     const s=await api('/api/host/settings');
-    if(s){document.getElementById('landing-text').value=s.landing_text||'';document.getElementById('company-name').value=s.company_name||'';document.getElementById('program-name').value=s.program_name||'';}
+    if(s){
+      document.getElementById('landing-text').value=s.landing_text||'';
+      document.getElementById('company-name').value=s.company_name||'';
+      document.getElementById('program-name').value=s.program_name||'';
+      const lq = document.getElementById('landing-quote');
+      if (lq) lq.value = s.landing_quote || '';
+      const ln = document.getElementById('landing-notice');
+      if (ln) ln.value = s.landing_notice || '';
+    }
   } catch(e){}
 }
 
 async function saveSettings() {
-  const data={landing_text:document.getElementById('landing-text').value,company_name:document.getElementById('company-name').value,program_name:document.getElementById('program-name').value};
-  try{await api('/api/host/settings','PUT',data);const s=document.getElementById('settings-success');s.classList.add('show');setTimeout(()=>s.classList.remove('show'),2000);}catch(e){alert('저장 실패');}
+  const data={
+    landing_text:document.getElementById('landing-text').value,
+    company_name:document.getElementById('company-name').value,
+    program_name:document.getElementById('program-name').value
+  };
+  const lq = document.getElementById('landing-quote');
+  if (lq) data.landing_quote = lq.value;
+  const ln = document.getElementById('landing-notice');
+  if (ln) data.landing_notice = ln.value;
+  try{
+    await api('/api/host/settings','PUT',data);
+    clearCustomLandingTextCache();  // 다음 로드 시 새 데이터 가져오게
+    const s=document.getElementById('settings-success');
+    s.classList.add('show');
+    setTimeout(()=>s.classList.remove('show'),2000);
+  }catch(e){alert('저장 실패: ' + (e.message||''));}
 }
 
 // ============================================================
