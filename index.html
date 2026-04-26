@@ -1328,10 +1328,18 @@ function tr(koText) {
       translateText(koText, lang, 'ko').then(translated => {
         if (translated && translated !== koText) {
           tCacheSet(koText, lang, translated);
-          // 1초 후 화면 다시 그려서 새 번역 반영
+          // 새 번역 도착 → data-translated 속성 제거하여 재스캔 가능하게 + 화면 재번역
           setTimeout(() => {
-            try { translateDOM(lang); } catch(e){}
-            try { translateDataElements(lang).catch(()=>{}); } catch(e){}
+            try {
+              const active = document.querySelector('.screen.active');
+              if (active) {
+                active.querySelectorAll('[data-translated]').forEach(el => {
+                  el.removeAttribute('data-translated');
+                });
+              }
+              translateDOM(lang);
+              translateDataElements(lang).catch(()=>{});
+            } catch(e){}
           }, 100);
         }
       }).catch(()=>{});
@@ -2007,6 +2015,9 @@ function retranslateNow(delay) {
   setTimeout(() => { try { translateDOM(lang); } catch(e){} }, d+200);
   setTimeout(() => { try { translateDOM(lang); } catch(e){} }, d+600);
   setTimeout(() => translateDataElements(lang).then(() => { try { translateDOM(lang); } catch(e){} }).catch(()=>{}), d+400);
+  // 추가: 1초/2초 후 한 번 더 (DeepL 응답 받을 시간 확보)
+  setTimeout(() => translateDataElements(lang).catch(()=>{}), d+1200);
+  setTimeout(() => translateDataElements(lang).catch(()=>{}), d+2500);
 }
 
 function startAutoTranslation(lang) {
