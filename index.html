@@ -2710,13 +2710,9 @@ function renderThreadTimeline(timeline) {
       return '<div class="tl-item tl-client"><div class="tl-meta">'+tag+' · '+dateStr+'</div>'
            + '<div class="tl-bubble">'+twrap(item.content)+'</div></div>';
     } else if (item.type === 'host_reply') {
-      let context = '';
-      if (item.inReplyToMessage) {
-        const prev = (item.inReplyToMessage || '').substring(0, 100) + (item.inReplyToMessage.length > 100 ? '...' : '');
-        context = '<div class="tl-reply-context"><b>💬 '+tr('이전 질문')+':</b>'+twrap(prev)+'</div>';
-      }
+      // 답변 안의 "이전 질문" 인용 박스 제거 - 시간순으로 위에 질문이 이미 표시됨
       return '<div class="tl-item tl-host"><div class="tl-meta"><span class="tl-tag">📩 '+tr('상담가 답변')+'</span> · '+dateStr+'</div>'
-           + '<div class="tl-bubble">'+context+twrap(item.content)
+           + '<div class="tl-bubble">'+twrap(item.content)
            + '<button class="tl-speak" onclick="speakBubble(this)">🔊 '+tr('듣기')+'</button></div></div>';
     } else if (item.type === 'host_notice') {
       return '<div class="tl-item tl-hostnotice"><div class="tl-meta"><span class="tl-tag notice">📌 '+tr('상담 안내')+'</span> · '+dateStr+'</div>'
@@ -3687,9 +3683,8 @@ function renderHostTimeline(messages) {
     if (item.type === 'client_msg') {
       return '<div class="tl-item tl-client"><div class="tl-meta"><span class="tl-tag">📝 내담자 질문</span> · '+dateStr+'</div><div class="tl-bubble">'+escapeHTML(item.content)+'</div></div>';
     } else if (item.type === 'host_reply') {
-      const prev = (item.inReplyToMessage || '').substring(0, 100) + (item.inReplyToMessage.length > 100 ? '...' : '');
-      const context = '<div class="tl-reply-context"><b>💬 질문에 대한 답변:</b>'+escapeHTML(prev)+'</div>';
-      return '<div class="tl-item tl-host"><div class="tl-meta"><span class="tl-tag">📩 호스트 답변</span> · '+dateStr+'</div><div class="tl-bubble">'+context+escapeHTML(item.content)+'</div></div>';
+      // 답변 안의 인용 박스 제거 - 시간순으로 위에 질문이 이미 표시됨
+      return '<div class="tl-item tl-host"><div class="tl-meta"><span class="tl-tag">📩 호스트 답변</span> · '+dateStr+'</div><div class="tl-bubble">'+escapeHTML(item.content)+'</div></div>';
     } else if (item.type === 'host_notice') {
       return '<div class="tl-item tl-hostnotice"><div class="tl-meta"><span class="tl-tag notice">📌 상담 안내</span> · '+dateStr+'</div><div class="tl-bubble">'+escapeHTML(item.content)+'</div></div>';
     }
