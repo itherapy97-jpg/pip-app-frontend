@@ -2530,7 +2530,7 @@ async function checkInviteCode() {
   try {
     const data = await api('/api/auth/client/login','POST',{inviteCode:code});
     if (data.needsRegister) { pendingInviteCode=code; goScreen('screen-register'); }
-    else if (data.token) { token=data.token; localStorage.setItem('pip_token',token); goScreen('screen-home'); }
+    else if (data.token) { token=data.token; localStorage.setItem('pip_token',token); localStorage.setItem('pip_role','client'); goScreen('screen-home'); }
     else { errEl.textContent=data.error||'유효하지 않은 초대코드입니다.'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
 }
@@ -2543,12 +2543,12 @@ async function registerClient() {
   if (pw!==pw2) { errEl.textContent='비밀번호가 일치하지 않습니다.'; errEl.classList.add('show'); return; }
   try {
     const data = await api('/api/auth/client/register','POST',{inviteCode:pendingInviteCode,email,password:pw,language:userLang});
-    if (data.token) { token=data.token; localStorage.setItem('pip_token',token); goScreen('screen-home'); }
+    if (data.token) { token=data.token; localStorage.setItem('pip_token',token); localStorage.setItem('pip_role','client'); goScreen('screen-home'); }
     else { errEl.textContent=data.error||'가입 실패'; errEl.classList.add('show'); }
   } catch(e) { errEl.textContent='서버 오류.'; errEl.classList.add('show'); }
 }
 
-function logout() { localStorage.removeItem('pip_token'); token=null; goScreen('screen-login'); }
+function logout() { localStorage.removeItem('pip_token'); localStorage.removeItem('pip_role'); token=null; goScreen('screen-login'); }
 
 // ============================================================
 // 홈
