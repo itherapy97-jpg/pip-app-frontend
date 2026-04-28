@@ -515,12 +515,9 @@ html.pip-ready body { visibility: visible; }
     </div>
   </div>
   <div id="host-tab-edu" class="content" style="display:none">
-    <p class="sec-label">공통 교육 모듈</p>
-    <div id="host-module-list"><div class="loading">로딩 중...</div></div>
-    <div class="divider"></div>
-    <div style="display:flex;gap:8px">
-      <input type="text" id="new-module-title" placeholder="새 모듈 제목" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px" />
-      <button onclick="createGlobalModule()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer">+ 추가</button>
+    <div id="host-edu-container">
+      <!-- JS로 동적 렌더링: 과정 목록 모드 / 과정 상세 모드 -->
+      <div class="loading">로딩 중...</div>
     </div>
   </div>
   <div id="host-tab-schedule" class="content" style="display:none">
@@ -689,10 +686,15 @@ html.pip-ready body { visibility: visible; }
     <div class="spacer"></div>
   </div>
   <div id="detail-tab-modules" class="content" style="display:none;overflow-y:auto">
+    <p class="sec-label">📚 배정된 과정</p>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">한 내담자는 한 과정만 배정 가능합니다. 과정 변경 시 이전 모듈은 비활성화되고 새 과정의 모듈들이 활성화됩니다.</p>
+    <div id="detail-course-area"><div class="loading">로딩 중...</div></div>
+    <div class="divider"></div>
     <p class="sec-label">배정된 모듈</p>
     <div id="detail-module-list"><div class="loading">로딩 중...</div></div>
     <div class="divider"></div>
-    <p class="sec-label">모듈 추가</p>
+    <p class="sec-label">개별 모듈 추가 (과정과 별개로)</p>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px">과정에 포함되지 않은 추가 모듈을 개별 배정합니다.</p>
     <div id="detail-all-modules"><div class="loading">로딩 중...</div></div>
     <div class="spacer"></div>
   </div>
@@ -2985,15 +2987,158 @@ async function loadHostDashboard() {
       return '<div class="client-item" onclick="openClientDetail(\''+c.id+'\')"><div class="avatar">'+ini+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+dn+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">'+(c.hasPending?'💬 상담 대기 중':'미답변 없음')+' · 주'+(c.session_frequency||2)+'회</div><div style="font-size:11px;color:var(--sage-dark);margin-top:2px">🔑 '+(c.invite_code||'-')+'</div></div>'+(c.hasPending?'<div class="unread-dot"></div>':'')+'</div>';
     }).join('');
   } catch(e){document.getElementById('client-list').innerHTML='<p style="color:var(--text-muted);font-size:13px">로드 실패</p>';}
-  try {
-    const modules=await api('/api/host/modules');
-    document.getElementById('host-module-list').innerHTML=modules.length>0?modules.map(m=>{
-      const safeTitle=(m.title||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
-      return '<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openModuleEditor(\''+m.id+'\',\''+safeTitle+'\')"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:14px;font-weight:500">'+(m.title||'(제목 없음)')+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">탭하여 질문 편집</div></div><span style="font-size:13px;color:var(--sage-dark);white-space:nowrap">편집 →</span></div></div>';
-    }).join(''):'<p style="font-size:13px;color:var(--text-muted)">모듈 없음</p>';
-  } catch(e){}
+  loadHostEducation();
   loadHostSchedule();
   retranslateNow(300);
+}
+
+// 호스트 교육 탭 상태 (과정 목록 / 과정 상세)
+let _eduView = { mode: 'list', currentCourseId: null, currentCourseName: '' };
+
+async function loadHostEducation() {
+  const container = document.getElementById('host-edu-container');
+  if (!container) return;
+
+  if (_eduView.mode === 'detail') {
+    return loadCourseDetail();
+  }
+
+  // 과정 목록 모드
+  try {
+    const courses = await api('/api/host/courses');
+    let html = '<p class="sec-label">교육 과정</p>'
+      + '<p style="font-size:11px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">과정은 모듈들의 묶음입니다. 과정을 만들고 그 안에 모듈을 추가한 뒤, 내담자별로 과정을 배정할 수 있습니다.</p>';
+
+    if (courses.length === 0) {
+      html += '<p style="font-size:13px;color:var(--text-muted)">과정이 없습니다. 아래에서 추가해주세요.</p>';
+    } else {
+      html += courses.map(c => {
+        const safeName = (c.name || '').replace(/'/g, "\\'");
+        return '<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="enterCourse(\''+c.id+'\',\''+safeName+'\')">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
+          + '<div style="flex:1">'
+          + '<div style="font-size:15px;font-weight:500">📚 '+(c.name||'(이름 없음)')+'</div>'
+          + (c.description ? '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+c.description+'</div>' : '')
+          + '<div style="font-size:11px;color:var(--sage-dark);margin-top:6px">모듈 '+(c.module_count||0)+'개</div>'
+          + '</div>'
+          + '<span style="color:var(--sage);font-size:14px">→</span>'
+          + '</div></div>';
+      }).join('');
+    }
+
+    html += '<div class="divider"></div>'
+      + '<p class="sec-label">새 과정 만들기</p>'
+      + '<input type="text" id="new-course-name" placeholder="과정 이름 (예: 기업 임직원용)" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />'
+      + '<input type="text" id="new-course-desc" placeholder="설명 (선택)" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;margin-bottom:8px" />'
+      + '<button onclick="createCourse()" style="width:100%;background:var(--sage);color:white;border:none;border-radius:8px;padding:11px;font-size:14px;cursor:pointer">+ 과정 생성</button>';
+
+    container.innerHTML = html;
+    retranslateNow(200);
+  } catch(e) {
+    container.innerHTML = '<p style="color:var(--danger);font-size:13px">과정 로드 실패: '+(e.message||'')+'</p>';
+  }
+}
+
+function enterCourse(courseId, courseName) {
+  _eduView.mode = 'detail';
+  _eduView.currentCourseId = courseId;
+  _eduView.currentCourseName = courseName;
+  loadHostEducation();
+}
+
+function exitCourse() {
+  _eduView.mode = 'list';
+  _eduView.currentCourseId = null;
+  _eduView.currentCourseName = '';
+  loadHostEducation();
+}
+
+async function loadCourseDetail() {
+  const container = document.getElementById('host-edu-container');
+  if (!container || !_eduView.currentCourseId) { exitCourse(); return; }
+  try {
+    const modules = await api('/api/host/modules?course_id=' + _eduView.currentCourseId);
+    let html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
+      + '<button onclick="exitCourse()" style="background:none;border:none;color:var(--sage-dark);font-size:13px;cursor:pointer;padding:4px 8px">← 과정 목록</button>'
+      + '<div style="flex:1"></div>'
+      + '</div>'
+      + '<div class="card" style="margin-bottom:14px;background:#F5F8F5">'
+      + '<div style="font-size:16px;font-weight:500">📚 '+_eduView.currentCourseName+'</div>'
+      + '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">이 과정에 모듈을 추가하면, 이 과정을 받은 내담자에게 자동 배정됩니다.</div>'
+      + '<div style="margin-top:10px;display:flex;gap:6px">'
+      + '<button onclick="renameCourse()" style="background:#EDF4EE;border:1px solid var(--sage-light);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--sage-dark)">✎ 과정 이름 수정</button>'
+      + '<button onclick="deleteCourse()" style="background:#F8E7E0;border:1px solid #E8A898;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--danger)">🗑 과정 삭제</button>'
+      + '</div></div>';
+
+    html += '<p class="sec-label">이 과정의 모듈</p>';
+    if (modules.length === 0) {
+      html += '<p style="font-size:13px;color:var(--text-muted);padding:20px;text-align:center;background:var(--cream);border-radius:8px">모듈이 없습니다. 아래에서 추가해주세요.</p>';
+    } else {
+      html += modules.map(m => {
+        const safeTitle = (m.title || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        return '<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="openModuleEditor(\''+m.id+'\',\''+safeTitle+'\')">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
+          + '<div style="flex:1"><div style="font-size:14px;font-weight:500">'+(m.title||'(제목 없음)')+'</div>'
+          + '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">탭하여 세션/질문 편집</div></div>'
+          + '<span style="font-size:13px;color:var(--sage-dark);white-space:nowrap">편집 →</span></div></div>';
+      }).join('');
+    }
+
+    html += '<div class="divider"></div>'
+      + '<p class="sec-label">이 과정에 모듈 추가</p>'
+      + '<div style="display:flex;gap:8px">'
+      + '<input type="text" id="new-module-title-in-course" placeholder="새 모듈 제목" style="flex:1;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px" />'
+      + '<button onclick="createModuleInCourse()" style="background:var(--sage);color:white;border:none;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer">+ 추가</button>'
+      + '</div>';
+
+    container.innerHTML = html;
+    retranslateNow(200);
+  } catch(e) {
+    container.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패: '+(e.message||'')+'</p>';
+  }
+}
+
+async function createCourse() {
+  const nameEl = document.getElementById('new-course-name');
+  const descEl = document.getElementById('new-course-desc');
+  const name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { alert('과정 이름을 입력해주세요.'); return; }
+  try {
+    await api('/api/host/courses', 'POST', { name, description: descEl ? descEl.value.trim() : '' });
+    if (nameEl) nameEl.value = '';
+    if (descEl) descEl.value = '';
+    loadHostEducation();
+  } catch(e) { alert('과정 생성 실패: ' + (e.message||'')); }
+}
+
+async function renameCourse() {
+  const newName = prompt('새 과정 이름:', _eduView.currentCourseName);
+  if (!newName || !newName.trim() || newName === _eduView.currentCourseName) return;
+  try {
+    await api('/api/host/courses/'+_eduView.currentCourseId, 'PUT', { name: newName.trim() });
+    _eduView.currentCourseName = newName.trim();
+    loadHostEducation();
+  } catch(e) { alert('수정 실패: ' + (e.message||'')); }
+}
+
+async function deleteCourse() {
+  if (!confirm('⚠ 이 과정을 삭제하시겠습니까?\n\n• 과정만 삭제됩니다\n• 속한 모듈들은 보존되며 "기본 과정"으로 자동 이동됩니다\n• 이 과정을 받고 있던 내담자들은 과정 미배정 상태가 됩니다\n\n계속하시겠습니까?')) return;
+  try {
+    await api('/api/host/courses/'+_eduView.currentCourseId, 'DELETE');
+    exitCourse();
+    alert('✓ 과정 삭제 완료');
+  } catch(e) { alert('삭제 실패: ' + (e.message||'')); }
+}
+
+async function createModuleInCourse() {
+  const titleEl = document.getElementById('new-module-title-in-course');
+  const title = titleEl ? titleEl.value.trim() : '';
+  if (!title) { alert('모듈 제목을 입력해주세요.'); return; }
+  try {
+    await api('/api/host/modules', 'POST', { title, course_id: _eduView.currentCourseId, order_num: 1 });
+    if (titleEl) titleEl.value = '';
+    loadHostEducation();
+  } catch(e) { alert('모듈 생성 실패: ' + (e.message||'')); }
 }
 
 // 그룹 화면 상태 (선택 모드, 현재 진입한 그룹)
@@ -3522,15 +3667,31 @@ async function loadDetailCounselThreads() {
 // [신규] 호스트 - 내담자 상세: 모듈 탭 로드
 // ============================================================
 async function loadClientDetailModules() {
+  const courseEl = document.getElementById('detail-course-area');
   const assignedEl = document.getElementById('detail-module-list');
   const allEl = document.getElementById('detail-all-modules');
+  if (courseEl) courseEl.innerHTML = '<div class="loading">로딩 중...</div>';
   if (assignedEl) assignedEl.innerHTML = '<div class="loading">로딩 중...</div>';
   if (allEl) allEl.innerHTML = '<div class="loading">로딩 중...</div>';
   try {
-    const [clientData, allModules] = await Promise.all([
+    const [clientData, allModules, courses] = await Promise.all([
       api('/api/host/clients/'+currentDetailClientId),
-      api('/api/host/modules')
+      api('/api/host/modules'),
+      api('/api/host/courses').catch(() => [])
     ]);
+    const client = clientData.client || {};
+    const currentCourseId = client.assigned_course_id || '';
+
+    // 과정 배정 UI
+    if (courseEl) {
+      let opts = '<option value="">📌 과정 미배정</option>';
+      opts += (courses || []).map(c => '<option value="'+c.id+'"'+(currentCourseId===c.id?' selected':'')+'>'+c.name+' (모듈 '+(c.module_count||0)+'개)</option>').join('');
+      const currentCourseName = (courses || []).find(c => c.id === currentCourseId);
+      const courseLabel = currentCourseName ? '📚 ' + currentCourseName.name : '미배정';
+      courseEl.innerHTML = '<div style="font-size:13px;color:var(--text);margin-bottom:6px">현재: <strong>'+courseLabel+'</strong></div>'
+        + '<select id="detail-course-select" style="width:100%;padding:10px 12px;border:1px solid var(--warm);border-radius:8px;font-size:14px;background:white;margin-bottom:8px">'+opts+'</select>'
+        + '<button onclick="changeClientCourse()" style="width:100%;padding:10px;background:var(--sage);color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer">과정 적용</button>';
+    }
     // 백엔드는 client_modules 배열을 반환: {id, module_id, is_active, order_num, activated_at, modules:{id,title,order_num}, completed}
     const assignedModules = (clientData && clientData.modules) || [];
     const assignedModuleIds = new Set(assignedModules.map(cm => cm.module_id));
@@ -3592,6 +3753,24 @@ async function loadClientDetailModules() {
     if (assignedEl) assignedEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>';
     if (allEl) allEl.innerHTML = '<p style="color:var(--danger);font-size:13px">로드 실패</p>';
   }
+}
+
+// 내담자 과정 변경 (한 번에 여러 모듈 자동 배정)
+async function changeClientCourse() {
+  const sel = document.getElementById('detail-course-select');
+  if (!sel) return;
+  const courseId = sel.value || null;
+  const courseName = courseId ? (sel.options[sel.selectedIndex].text || '과정') : '미배정';
+  const msg = courseId
+    ? '⚠ 이 내담자에게 과정 "'+courseName+'"을 적용하시겠습니까?\n\n• 과정의 모든 모듈이 자동 배정됩니다 (첫 모듈만 활성화)\n• 다른 과정의 모듈은 비활성화됩니다 (진행 기록은 보존)\n• 개별 추가한 모듈은 그대로 유지됩니다\n\n계속하시겠습니까?'
+    : '⚠ 이 내담자의 과정 배정을 해제하시겠습니까?\n\n• 모든 과정 모듈이 비활성화됩니다 (진행 기록은 보존)\n\n계속하시겠습니까?';
+  if (!confirm(msg)) return;
+  try {
+    const res = await api('/api/host/clients/'+currentDetailClientId+'/course', 'POST', { courseId });
+    if (res.warning) alert('⚠ ' + res.warning);
+    else alert('✓ ' + (res.assignedModules ? res.assignedModules + '개 모듈이 배정되었습니다.' : '과정이 변경되었습니다.'));
+    loadClientDetailModules();
+  } catch(e) { alert('과정 변경 실패: ' + (e.message||'')); }
 }
 
 async function assignModule(moduleId) {
