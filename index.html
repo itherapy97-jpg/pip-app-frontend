@@ -1190,6 +1190,14 @@ function twrap(koText) {
   if (!trimmed || trimmed.length < 2) return escapeHTML(koText);
   // 한글/한자/일본어/영문/숫자가 하나도 없으면 (순수 기호) 스킵
   if (!/[\p{Letter}\p{Number}]/u.test(trimmed)) return escapeHTML(koText);
+  // 날짜/시간 형식 스킵 (예: "4월 28일 오전 07:21", "April 28, 7:21 a.m.")
+  // - 숫자 + 날짜/시간 단어 패턴
+  if (/^\d{1,4}[년월일\s\-:./]+/.test(trimmed) ||
+      /^[A-Z][a-z]+\s+\d+,?\s+\d/.test(trimmed) ||
+      /^\d{1,2}:\d{2}/.test(trimmed) ||
+      /^\d+\/\d+\/?\d*$/.test(trimmed)) {
+    return escapeHTML(koText);
+  }
 
   // 텍스트의 주요 언어 감지
   const detected = detectTextLang(trimmed);
@@ -1238,6 +1246,14 @@ function needsTranslation(text, targetLang) {
   // 글자(한글/한자/영문/일본어 등) 또는 숫자가 하나도 없으면 (순수 기호) 스킵
   // 주의: \W는 비-ASCII를 모두 포함하므로 한글에도 매치됨 → 사용 금지
   if (!/[\p{Letter}\p{Number}]/u.test(text)) return false;
+  // 날짜/시간 형식 스킵 (rate limit 절약)
+  const trimmed = text.trim();
+  if (/^\d{1,4}[년월일\s\-:./]+/.test(trimmed) ||
+      /^[A-Z][a-z]+\s+\d+,?\s+\d/.test(trimmed) ||
+      /^\d{1,2}:\d{2}/.test(trimmed) ||
+      /^\d+\/\d+\/?\d*$/.test(trimmed)) {
+    return false;
+  }
   const detected = detectTextLang(text);
   const tgt = (targetLang || '').split('-')[0];
   // 감지 못 함 → 번역 시도 (안전장치)
