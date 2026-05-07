@@ -5018,7 +5018,7 @@ async function loadDashTaxList() {
   } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:12px">로드 실패</p>'; }
 }
 
-async function generateTaxReport(clientId) {
+function printCert(){var html=document.getElementById('dash-tax-report').innerHTML.replace(/<button[\s\S]*?<\/button>/g,'');var w=window.open('','_blank','width=800,height=1000');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>이수 증명서</title><style>@page{size:A4;margin:15mm}body{font-family:Arial,sans-serif;margin:0}.card{border:2px solid #4A6B4D;padding:25mm 18mm;min-height:255mm;background:white;box-sizing:border-box;font-size:14pt;line-height:2}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.print()},400)} async function generateTaxReport(clientId) {
   const el = document.getElementById('dash-tax-report');
   if (!el) return;
   el.style.display = 'block';
@@ -5048,7 +5048,7 @@ async function generateTaxReport(clientId) {
       + '<div>· 1:1 상담 횟수: '+r.counselingTotal+'회 (답변 완료 '+r.counselingReplied+'회)</div>'
       + '</div>'
       + '<div style="text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--warm);font-size:10px;color:var(--text-muted)">본 증명서는 Peace-In Practice™ 교육 프로그램 이수를 증명합니다.<br>※ 본문(상담 내용·답변)은 비밀유지 의무로 포함되지 않으며, 메타데이터만 기록됩니다.</div>'
-      + '<div style="text-align:center;margin-top:14px"><button onclick="window.print()" class="btn primary" style="display:inline-block;width:auto;padding:8px 20px">🖨 인쇄 / PDF 저장</button></div>'
+     + '<div style="text-align:center;margin-top:14px"><button onclick="printCert()" class="btn primary" style="display:inline-block;width:auto;padding:8px 20px">🖨 인쇄 / PDF 저장</button></div>'
       + '</div>';
     el.scrollIntoView({behavior:'smooth', block:'center'});
   } catch(e) {
