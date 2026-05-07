@@ -463,12 +463,48 @@ html.pip-ready body { visibility: visible; }
   <div class="host-tabs">
     <button class="host-tab active" onclick="showHostTab('groups',this)">그룹</button>
     <button class="host-tab" onclick="showHostTab('clients',this)">내담자</button>
+    <button class="host-tab" onclick="showHostTab('dashboard',this)">📊 대시보드</button
     <button class="host-tab" onclick="showHostTab('notice',this)">상담 안내</button>
     <button class="host-tab" onclick="showHostTab('edu',this)">교육</button>
     <button class="host-tab" onclick="showHostTab('schedule',this)">일정</button>
     <button class="host-tab" onclick="showHostTab('settings',this)">설정</button>
   </div>
   
+  <!-- [신규] 대시보드 탭 -->
+  <div id="host-tab-dashboard" class="content" style="display:none">
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button id="dash-mode-mgmt" onclick="switchDashMode('mgmt')" style="flex:1;padding:10px 8px;border:1px solid var(--sage);background:var(--sage);color:white;border-radius:8px;font-size:12px;cursor:pointer;font-weight:500">📈 관리 모드</button>
+      <button id="dash-mode-tax" onclick="switchDashMode('tax')" style="flex:1;padding:10px 8px;border:1px solid var(--warm);background:white;color:var(--text-muted);border-radius:8px;font-size:12px;cursor:pointer">📋 세무 보고서</button>
+    </div>
+
+    <!-- 관리 모드 -->
+    <div id="dash-mgmt-area">
+      <div id="dash-summary-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div class="loading" style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-muted);font-size:13px">로딩 중...</div>
+      </div>
+      <p class="sec-label">필터</p>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <select id="dash-group-filter" onchange="loadDashClients()" style="flex:1;min-width:140px;padding:8px 10px;border:1px solid var(--warm);border-radius:6px;font-size:12px;background:white">
+          <option value="">전체 내담자</option>
+          <option value="unassigned">📌 미배정</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);padding:0 8px">
+          <input type="checkbox" id="dash-completed-only" onchange="loadDashClients()"> 이수자만
+        </label>
+      </div>
+      <p class="sec-label">내담자 진행 현황</p>
+      <div id="dash-clients-list"><div class="loading">로딩 중...</div></div>
+    </div>
+
+    <!-- 세무 보고서 모드 -->
+    <div id="dash-tax-area" style="display:none">
+      <div class="notice"><p>💡 <strong>세무서 제출용 이수 보고서</strong><br>이수 완료된 내담자만 보고서 생성 가능합니다. 본문 내용(상담 답변 등)은 절대 포함되지 않으며, 메타데이터만 출력됩니다.</p></div>
+      <p class="sec-label">이수 완료 내담자 선택</p>
+      <div id="dash-tax-list"><div class="loading">로딩 중...</div></div>
+      <div id="dash-tax-report" style="display:none;margin-top:14px"></div>
+    </div>
+  </div>
+
   <!-- [신규] 상담 안내 탭 -->
   <div id="host-tab-notice" class="content" style="display:none">
     <div class="notice"><p>📬 <strong>상담 안내 기능</strong><br>특정 내담자에게 상담 내용을 <strong>먼저</strong> 보낼 수 있습니다. 내담자는 앱에서 확인 후 추가 질문을 보내거나 '확인했습니다'를 눌러 삭제할 수 있습니다.</p></div>
@@ -3960,7 +3996,7 @@ function showDetailTab(tab, btn) {
 function showHostTab(tab, btn) {
   document.querySelectorAll('.host-tab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  ['groups','clients','notice','edu','schedule','settings'].forEach(t => {
+  ['groups','clients','dashboard','notice','edu','schedule','settings'].forEach(t => {
     const el = document.getElementById('host-tab-'+t);
     if (el) el.style.display = (t===tab)?'block':'none';
   });
@@ -3968,6 +4004,7 @@ function showHostTab(tab, btn) {
   if (tab === 'schedule') loadHostSchedule();
   if (tab === 'groups') loadGroups();
   if (tab === 'settings') loadHostSettings();
+  if (tab === 'dashboard') loadDashboardTab();
   retranslateNow(200);
 }
 
@@ -4843,6 +4880,185 @@ async function confirmAdvanceSession(moduleId, sessionNum) {
     }
   });
 })();
+
+// ============================================================
+// [신규] 대시보드 + 세무 보고서 (기존 데이터 조회만, DB 쓰기 X)
+// ============================================================
+let _dashMode = 'mgmt';
+let _dashClientsData = [];
+
+function switchDashMode(mode) {
+  _dashMode = mode;
+  const mgmtBtn = document.getElementById('dash-mode-mgmt');
+  const taxBtn = document.getElementById('dash-mode-tax');
+  const mgmtArea = document.getElementById('dash-mgmt-area');
+  const taxArea = document.getElementById('dash-tax-area');
+  if (mode === 'mgmt') {
+    mgmtBtn.style.background = 'var(--sage)'; mgmtBtn.style.color = 'white'; mgmtBtn.style.borderColor = 'var(--sage)';
+    taxBtn.style.background = 'white'; taxBtn.style.color = 'var(--text-muted)'; taxBtn.style.borderColor = 'var(--warm)';
+    mgmtArea.style.display = 'block'; taxArea.style.display = 'none';
+    loadDashSummary(); loadDashClients();
+  } else {
+    taxBtn.style.background = 'var(--sage)'; taxBtn.style.color = 'white'; taxBtn.style.borderColor = 'var(--sage)';
+    mgmtBtn.style.background = 'white'; mgmtBtn.style.color = 'var(--text-muted)'; mgmtBtn.style.borderColor = 'var(--warm)';
+    taxArea.style.display = 'block'; mgmtArea.style.display = 'none';
+    loadDashTaxList();
+  }
+}
+
+async function loadDashboardTab() {
+  // 그룹 드롭다운 채우기
+  try {
+    const groups = await api('/api/host/groups');
+    const sel = document.getElementById('dash-group-filter');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">전체 내담자</option><option value="unassigned">📌 미배정</option>'
+        + (groups||[]).map(g => '<option value="'+g.id+'">'+g.name+'</option>').join('');
+      sel.value = cur;
+    }
+  } catch(e){}
+  if (_dashMode === 'mgmt') { loadDashSummary(); loadDashClients(); }
+  else loadDashTaxList();
+}
+
+async function loadDashSummary() {
+  const el = document.getElementById('dash-summary-cards');
+  if (!el) return;
+  try {
+    const s = await api('/api/host/dashboard/summary');
+    el.innerHTML =
+      '<div class="card" style="margin:0;padding:14px"><div style="font-size:11px;color:var(--text-muted)">전체 내담자</div><div style="font-size:24px;font-weight:500;color:var(--sage-dark);margin-top:2px">'+(s.totalClients||0)+'</div></div>'
+    + '<div class="card" style="margin:0;padding:14px"><div style="font-size:11px;color:var(--text-muted)">이수 완료</div><div style="font-size:24px;font-weight:500;color:var(--sage);margin-top:2px">'+(s.completedClients||0)+'</div></div>'
+    + '<div class="card" style="margin:0;padding:14px"><div style="font-size:11px;color:var(--text-muted)">진행 중</div><div style="font-size:24px;font-weight:500;color:#8B5E2A;margin-top:2px">'+(s.inProgressClients||0)+'</div></div>'
+    + '<div class="card" style="margin:0;padding:14px"><div style="font-size:11px;color:var(--text-muted)">미답변 상담</div><div style="font-size:24px;font-weight:500;color:var(--danger);margin-top:2px">'+(s.pendingCounsel||0)+'</div></div>';
+  } catch(e) { el.innerHTML = '<p style="grid-column:1/-1;color:var(--danger);font-size:12px">요약 로드 실패</p>'; }
+}
+
+async function loadDashClients() {
+  const el = document.getElementById('dash-clients-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">로딩 중...</div>';
+  try {
+    const groupId = document.getElementById('dash-group-filter').value;
+    const completedOnly = document.getElementById('dash-completed-only').checked ? '1' : '';
+    let url = '/api/host/dashboard/clients-overview?';
+    if (groupId) url += 'groupId=' + encodeURIComponent(groupId) + '&';
+    if (completedOnly) url += 'completedOnly=1';
+    const data = await api(url);
+    _dashClientsData = data.clients || [];
+    if (_dashClientsData.length === 0) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:20px;text-align:center">조건에 맞는 내담자가 없습니다.</p>';
+      return;
+    }
+    el.innerHTML = _dashClientsData.map(c => {
+      const completedBadge = c.isCompleted
+        ? '<span class="badge green">✓ 이수</span>'
+        : '<span class="badge amber">진행 중</span>';
+      const groupLabel = c.group ? '📁 '+c.group.name : '<span style="color:var(--text-muted)">미배정</span>';
+      const courseLabel = c.courseName ? ' · 📚 '+c.courseName : '';
+      const startDate = c.programStartDate ? new Date(c.programStartDate).toLocaleDateString('ko-KR') : '-';
+      const completedDate = c.completedAt ? new Date(c.completedAt).toLocaleDateString('ko-KR') : '';
+      const activeMod = c.activeModule
+        ? '🟢 '+c.activeModule.title+' · 세션 '+c.activeModule.currentSession+'/'+c.activeModule.totalSessions
+        : (c.isCompleted ? '✅ 전체 이수 완료' : '⏸ 모듈 비활성');
+      return '<div class="card" style="margin-bottom:8px;padding:12px">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
+        + '<div style="flex:1"><div style="font-size:14px;font-weight:500">'+(c.name||'-')+(c.nickname?' · '+c.nickname:'')+'</div>'
+        + '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+groupLabel+courseLabel+'</div>'
+        + '<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">시작 '+startDate+(completedDate?' · 이수 '+completedDate:'')+'</div>'
+        + '</div>'
+        + completedBadge
+        + '</div>'
+        + '<div style="font-size:11px;color:var(--text);margin:6px 0">'+activeMod+'</div>'
+        + '<div style="display:flex;gap:8px;font-size:11px;color:var(--text-muted)">'
+        + '<div style="flex:1">📚 모듈 '+c.completedModules+'/'+c.totalModules+' ('+c.moduleProgressPct+'%)</div>'
+        + '<div style="flex:1">🔢 세션 '+c.completedSessions+'/'+c.totalSessions+' ('+c.sessionProgressPct+'%)</div>'
+        + '<div>💬 상담 '+c.counselingCount+'</div>'
+        + '</div>'
+        + '<div class="prog-wrap" style="margin-top:6px"><div class="prog-bar" style="width:'+c.sessionProgressPct+'%"></div></div>'
+        + (c.isCompleted ? '' : '<div style="margin-top:8px;text-align:right"><button onclick="markClientComplete(\''+c.clientId+'\',\''+(c.name||'').replace(/\x27/g,"\\\x27")+'\')" style="background:#EDF4EE;color:var(--sage-dark);border:1px solid var(--sage-light);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">✓ 이수 처리</button></div>')
+        + '</div>';
+    }).join('');
+  } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:12px">로드 실패: '+(e.message||'')+'</p>'; }
+}
+
+async function markClientComplete(clientId, name) {
+  if (!confirm('"'+name+'" 내담자를 이수 완료로 처리하시겠습니까?\n\n이수 처리하면 세무 보고서를 생성할 수 있게 됩니다.\n(나중에 취소할 수 있습니다)')) return;
+  try {
+    await api('/api/host/clients/'+clientId+'/mark-complete','PUT',{});
+    alert('✓ 이수 처리 완료');
+    loadDashSummary(); loadDashClients();
+  } catch(e) { alert('이수 처리 실패: '+(e.message||'')); }
+}
+
+async function loadDashTaxList() {
+  const el = document.getElementById('dash-tax-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">로딩 중...</div>';
+  try {
+    const data = await api('/api/host/dashboard/clients-overview?completedOnly=1');
+    const completed = data.clients || [];
+    if (completed.length === 0) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:20px;text-align:center">이수 완료된 내담자가 없습니다.<br><br>관리 모드에서 [✓ 이수 처리] 버튼으로 이수 처리하실 수 있습니다.</p>';
+      return;
+    }
+    el.innerHTML = completed.map(c => {
+      const completedDate = c.completedAt ? new Date(c.completedAt).toLocaleDateString('ko-KR') : '-';
+      const groupLabel = c.group ? c.group.name : '미배정';
+      const companyLabel = (c.group && c.group.company_full_name) ? ' · '+c.group.company_full_name : '';
+      return '<div class="card" style="margin-bottom:8px;padding:12px;cursor:pointer" onclick="generateTaxReport(\''+c.clientId+'\')">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center">'
+        + '<div style="flex:1"><div style="font-size:14px;font-weight:500">'+(c.name||'-')+'</div>'
+        + '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📁 '+groupLabel+companyLabel+'</div>'
+        + '<div style="font-size:11px;color:var(--sage-dark);margin-top:2px">✓ 이수일: '+completedDate+'</div></div>'
+        + '<span style="color:var(--sage-dark);font-size:13px">보고서 →</span>'
+        + '</div></div>';
+    }).join('');
+  } catch(e) { el.innerHTML = '<p style="color:var(--danger);font-size:12px">로드 실패</p>'; }
+}
+
+async function generateTaxReport(clientId) {
+  const el = document.getElementById('dash-tax-report');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">생성 중...</div>';
+  try {
+    const data = await api('/api/host/reports/completion/'+clientId);
+    const r = data.report;
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString('ko-KR') : '-';
+    el.innerHTML = '<div class="card" style="border:2px solid var(--sage-dark);padding:20px;background:#FAFAF7">'
+      + '<div style="text-align:center;border-bottom:2px solid var(--sage-dark);padding-bottom:12px;margin-bottom:14px">'
+      + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;font-weight:500;color:var(--sage-dark)">📋 교육 이수 증명서</div>'
+      + '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">Peace-In Practice™ Certificate of Completion</div>'
+      + '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">발급일: '+new Date().toLocaleDateString('ko-KR')+'</div>'
+      + '</div>'
+      + '<div style="font-size:12px;line-height:1.9">'
+      + '<div><strong>📌 수료자:</strong> '+(r.clientName||'-')+(r.clientNickname?' ('+r.clientNickname+')':'')+'</div>'
+      + '<div><strong>🏢 소속 기업:</strong> '+(r.companyFullName || r.groupName || '미배정')+'</div>'
+      + (r.companyRegistrationNumber ? '<div><strong>📇 사업자등록번호:</strong> '+r.companyRegistrationNumber+'</div>' : '')
+      + '<div><strong>📚 교육 과정:</strong> '+(r.courseName || '-')+'</div>'
+      + '<div><strong>📅 시작일:</strong> '+fmtDate(r.programStartDate)+'</div>'
+      + '<div><strong>📅 실제 첫 활동일:</strong> '+fmtDate(r.actualFirstActivityDate)+'</div>'
+      + '<div><strong>✅ 이수 완료일:</strong> '+fmtDate(r.completedAt)+'</div>'
+      + '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--warm)"><strong>📊 진행 통계</strong></div>'
+      + '<div>· 주당 세션 빈도: '+(r.sessionFrequencyPerWeek||'-')+'회</div>'
+      + '<div>· 모듈 이수: '+r.completedModules+' / '+r.totalModules+' ('+r.moduleProgressPct+'%)</div>'
+      + '<div>· 세션 진행: '+r.completedSessions+' / '+r.totalSessions+' ('+r.sessionProgressPct+'%)</div>'
+      + '<div>· 1:1 상담 횟수: '+r.counselingTotal+'회 (답변 완료 '+r.counselingReplied+'회)</div>'
+      + '</div>'
+      + '<div style="text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--warm);font-size:10px;color:var(--text-muted)">본 증명서는 Peace-In Practice™ 교육 프로그램 이수를 증명합니다.<br>※ 본문(상담 내용·답변)은 비밀유지 의무로 포함되지 않으며, 메타데이터만 기록됩니다.</div>'
+      + '<div style="text-align:center;margin-top:14px"><button onclick="window.print()" class="btn primary" style="display:inline-block;width:auto;padding:8px 20px">🖨 인쇄 / PDF 저장</button></div>'
+      + '</div>';
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+  } catch(e) {
+    if (e.message && e.message.includes('이수가 완료되지 않은')) {
+      el.innerHTML = '<p style="color:var(--danger);font-size:13px;padding:14px">⚠ 이 내담자는 아직 이수 완료가 아닙니다.</p>';
+    } else {
+      el.innerHTML = '<p style="color:var(--danger);font-size:13px;padding:14px">보고서 생성 실패: '+(e.message||'')+'</p>';
+    }
+  }
+}
 
 </script>
 </body>
