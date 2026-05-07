@@ -3652,7 +3652,7 @@ async function openClientDetail(clientId) {
 async function loadClientDetail() {
   try {
     const data = await api('/api/host/clients/'+currentDetailClientId);
-    const c = flattenClientGroup(data.client);
+    const c = flattenClientGroup(data.client); try { const _all = await api('/api/host/clients'); const _f = (_all||[]).find(x => x.id === currentDetailClientId); if (_f) c.group_id = flattenClientGroup(_f).group_id; } catch(e){}
     document.getElementById('detail-client-name').textContent = c.name + (c.nickname?' · '+c.nickname:'');
     document.getElementById('detail-client-sub').textContent = '주'+(c.session_frequency||2)+'회';
     document.getElementById('dp-name').value=c.name||'';
