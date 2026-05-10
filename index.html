@@ -839,7 +839,7 @@ html.pip-ready body { visibility: visible; }
         <option value="1">세션 1</option>
       </select>
     </div>
-    <button onclick="deleteEntireSession('cme')" style="width:100%;background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:8px;padding:8px;font-size:11px;cursor:pointer;margin-bottom:12px">🗑 이 세션의 이 내담자 전용 질문·답변 삭제</button>
+    <button onclick="addNewSession('cme')" style="width:100%;background:var(--sage);color:white;border:none;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:8px">+ 이 내담자만을 위한 새 세션 추가</button><button onclick="deleteEntireSession('cme')" style="width:100%;background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:8px;padding:8px;font-size:11px;cursor:pointer;margin-bottom:12px">🗑 이 세션의 이 내담자 전용 질문·답변 삭제</button>
 
     <p class="sec-label"><span id="cme-session-label">세션 1</span> · 이 내담자 전용 질문</p>
     <div id="cme-questions-list"><div class="loading">로딩 중...</div></div>
