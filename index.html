@@ -3793,7 +3793,7 @@ async function loadClientDetailModules() {
     if (available.length === 0) {
       allEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
     } else {
-      allEl.innerHTML = '<button onclick="deleteAllAvailableModules()" style="width:100%;background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:6px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:12px;font-weight:500">🗑 아래 모든 모듈을 시스템에서 완전 삭제</button>' + available.map(m => {
+      allEl.innerHTML = available.map(m => {
         return '<div class="card" style="margin-bottom:8px">'
           + '<div class="card-row"><div style="font-size:13px">'+(m.title||'제목 없음')+'</div>'
           + '<button onclick="assignModule(\''+m.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">+ '+tr('배정')+'</button> <button onclick="deleteGlobalModule(\''+m.id+'\',\''+(m.title||'').replace(/\x27/g,"\\\x27")+'\')" style="background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap" title="이 모듈을 시스템에서 완전 삭제">🗑</button></div></div>';
