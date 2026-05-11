@@ -3793,10 +3793,10 @@ async function loadClientDetailModules() {
     if (available.length === 0) {
       allEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
     } else {
-      allEl.innerHTML = available.map(m => {
+      allEl.innerHTML = '<button onclick="deleteAllAvailableModules()" style="width:100%;background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:6px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:12px;font-weight:500">🗑 아래 모든 모듈을 시스템에서 완전 삭제</button>' + available.map(m => {
         return '<div class="card" style="margin-bottom:8px">'
           + '<div class="card-row"><div style="font-size:13px">'+(m.title||'제목 없음')+'</div>'
-          + '<button onclick="assignModule(\''+m.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">+ '+tr('배정')+'</button></div></div>';
+          + '<button onclick="assignModule(\''+m.id+'\')" style="background:var(--sage);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">+ '+tr('배정')+'</button> <button onclick="deleteGlobalModule(\''+m.id+'\',\''+(m.title||'').replace(/\x27/g,"\\\x27")+'\')" style="background:#F8E7E0;color:var(--danger);border:1px solid #E8A898;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap" title="이 모듈을 시스템에서 완전 삭제">🗑</button></div></div>';
       }).join('');
     }
     retranslateNow(200);
@@ -4421,7 +4421,7 @@ async function saveModuleTitle() {
 }
 
 // 공통 모듈 완전 삭제
-async function deleteWholeModule() {
+async function deleteGlobalModule(moduleId, title) { if (!confirm('⚠ "'+title+'" 모듈을 시스템에서 완전히 삭제하시겠습니까?\n\n• 이 모듈의 모든 세션, 질문, 답변, 배정이 영구 삭제됩니다\n• 다른 내담자에게도 배정되어 있으면 그 내담자에게서도 사라집니다\n• 이 작업은 되돌릴 수 없습니다\n\n계속하시겠습니까?')) return; try { await api('/api/host/modules/'+moduleId, 'DELETE'); loadClientDetailModules(); } catch(e) { alert('모듈 삭제 실패: ' + (e.message || e.toString())); } } async function deleteAllAvailableModules() { const allModules = await api('/api/host/modules'); const clientData = await api('/api/host/clients/'+currentDetailClientId); const assignedIds = new Set(((clientData && clientData.modules) || []).map(cm => cm.module_id)); const available = (allModules || []).filter(m => !assignedIds.has(m.id)); if (available.length === 0) { alert('삭제할 모듈이 없습니다'); return; } if (!confirm('⚠ 배정되지 않은 모듈 '+available.length+'개를 모두 시스템에서 삭제하시겠습니까?\n\n• 모든 세션, 질문, 답변이 영구 삭제됩니다\n• 다른 내담자에게 배정된 경우 그 내담자에게서도 사라집니다\n• 이 작업은 되돌릴 수 없습니다\n\n계속하시겠습니까?')) return; const results = await Promise.all(available.map(m => api('/api/host/modules/'+m.id, 'DELETE').then(() => 1).catch(() => 0))); const success = results.reduce((a, b) => a + b, 0); alert(success + '개 모듈이 삭제되었습니다'); loadClientDetailModules(); } async function deleteWholeModule() {
   if (!confirm('⚠ 이 모듈 "'+currentEditingModuleTitle+'"을(를) 완전히 삭제하시겠습니까?\n\n해당 모듈의 모든 세션, 모든 질문, 모든 답변, 모든 배정이 함께 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.')) return;
   try {
     await api('/api/host/modules/'+currentEditingModuleId, 'DELETE');
