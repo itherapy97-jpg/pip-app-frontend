@@ -3815,12 +3815,12 @@ async function changeClientCourse() {
   const courseName = courseId ? (sel.options[sel.selectedIndex].text || '과정') : '미배정';
   const msg = courseId
     ? '⚠ 이 내담자에게 과정 "'+courseName+'"을 적용하시겠습니까?\n\n• 과정의 모든 모듈이 자동 배정됩니다 (첫 모듈만 활성화)\n• 다른 과정의 모듈은 비활성화됩니다 (진행 기록은 보존)\n• 개별 추가한 모듈은 그대로 유지됩니다\n\n계속하시겠습니까?'
-    : '⚠ 이 내담자의 과정 배정을 해제하시겠습니까?\n\n• 모든 과정 모듈이 비활성화됩니다 (진행 기록은 보존)\n\n계속하시겠습니까?';
+    : '⚠ 이 내담자의 배정된 모든 모듈을 완전히 삭제하시겠습니까?\n\n• 배정된 모든 모듈이 영구 삭제됩니다 (답변·진행 기록 포함)\n• 이 작업은 되돌릴 수 없습니다\n\n계속하시겠습니까?';
   if (!confirm(msg)) return;
   try {
-    const res = await api('/api/host/clients/'+currentDetailClientId+'/course', 'POST', { courseId });
+    if (!courseId) { const _d = await api('/api/host/clients/'+currentDetailClientId); const _mods = (_d && _d.modules) || []; await Promise.all(_mods.map(_cm => api('/api/host/clients/'+currentDetailClientId+'/modules/'+_cm.module_id, 'DELETE').catch(()=>{}))); } const res = await api('/api/host/clients/'+currentDetailClientId+'/course', 'POST', { courseId });
     if (res.warning) alert('⚠ ' + res.warning);
-    else alert('✓ ' + (res.assignedModules ? res.assignedModules + '개 모듈이 배정되었습니다.' : '과정이 변경되었습니다.'));
+    else alert('✓ ' + (courseId ? (res.assignedModules ? res.assignedModules + '개 모듈이 배정되었습니다.' : '과정이 변경되었습니다.') : '모든 모듈이 삭제되었습니다.'));
     loadClientDetailModules();
   } catch(e) { alert('과정 변경 실패: ' + (e.message||'')); }
 }
