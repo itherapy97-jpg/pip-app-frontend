@@ -3745,7 +3745,7 @@ async function loadClientDetailModules() {
         + '<button onclick="changeClientCourse()" style="width:100%;padding:10px;background:var(--sage);color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer">과정 적용</button>';
     }
     // 백엔드는 client_modules 배열을 반환: {id, module_id, is_active, order_num, activated_at, modules:{id,title,order_num}, completed}
-    const assignedModules = (clientData && clientData.modules) || [];
+    const assignedModules = ((clientData && clientData.modules) || []).slice().sort((a,b) => { const aT = (a.modules && a.modules.title) || ''; const bT = (b.modules && b.modules.title) || ''; const aN = parseInt((aT.match(/(\d+)/) || [])[1] || '999'); const bN = parseInt((bT.match(/(\d+)/) || [])[1] || '999'); if (aN !== bN) return aN - bN; return aT.localeCompare(bT); });
     const assignedModuleIds = new Set(assignedModules.map(cm => cm.module_id));
 
     if (assignedModules.length === 0) {
@@ -3789,7 +3789,7 @@ async function loadClientDetailModules() {
       }).join('');
     }
 
-    const available = (allModules || []).filter(m => !assignedModuleIds.has(m.id));
+    const available = (allModules || []).filter(m => !assignedModuleIds.has(m.id)).sort((a,b) => { const aT = a.title || ''; const bT = b.title || ''; const aN = parseInt((aT.match(/(\d+)/) || [])[1] || '999'); const bN = parseInt((bT.match(/(\d+)/) || [])[1] || '999'); if (aN !== bN) return aN - bN; return aT.localeCompare(bT); });
     if (available.length === 0) {
       allEl.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">배정 가능한 모듈 없음</p>';
     } else {
