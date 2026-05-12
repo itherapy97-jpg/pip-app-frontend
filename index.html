@@ -2126,7 +2126,7 @@ function toggleHostLangMenu() {
 function setLang(lang) {
   console.log('[PIP] setLang:', lang);
   const m=document.getElementById('langMenu'); if(m) m.classList.remove('open');
-  localStorage.setItem('pip_client_lang_pref', lang); localStorage.setItem('pip_host_lang_pref', lang); localStorage.setItem('pip_host_lang_pref', lang); localStorage.setItem('pip_host_lang_pref', lang);
+  localStorage.setItem('pip_client_lang_pref', lang); localStorage.setItem('pip_host_lang_pref', lang);
   sessionStorage.setItem('pip_lang_manually_set', '1');
   const el1=document.getElementById('langSelected'); if(el1) el1.textContent=LANG_NAMES[lang]||lang;
   // langSelectedHome은 홈 화면 언어 버튼 삭제로 제거됨
