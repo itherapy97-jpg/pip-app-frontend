@@ -363,7 +363,7 @@ html.pip-ready body { visibility: visible; }
     <div class="field">
       <label id="counsel-label">지금 마음속에 있는 것을 자유롭게 적어주세요</label>
       <textarea id="counsel-text" placeholder="여기에 작성하세요..." style="min-height:140px" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-private="true" data-form-type="other"></textarea>
-<button id="mic-counsel-text" onclick="startVoiceInput('counsel-text')" style="margin-top:8px;width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer">🎤 음성 입력</button><div style="font-size:11px;color:#7A4F1A;margin-top:8px;line-height:1.6;padding:8px 10px;background:#FDF3E7;border:1px solid #E8C99A;border-radius:6px;text-align:center">⚠ 음성·키보드 입력 시 이름·주민등록번호·계좌번호 등 식별 정보는 입력하지 마세요</div>
+<button id="mic-counsel-text" onclick="startVoiceInput('counsel-text')" style="margin-top:8px;width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer">🎤 음성 입력</button><div style="font-size:11px;color:#7A4F1A;margin-top:8px;line-height:1.6;padding:8px 10px;background:#FDF3E7;border:1px solid #E8C99A;border-radius:6px;text-align:center">⚠ 음성·키보드 입력 시 이름·주민등록번호·계좌번호 등 식별 정보는 입력하지 마세요<br><br>💡 웹에서 마이크 🎤 버튼이 작동하지 않을 때는 'Windows 키 + H' (PC) 또는 모바일 키보드의 🎤 아이콘으로 음성 입력하실 수 있습니다</div>
     </div>
     <div class="error-msg" id="counsel-error"></div>
     <div class="spacer"></div>
@@ -408,7 +408,7 @@ html.pip-ready body { visibility: visible; }
     <div class="divider"></div>
     <p class="sec-label" id="td-followup-label">✏ 추가 질문하기 (이 스레드에 이어서)</p>
     <textarea id="td-followup-text" placeholder="이 답변에 대해 궁금한 점을 더 질문해보세요..." class="editor-area" style="min-height:100px" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-private="true" data-form-type="other"></textarea>
-<button id="mic-td-followup-text" onclick="startVoiceInput('td-followup-text')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;margin-top:6px">🎤 음성 입력</button><div style="font-size:11px;color:#7A4F1A;margin-top:8px;line-height:1.6;padding:8px 10px;background:#FDF3E7;border:1px solid #E8C99A;border-radius:6px;text-align:center">⚠ 음성·키보드 입력 시 이름·주민등록번호·계좌번호 등 식별 정보는 입력하지 마세요</div>
+<button id="mic-td-followup-text" onclick="startVoiceInput('td-followup-text')" style="width:100%;padding:10px;background:#EDF4EE;border:1px solid var(--sage-light);border-radius:8px;color:var(--sage-dark);font-size:13px;cursor:pointer;margin-top:6px">🎤 음성 입력</button><div style="font-size:11px;color:#7A4F1A;margin-top:8px;line-height:1.6;padding:8px 10px;background:#FDF3E7;border:1px solid #E8C99A;border-radius:6px;text-align:center">⚠ 음성·키보드 입력 시 이름·주민등록번호·계좌번호 등 식별 정보는 입력하지 마세요<br><br>💡 웹에서 마이크 🎤 버튼이 작동하지 않을 때는 'Windows 키 + H' (PC) 또는 모바일 키보드의 🎤 아이콘으로 음성 입력하실 수 있습니다</div>
     <div class="spacer"></div>
     <button class="btn primary" onclick="sendFollowup()" id="td-send-btn">📤 추가 질문 전송</button>
     <button class="btn" onclick="confirmThread()" id="td-confirm-btn" style="background:var(--sage-dark);color:white;border-color:var(--sage-dark)">✓ 모두 확인했습니다 (삭제)</button>
