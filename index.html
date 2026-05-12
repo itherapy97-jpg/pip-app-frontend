@@ -2711,7 +2711,7 @@ async function loadThreads() {
       const isNotice = t.rootKind === 'host_notice' || t.initiatedBy === 'host';
       const badgeClass = isNotice ? 'amber' : 'blue';
       const badgeLabel = isNotice ? tr('📌 상담 안내') : tr('📝 내 질문');
-      const preview = twrap((t.rootMessage || '').substring(0, 70)) + ((t.rootMessage||'').length > 70 ? '...' : '');
+      const _r = twrap((t.rootMessage || '').substring(0, 70)); const preview = _r.replace(/<\/?span[^>]*>/g,'').replace(/&lt;\/?span[^&]*&gt;/g,'') + ((t.rootMessage||'').length > 70 ? '...' : '');
       return '<div class="card" style="cursor:pointer;margin-bottom:10px" onclick="openThread(\''+t.threadRootId+'\')">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
         + '<span class="badge '+badgeClass+'">'+twrap(badgeLabel)+'</span>'
