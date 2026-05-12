@@ -2638,7 +2638,7 @@ async function loadHome() {
     }
     document.getElementById('prog-bar').style.width=weekPct+'%';
     // 기존 라벨은 "월내세션번호/주당세션수/모듈번호/전체모듈수" 형태 - 현재 진행도 표시로 교체하면서 전체 진행 정보도 병기
-    document.getElementById('prog-text').textContent=weekLabel+' · '+tr('전체')+' '+completed+'/'+totalModules+' '+tr('모듈');
+    document.getElementById('prog-text').innerHTML=twrap(weekLabel)+' · '+twrap('전체')+' '+completed+'/'+totalModules+' '+twrap('모듈'); setTimeout(()=>{try{flushPendingTranslations&&flushPendingTranslations().catch(()=>{});}catch(e){}}, 100);
     // 안내 메시지 표시 (모듈 리스트 위)
     const extraEl = document.getElementById('home-extra-msg');
     if (extraEl) {
@@ -2707,17 +2707,17 @@ async function loadThreads() {
       prefetchTranslations(previews, lang).catch(()=>{});
     }
     listEl.innerHTML = threads.map(t => {
-      const dateStr = new Date(t.lastActivityAt).toLocaleDateString('ko-KR', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+      const _lng=(typeof getCurrentDisplayLang==='function'?getCurrentDisplayLang():'ko'); const _loc=(_lng==='ko'?'ko-KR':_lng==='ja'?'ja-JP':_lng==='zh-CN'?'zh-CN':_lng==='zh-TW'?'zh-TW':_lng==='en'?'en-US':_lng); const dateStr = new Date(t.lastActivityAt).toLocaleDateString(_loc, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
       const isNotice = t.rootKind === 'host_notice' || t.initiatedBy === 'host';
       const badgeClass = isNotice ? 'amber' : 'blue';
       const badgeLabel = isNotice ? tr('📌 상담 안내') : tr('📝 내 질문');
-      const preview = (t.rootMessage || '').substring(0, 70) + ((t.rootMessage||'').length > 70 ? '...' : '');
+      const preview = twrap((t.rootMessage || '').substring(0, 70)) + ((t.rootMessage||'').length > 70 ? '...' : '');
       return '<div class="card" style="cursor:pointer;margin-bottom:10px" onclick="openThread(\''+t.threadRootId+'\')">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-        + '<span class="badge '+badgeClass+'">'+badgeLabel+'</span>'
+        + '<span class="badge '+badgeClass+'">'+twrap(badgeLabel)+'</span>'
         + '<span style="font-size:11px;color:var(--text-muted)">'+dateStr+'</span></div>'
         + '<p style="font-size:13px;line-height:1.6;color:var(--text)">'+twrap(preview)+'</p>'
-        + '<div style="text-align:right;font-size:11px;color:var(--sage-dark);margin-top:6px">'+tr('열기')+' →</div></div>';
+        + '<div style="text-align:right;font-size:11px;color:var(--sage-dark);margin-top:6px">'+twrap('열기 →')+'</div></div>';
     }).join('');
     retranslateNow(150);
     // 렌더링 직후 + 약간의 지연 후 미번역 span 강제 처리
